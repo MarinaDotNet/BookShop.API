@@ -1,11 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "9p6ZsGQuu54=",
+  "dgSpecHash": "UPKVXsUrwUo=",
   "success": true,
   "projectFilePath": "C:\\Users\\msich\\Documents\\ProgrammingPractice\\CSharp\\BookShop.API\\BookShop.API\\BookShop.API\\BookShop.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\msich\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.0\\microsoft.aspnetcore.openapi.10.0.0.nupkg.sha512",
-    "C:\\Users\\msich\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
+    "C:\\Users\\msich\\.nuget\\packages\\microsoft.entityframeworkcore\\10.0.1\\microsoft.entityframeworkcore.10.0.1.nupkg.sha512",
+    "C:\\Users\\msich\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\10.0.1\\microsoft.entityframeworkcore.abstractions.10.0.1.nupkg.sha512",
+    "C:\\Users\\msich\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\10.0.1\\microsoft.entityframeworkcore.analyzers.10.0.1.nupkg.sha512",
+    "C:\\Users\\msich\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512",
+    "C:\\Users\\msich\\.nuget\\packages\\mongodb.bson\\3.5.2\\mongodb.bson.3.5.2.nupkg.sha512"
   ],
   "logs": []
 }
