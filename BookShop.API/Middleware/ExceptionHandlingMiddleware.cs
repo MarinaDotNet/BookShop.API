@@ -19,14 +19,13 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
     private readonly ILogger<ExceptionHandlingMiddleware> _logger = logger;
 
     /// <summary>
-    /// Processes an HTTP request and handles specific exceptions by returning appropriate HTTP status codes and error
-    /// responses.
+    /// Processes the incoming HTTP request and handles specific exceptions by returning appropriate HTTP status codes
+    /// and error messages to the client.
     /// </summary>
-    /// <remarks>If a NotFoundException, ValidationException, ConflictException, or ForbidenException is
-    /// thrown during request processing, this method sets the corresponding HTTP status code and returns a JSON error
-    /// response. Any other unhandled exceptions result in a 500 Internal Server Error with a generic error message.
-    /// This middleware should be registered early in the pipeline to ensure consistent error handling.</remarks>
-    /// <param name="context">The HTTP context for the current request.</param>
+    /// <remarks>If a known exception is thrown during request processing, the method logs the exception and
+    /// writes an error response with a corresponding status code. Unhandled exceptions result in a 500 Internal Server
+    /// Error response. This method should be used as middleware in the ASP.NET Core request pipeline.</remarks>
+    /// <param name="context">The HTTP context for the current request. Provides access to request and response information.</param>
     /// <returns>A task that represents the asynchronous operation of processing the HTTP request.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
@@ -37,34 +36,51 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         catch (NotFoundException ex)
         {
             _logger.LogWarning(ex, "NotFoundException caught.");
-            context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            await WriteErrorAsync(context, StatusCodes.Status404NotFound, ex.Message);
         }
         catch(ValidationException ex)
         {
             _logger.LogWarning(ex, "ValidationException caught.");
-            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            await WriteErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message);
         }
         catch(ConflictException ex)
         {
             _logger.LogWarning(ex, "ConflictException caught.");
-            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
-            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            await WriteErrorAsync(context, StatusCodes.Status409Conflict, ex.Message);
         }
         catch(ForbiddenException ex)
         {
             _logger.LogWarning(ex, "ForbidenException caught.");
-            context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+            await WriteErrorAsync(context, StatusCodes.Status403Forbidden, ex.Message);
         }
         catch(Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception caught.");
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            await context.Response.WriteAsJsonAsync(new { error = "An unexpected error occured." });
+            await WriteErrorAsync(context, StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
 
+    }
+
+    /// <summary>
+    /// Asynchronously writes a JSON-formatted error response to the specified HTTP context with the given status code
+    /// and error message.
+    /// </summary>
+    /// <remarks>The response content type is set to "application/json". The response body will contain a
+    /// single property named "error" with the provided message.</remarks>
+    /// <param name="context">The HTTP context to which the error response will be written. Must not be null.</param>
+    /// <param name="statusCode">The HTTP status code to set for the response. Common values include 400 for bad requests or 500 for server
+    /// errors.</param>
+    /// <param name="message">The error message to include in the JSON response body. Cannot be null.</param>
+    /// <returns>A task that represents the asynchronous write operation.</returns>
+    private static async Task WriteErrorAsync(HttpContext context, int statusCode, string message)
+    {
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
+
+        await context.Response.WriteAsJsonAsync(new
+        {
+            error = message
+        });
     }
 
 }
