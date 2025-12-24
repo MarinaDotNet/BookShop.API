@@ -19,6 +19,12 @@ public class MongoDbContext
     private readonly MongoClient _client;
 
     /// <summary>
+    /// Gets the MongoDB collection used to store and retrieve Book entities.
+    /// </summary>
+    /// <returns>An <see cref="IMongoCollection{Book}"/> representing the collection of books in the database.</returns>
+    public IMongoCollection<Book> GetCollection() => _collection;
+
+    /// <summary>
     /// Initializes a new instance of the MongoDbContext class using the specified MongoDB settings.
     /// </summary>
     /// <remarks>This constructor validates the provided settings and establishes a connection to the
