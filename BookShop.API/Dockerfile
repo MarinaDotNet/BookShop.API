@@ -2,11 +2,11 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
 
-COPY *.csproj ./
-RUN dotnet restore
+COPY BookShop.API/*.csproj ./BookShop.API/
+RUN dotnet restore ./BookShop.API/BookShop.API.csproj
 
-COPY . ./
-RUN dotnet publish -c Release -o /app/publish
+COPY BookShop.API/ ./BookShop.API/
+RUN dotnet publish ./BookShop.API/BookShop.API.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
