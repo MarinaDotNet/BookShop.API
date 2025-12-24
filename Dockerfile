@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-COPY BookShop.API/BookShop.API.csproj ./BookShop.API.csproj
+COPY BookShop.API/BookShop.API.csproj ./
 RUN dotnet restore ./BookShop.API.csproj
 
 COPY BookShop.API/ ./BookShop.API/
