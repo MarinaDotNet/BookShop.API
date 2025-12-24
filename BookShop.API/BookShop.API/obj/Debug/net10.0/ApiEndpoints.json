@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "ContainingType": "BookShop.API.Controllers.BooksController",
+    "Method": "GetAll",
+    "RelativePath": "all",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]
