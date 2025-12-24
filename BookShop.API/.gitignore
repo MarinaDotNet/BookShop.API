@@ -1,1 +1,41 @@
+# Visual Studio
 .vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build output
+bin/
+obj/
+out/
+publish/
+
+# Rider
+.idea/
+
+# User secrets
+UserSecrets/
+
+# Logs
+*.log
+*.tlg
+*.trace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# NuGet
+*.nupkg
+packages/
+*.snupkg
+
+# Redis dump files
+dump.rdb
+appendonly.aof
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
