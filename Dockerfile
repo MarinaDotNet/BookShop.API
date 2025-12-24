@@ -1,6 +1,6 @@
+# Stage 1: build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
-
 
 COPY BookShop.API/*.csproj ./BookShop.API/
 RUN dotnet restore ./BookShop.API/BookShop.API.csproj
@@ -8,6 +8,7 @@ RUN dotnet restore ./BookShop.API/BookShop.API.csproj
 COPY BookShop.API/ ./BookShop.API/
 RUN dotnet publish ./BookShop.API/BookShop.API.csproj -c Release -o /app/publish
 
+# Stage 2: runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/publish .
