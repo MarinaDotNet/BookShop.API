@@ -1,4 +1,5 @@
-﻿using BookShop.API.Models;
+﻿using BookShop.API.Exceptions;
+using BookShop.API.Models;
 using BookShop.API.Repositories;
 
 namespace BookShop.API.Services;
@@ -17,10 +18,16 @@ public class BookService(IBookRepository bookRepository)
     /// <summary>
     /// Asynchronously retrieves all books from the data store.
     /// </summary>
-    /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of <see
-    /// cref="Book"/> objects representing all books. If no books are found, the collection will be empty.</returns>
-    public async Task <IEnumerable<Book>> GetAllBooksAsync()
+    /// <returns>A read-only collection containing all <see cref="Book"/> objects. The collection is empty if no books are found.</returns>
+    public async Task <IReadOnlyCollection<Book>> GetAllBooksAsync()
     {
-        return await _bookRepository.GetAllBooksAsync();
+        var books = await _bookRepository.GetAllBooksAsync();
+
+        if(!books.Any())
+        {
+            throw new NotFoundException("No books found.");
+        }
+
+        return [.. books ];
     }
 }
