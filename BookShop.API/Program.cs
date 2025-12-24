@@ -22,6 +22,13 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    app.Urls.Clear();
+    app.Urls.Add($"http://*:{port}");
+}
+
 // Add Exception Handling Middleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
