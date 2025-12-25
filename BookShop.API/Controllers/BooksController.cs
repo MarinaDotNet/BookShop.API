@@ -25,4 +25,15 @@ public class BooksController(BookService service) : ControllerBase
     {
         return Ok( await _service.GetAllBooksAsync());
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(string id)
+    {
+        return Ok( await _service.GetBookByIdAsync(id));
+    }
 }
