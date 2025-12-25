@@ -1,4 +1,5 @@
 using BookShop.API.Infrastructure.Persistence;
+using BookShop.API.Mappings;
 using BookShop.API.Middleware;
 using BookShop.API.Repositories;
 using BookShop.API.Services;
@@ -14,6 +15,9 @@ builder.Services.AddSingleton<MongoDbContext>();
 /// Dependency Injection
 builder.Services.AddSingleton<IBookRepository, BookRepository>();
 builder.Services.AddScoped<BookService>();
+
+// Auto Mapper Configurations
+builder.Services.AddAutoMapper(typeof(BookMapingProfile));
 
 builder.Services.AddControllers();
 
