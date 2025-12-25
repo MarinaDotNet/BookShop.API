@@ -32,4 +32,16 @@ public class BookRepository(MongoDbContext context) : IBookRepository
         var books = await _booksCollection.Find(_ => true).ToListAsync();
         return books;
     }
+
+    /// <summary>
+    /// Asynchronously retrieves a book with the specified identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the book to retrieve. Cannot be null.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="Book"/> with the
+    /// specified identifier, or <see langword="null"/> if no matching book is found.</returns>
+    public async Task<Book> GetBookByIdAsync(string id)
+    {
+        var book = await _booksCollection.Find(b => b.Id!.Equals(id)).FirstOrDefaultAsync();
+        return book;
+    }
 }
