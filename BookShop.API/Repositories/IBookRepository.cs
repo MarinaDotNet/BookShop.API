@@ -8,11 +8,19 @@ namespace BookShop.API.Repositories;
 public interface IBookRepository
 {
     /// <summary>
-    /// Asynchronously retrieves all books from the data source.
+    /// Asynchronously retrieves all books from the data source, with optional filter for availability.
     /// </summary>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a collection of all books. The
-    /// collection is empty if no books are found.</returns>
-    Task<IEnumerable<Book>> GetAllBooksAsync();
+    /// <param name="isAvailable">
+    /// An optional parameter to filter books by their availability status. 
+    /// If provided, only books match the specified availability status will be returned. 
+    /// If null, no avialability filter is applied.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a collection of books 
+    /// that match the availability filter, or all books if filter not applied. 
+    /// The collection is empty if no books are found.
+    /// </returns>
+    Task<IEnumerable<Book>> GetAllBooksAsync(bool? isAvailable);
 
     /// <summary>
     /// Asynchronously retrieves a book with the specified identifier.

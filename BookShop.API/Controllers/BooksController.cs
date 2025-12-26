@@ -16,14 +16,20 @@ public class BooksController(BookService service) : ControllerBase
     private readonly BookService _service = service;
 
     /// <summary>
-    /// Retrieves a collection of all books.
+    /// Retrieves a collection of books with optional filtering by availability.
     /// </summary>
-    /// <returns>An <see cref="IActionResult"/> containing the list of all books. The result is returned with an HTTP 200 status
-    /// code.</returns>
+    /// <param name="isAvailable">
+    /// Optional availability filter.
+    /// If null, all books are returned.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> containing the list of books that match the specified criteria.
+    /// Returned with HTTP 200 status code.
+    /// </returns>
     [HttpGet("all")]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(bool? isAvailable)
     {
-        return Ok( await _service.GetAllBooksAsync());
+        return Ok( await _service.GetAllBooksAsync(isAvailable));
     }
 
     /// <summary>

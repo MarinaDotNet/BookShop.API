@@ -23,19 +23,31 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
     #region Getters
 
     /// <summary>
-    /// Asynchronously retrieves all books from the data store.
+    /// Asynchronously retrieves all books from the data source,
+    /// with an optional filter for availability.
     /// </summary>
-    /// <returns>A read-only collection containing all <see cref="BookDto"/> objects. The collection is empty if no books are found.</returns>
-    public async Task <IReadOnlyCollection<BookDto>> GetAllBooksAsync()
+    /// <param name="isAvailable">
+    /// Optional availability filter.
+    /// If null, all books are retrieved.
+    /// If true or false, only books matching the specified availability are returned.
+    /// </param>
+    /// <returns>
+    /// A read-only collection of <see cref="BookDto"/> objects
+    /// that match the specified criteria.
+    /// </returns>
+    /// <exception cref="NotFoundException">
+    /// Thrown when no books are found for the given filter.
+    /// </exception>
+    public async Task <IReadOnlyCollection<BookDto>> GetAllBooksAsync(bool? isAvailable)
     {
-        var books = await _bookRepository.GetAllBooksAsync();
+        var books = await _bookRepository.GetAllBooksAsync(isAvailable);
 
         if (!books.Any())
         {
             throw new NotFoundException("No books found.");
         }
 
-        return [.. _mapper.Map<IReadOnlyCollection<BookDto>>(books) ];
+        return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
 
 

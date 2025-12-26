@@ -20,16 +20,31 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     private readonly IMongoCollection<Book> _booksCollection = context.GetCollection();
 
     /// <summary>
-    /// Asynchronously retrieves all books from the data store.
+    /// Asynchronously retrieves all books from the data source, with optional filter for availability.
     /// </summary>
-    /// <remarks>This method performs a read operation that returns all available books. The returned
-    /// collection reflects the current state of the data store at the time of the query. The order of books in the
-    /// collection is not guaranteed.</remarks>
-    /// <returns>A task that represents the asynchronous operation. The task result contains an enumerable collection of all <see
-    /// cref="Book"/> objects in the data store. If no books are found, the collection will be empty.</returns>
-    public async Task<IEnumerable<Book>> GetAllBooksAsync()
+    /// <remarks>
+    /// This method performs a read operation that returns all available books, with optional 
+    /// filter for availability. 
+    /// The returned collection reflects the current state of the data store at the time of the query. 
+    /// The order of books in the collection is not guaranteed.
+    /// </remarks>
+    /// <param name="isAvailable">
+    /// An optional parameter to filter books by their availability status. 
+    /// If provided, only books match the specified availability status will be returned. 
+    /// If null, no avialability filter is applied.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a collection 
+    /// of books that match the availability filter, or all books if filter not applied. 
+    /// The collection is empty if no books are found.
+    /// </returns>
+    public async Task<IEnumerable<Book>> GetAllBooksAsync(bool? isAvailable)
     {
-        var books = await _booksCollection.Find(_ => true).ToListAsync();
+        var filter = isAvailable.HasValue
+            ? Builders<Book>.Filter.Eq(b => b.IsAvailable, isAvailable.Value)
+            : Builders<Book>.Filter.Empty;
+
+        var books = await _booksCollection.Find(filter).ToListAsync();
         return books;
     }
 
