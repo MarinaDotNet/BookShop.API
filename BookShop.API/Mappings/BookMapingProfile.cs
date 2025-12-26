@@ -15,6 +15,8 @@ public class BookMapingProfile : Profile
     {
         CreateMap<Book, BookDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id!.ToString()));
-            
+
+        CreateMap<Book, BookSearchRequestDto>();
+
     }
 }
