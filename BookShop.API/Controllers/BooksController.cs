@@ -34,10 +34,14 @@ public class BooksController(BookService service) : ControllerBase
     }
 
     /// <summary>
-    /// 
+    /// Retrieves a book by its unique identifier.
     /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
+    /// <param name="id">
+    /// The unique identifier of the book to retrieve.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> containing the book with the specified identifier.
+    /// </returns>
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
