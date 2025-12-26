@@ -40,7 +40,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// of books that match the availability filter, or all books if filter not applied. 
     /// The collection is empty if no books are found.
     /// </returns>
-    public async Task<IEnumerable<Book>> GetAllBooksAsync(bool? isAvailable)
+    public async Task<IReadOnlyCollection<Book>> GetAllBooksAsync(bool? isAvailable)
     {
         var filter = isAvailable.HasValue
             ? Builders<Book>.Filter.Eq(b => b.IsAvailable, isAvailable.Value)

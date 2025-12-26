@@ -20,7 +20,7 @@ public interface IBookRepository
     /// that match the availability filter, or all books if filter not applied. 
     /// The collection is empty if no books are found.
     /// </returns>
-    Task<IEnumerable<Book>> GetAllBooksAsync(bool? isAvailable);
+    Task<IReadOnlyCollection<Book>> GetAllBooksAsync(bool? isAvailable);
 
     /// <summary>
     /// Asynchronously retrieves a book with the specified identifier.
