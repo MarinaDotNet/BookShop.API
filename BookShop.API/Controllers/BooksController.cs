@@ -1,4 +1,5 @@
-﻿using BookShop.API.Services;
+﻿using BookShop.API.Models;
+using BookShop.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookShop.API.Controllers;
@@ -41,5 +42,20 @@ public class BooksController(BookService service) : ControllerBase
     public async Task<IActionResult> GetById(string id)
     {
         return Ok( await _service.GetBookByIdAsync(id));
+    }
+
+    /// <summary>
+    /// Retrieves books that match the specified search criteria exactly.
+    /// </summary>
+    /// <param name="request">
+    /// The search criteria encapsulated in a <see cref="BookSearchRequestDto"/> object.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> containing the list of books that exactly match the search criteria.
+    /// </returns>
+    [HttpGet("search-exact") ]
+    public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request)
+    {
+        return Ok( await _service.GetBooksByExactMatchAsync(request));
     }
 }

@@ -69,6 +69,38 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
             : _mapper.Map<BookDto>(book);
     }
 
+    /// <summary>
+    /// Asynchronously retrieves books that exactly match the specified search term with an 
+    /// optional availability filter.
+    /// </summary>
+    /// <param name="request">
+    /// The search request containing the search term and optional availability filter.
+    /// </param>
+    /// A task that represents the asynchronous operation.
+    /// The task result contains a read-only collection of <see cref="BookDto"/>
+    /// objects that match the specified search criteria.
+    /// <exception cref="ValidationException">
+    /// Thrown if the <paramref name="searchTerm"/> is null or empty.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown if no books are found matching the search criteria.
+    /// </exception>
+    public async Task<IReadOnlyCollection<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            throw new ValidationException("Search term cannot be null or empty.");
+        }
+
+        var books = await _bookRepository.GetBooksByExactMatchAsync(request.SearchTerm, request.IsAvailable);
+
+        if (books.Count == 0)
+        {
+            throw new NotFoundException("No books found matching the search criteria.");
+        }
+
+        return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
+    }
     #endregion Getters
 
     #region Helpers
