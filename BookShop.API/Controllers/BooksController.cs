@@ -79,6 +79,24 @@ public class BooksController(BookService service) : ControllerBase
         return Ok( await _service.GetBooksByPartialMatchAsync(request));
     }
 
+    /// <summary>
+    /// Asynchronously determines whether a book with the specified identifier exists.
+    /// </summary>
+    /// <param name="id">
+    /// The unique identifier of the book to check.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> indicating existence.
+    /// </returns>
+    /// <response code="200">A book with the specified identifier exists.</response>
+    /// <response code="404">A book with the specified identifier does not exist.</response>
+    /// <response code="400">The provided identifier is invalid.</response>
+    [HttpGet("is-exists/{id}")]
+    public async Task<IActionResult> Exists(string id)
+    {
+        var exists = await _service.IsBookExistsAsync(id);
+        return exists ? Ok() : NotFound();
+    }
 
     #region Setters
 
@@ -102,5 +120,25 @@ public class BooksController(BookService service) : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = createdBook.Id }, createdBook);
     }
 
+    /// <summary>
+    /// Asynchronously deletes the book with the specified identifier.
+    /// </summary>
+    /// <param name="id">
+    /// The unique identifier of the book to delete.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> with HTTP 204 (No Content) if the deletion
+    /// succeeds.
+    /// </returns>
+    /// <response code="204">The book was successfully deleted.</response>
+    /// <response code="400">The provided identifier is invalid.</response>
+    /// <response code="404">A book with the specified identifier was not found.</response>
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteById(string id)
+    {
+       await _service.DeleteBookByIdAsync(id);
+
+        return NoContent();
+    }
     #endregion
 }
