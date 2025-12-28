@@ -201,6 +201,53 @@ public class BookRepository(MongoDbContext context) : IBookRepository
         return deletedBook;
     }
 
+    /// <summary>
+    /// Asynchronously updates a full <see cref="Book"/> entity in the data source.
+    /// </summary>
+    /// <param name="book">The <see cref="Book"/> object containing updated data. Must have a valid ID.</param>
+    /// <returns>
+    /// A <see cref="Task{Book}"/> representing the asynchronous operation.
+    /// The task result contains the updated <see cref="Book"/> entity.
+    /// </returns>
+    public async Task<Book> UpdateBookAsync(Book book)
+    {
+        var filter = Builders<Book>.Filter.Eq(b => b.Id, book.Id);
+
+        var options = new FindOneAndReplaceOptions<Book>
+        {
+            ReturnDocument = ReturnDocument.After
+        };
+
+        return await _booksCollection.FindOneAndReplaceAsync(filter, book, options);
+    }
+
+    /// <summary>
+    /// Asynchronously applies partial updates to a <see cref="Book"/> using MongoDB <see cref="UpdateDefinition{Book}"/>.
+    /// </summary>
+    /// <param name="updates">A list of update definitions specifying the fields to update.</param>
+    /// <param name="id">The unique identifier of the book to update.</param>
+    /// <returns>
+    /// A <see cref="Task{Book?}"/> representing the asynchronous operation.
+    /// The task result contains the updated <see cref="Book"/> if found; otherwise, <c>null</c>.
+    /// </returns>
+    public async Task<Book?> UpdateBookPartlyAsync(List<UpdateDefinition<Book>> updates, string id)
+    {
+        if(updates == null || updates.Count == 0)
+        {
+            return await _booksCollection.Find(b => b.Id!.Equals(id)).FirstOrDefaultAsync();
+        }
+
+        var filter = Builders<Book>.Filter.Eq(b => b.Id, id);
+
+        var update = Builders<Book>.Update.Combine(updates);
+
+        var options = new FindOneAndUpdateOptions<Book>
+        {
+            ReturnDocument = ReturnDocument.After
+        };
+
+        return await _booksCollection.FindOneAndUpdateAsync(filter, update, options);
+    }
     #endregion Setters
 
     #region Helpers

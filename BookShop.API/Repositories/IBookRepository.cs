@@ -1,4 +1,5 @@
 ﻿using BookShop.API.Models;
+using MongoDB.Driver;
 
 namespace BookShop.API.Repositories;
 
@@ -103,4 +104,25 @@ public interface IBookRepository
     /// is typically thrown by the service layer.
     /// </remarks>
     Task<Book> DeleteBookByIdAsync(string id);
+
+    /// <summary>
+    /// Asynchronously updates a full <see cref="Book"/> entity in the data source.
+    /// </summary>
+    /// <param name="book">The <see cref="Book"/> object containing updated data. Must have a valid ID.</param>
+    /// <returns>
+    /// A <see cref="Task{Book}"/> representing the asynchronous operation.
+    /// The task result contains the updated <see cref="Book"/> entity.
+    /// </returns>
+    Task<Book> UpdateBookAsync(Book book);
+
+    /// <summary>
+    /// Asynchronously applies partial updates to a <see cref="Book"/> using MongoDB <see cref="UpdateDefinition{Book}"/>.
+    /// </summary>
+    /// <param name="updates">A list of update definitions specifying the fields to update.</param>
+    /// <param name="id">The unique identifier of the book to update.</param>
+    /// <returns>
+    /// A <see cref="Task{Book?}"/> representing the asynchronous operation.
+    /// The task result contains the updated <see cref="Book"/> if found; otherwise, <c>null</c>.
+    /// </returns>
+    Task<Book?> UpdateBookPartlyAsync(List<UpdateDefinition<Book>> updates, string id);
 }
