@@ -143,6 +143,26 @@ public class BookRepository(MongoDbContext context) : IBookRepository
         return await _booksCollection.Find(filter).ToListAsync();
     }
 
+    #region Setters
+
+    /// <summary>
+    /// Asynchronously adds a new <see cref="Book"/> to the data source.
+    /// </summary>
+    /// <param name="book">
+    /// The <see cref="Book"/> object containing the details of the book to be added.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task{Book}"/> representing the asynchronous operation.
+    /// The task result contains the added <see cref="Book"/> object, including the generated Id.
+    /// </returns>
+    public async Task<Book> AddBookAsync(Book book)
+    {
+        await _booksCollection.InsertOneAsync(book);
+        return book;
+    }
+
+    #endregion Setters
+
     #region Helpers
 
     /// <summary>
