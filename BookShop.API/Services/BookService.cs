@@ -5,6 +5,7 @@ using BookShop.API.Repositories;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using MongoDB.Bson;
+using System.Threading.Tasks;
 
 namespace BookShop.API.Services;
 
@@ -136,6 +137,29 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
 
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
+
+    /// <summary>
+    /// Asynchronously checks if a book with the specified identifier exists
+    /// in the data source.
+    /// </summary>
+    /// <param name="id">
+    /// The unique identifier of the book to check. Cannot be <c>null</c> or empty.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task{Boolean}"/> representing the asynchronous operation.
+    /// The task result is <c>true</c> if the book exists; otherwise, <c>false</c>.
+    /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when the provided identifier is null, empty, or not a valid ObjectId.
+    /// </exception>
+    public async Task<bool> IsBookExistsAsync(string id)
+    {
+        ValidateObjectId(id);
+
+        var book = await _bookRepository.GetBookByIdAsync(id);
+
+        return book is not null;
+    }
     #endregion Getters
 
     #region Setters
@@ -163,6 +187,35 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
         return _mapper.Map<BookDto>(addedBook);
     }
 
+    /// <summary>
+    /// Asynchronously deletes the <see cref="Book"/> with the specified identifier
+    /// from the data source.
+    /// </summary>
+    /// <param name="id">
+    /// The unique identifier of the book to be deleted. Cannot be <c>null</c> or empty.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task{BookDto}"/> representing the asynchronous operation.
+    /// The task result contains the deleted <see cref="BookDto"/>.
+    /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when the provided identifier is null, empty, or not a valid ObjectId.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown when a book with the specified identifier does not exist.
+    /// </exception>
+    public async Task<BookDto> DeleteBookByIdAsync(string id)
+    {
+        ValidateObjectId(id);
+
+        if(!await IsBookExistsAsync(id))
+        {
+            throw new NotFoundException($"Book with ID '{id}' not found.");
+        }
+
+        return _mapper.Map<BookDto>(await _bookRepository.DeleteBookByIdAsync(id));
+    }
+
     #endregion Setters
 
     #region Helpers
@@ -174,7 +227,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
     /// <exception cref="ValidationException">Thrown if the object ID is null, empty, or not in a valid ObjectId format.</exception>
     private static void ValidateObjectId(string id)
     {
-        if(id is null || string.IsNullOrWhiteSpace(id) || string.IsNullOrEmpty(id))
+        if(id is null || string.IsNullOrWhiteSpace(id))
         {
             throw new ValidationException("Book ID cannot be empty or null.");
         }
@@ -185,6 +238,24 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
         }
     }
 
+    /// <summary>
+    /// Validates the provided <see cref="BookDto"/> instance.
+    /// </summary>
+    /// <param name="bookDto">
+    /// The <see cref="BookDto"/> object containing book data to validate.
+    /// </param>
+    /// <exception cref="ValidationException">
+    /// Thrown when the <paramref name="bookDto"/> is <c>null</c> or contains invalid or missing fields.
+    /// </exception>
+    /// <remarks>
+    /// This method performs structural and business-rule validation, including:
+    /// <list type="bullet">
+    /// <item><description>Non-empty title, publisher, language, and annotation</description></item>
+    /// <item><description>At least one author and one genre</description></item>
+    /// <item><description>Positive numeric values for price and pages</description></item>
+    /// <item><description>A well-formed absolute URI for the book link</description></item>
+    /// </list>
+    /// </remarks>
     private static void ValidateBookDto(BookDto bookDto)
     {
         if (bookDto is null)
