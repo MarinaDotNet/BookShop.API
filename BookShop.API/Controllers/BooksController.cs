@@ -1,6 +1,7 @@
 ﻿using BookShop.API.Models;
 using BookShop.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookShop.API.Controllers;
 
@@ -139,6 +140,49 @@ public class BooksController(BookService service) : ControllerBase
        await _service.DeleteBookByIdAsync(id);
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// Updates an existing book completely using HTTP PUT.
+    /// </summary>
+    /// <param name="id">The unique identifier of the book to update. Must match <see cref="BookDto.Id"/>.</param>
+    /// <param name="bookDto">The <see cref="BookDto"/> containing the updated book data.</param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> containing the updated <see cref="BookDto"/> if successful,
+    /// or <c>400 Bad Request</c> if the route ID does not match the body ID.
+    /// </returns>
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateBook(string id, [FromBody]BookDto bookDto)
+    {
+        if (!id.Equals(bookDto.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest("Route ID does not match body ID.");
+        }
+
+        var updatedBook = await _service.UpdateBookAsync(bookDto);
+        return Ok(updatedBook);
+    }
+
+    /// <summary>
+    /// Partially updates an existing book using HTTP PATCH semantics.
+    /// Only fields provided in <see cref="BookUpdateDto"/> are updated.
+    /// </summary>
+    /// <param name="id">The unique identifier of the book to update. Must match <see cref="BookUpdateDto.Id"/>.</param>
+    /// <param name="bookDto">The <see cref="BookUpdateDto"/> containing fields to update.</param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> containing the updated <see cref="BookDto"/> if successful,
+    /// or <c>400 Bad Request</c> if the route ID does not match the body ID.
+    /// </returns>
+    [HttpPatch("update-partly/{id}")]
+    public async Task<IActionResult> UpdatePartlyBook(string id, [FromBody]BookUpdateDto bookDto)
+    {
+        if(!id.Equals(bookDto.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest("Route ID does not match body ID.");
+        }
+
+        var updatedBook = await _service.UpdateBookPartlyAsync(bookDto);
+        return Ok(updatedBook);
     }
     #endregion
 }
