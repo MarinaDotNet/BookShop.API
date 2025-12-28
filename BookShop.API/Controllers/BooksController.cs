@@ -78,4 +78,29 @@ public class BooksController(BookService service) : ControllerBase
     {
         return Ok( await _service.GetBooksByPartialMatchAsync(request));
     }
+
+
+    #region Setters
+
+    /// <summary>
+    /// Adds a new book to the collection.
+    /// </summary>
+    /// <param name="bookDto">
+    /// A <see cref="BookDto"/> object representing the book to be added.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> containing the created <see cref="BookDto"/> object.
+    /// Returns HTTP 201 (Created) with a link to the newly created resource.
+    /// </returns>
+    /// <remarks>
+    /// Calls <see cref="BookService.CreateBookAsync"/> to perform the creation.
+    /// </remarks>
+    [HttpPost("add")]
+    public async Task<IActionResult> CreateBook([FromBody] BookDto bookDto)
+    {
+        var createdBook = await _service.CreateBookAsync(bookDto);
+        return CreatedAtAction(nameof(GetById), new { id = createdBook.Id }, createdBook);
+    }
+
+    #endregion
 }
