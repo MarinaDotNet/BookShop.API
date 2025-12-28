@@ -81,31 +81,26 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// </returns>
     public async Task<IReadOnlyCollection<Book>> GetBooksByExactMatchAsync(string searchTerm, bool? isAvailable)
     {
-        var trimedTerm = searchTerm.Trim();
-        var escapedTerm = Regex.Escape(trimedTerm);
-        var regex = new BsonRegularExpression($"^{escapedTerm}$", "i");
+        var regex = BuildCaseInsensitiveRegex(searchTerm);
 
-        var filters = new List<FilterDefinition<Book>>
-        {
+        var filters = Builders<Book>.Filter.Or(
             Builders<Book>.Filter.Regex(b => b.Title, regex),
             Builders<Book>.Filter.Regex(b => b.Language, regex),
             Builders<Book>.Filter.Regex(b => b.Publisher, regex),
 
             Builders<Book>.Filter.Regex("Authors", regex),
             Builders<Book>.Filter.Regex("Genres", regex)
-        };
-
-        var searchFilter = Builders<Book>.Filter.Or(filters);
+            );
 
         if (isAvailable.HasValue)
         {
             var availabilityFilter =
             Builders<Book>.Filter.Eq(b => b.IsAvailable, isAvailable.Value);
 
-            searchFilter = Builders<Book>.Filter.And(searchFilter, availabilityFilter);
+            filters = Builders<Book>.Filter.And(filters, availabilityFilter);
         }
 
-        return await _booksCollection.Find(searchFilter).ToListAsync();
+        return await _booksCollection.Find(filters).ToListAsync();
     }
 
     /// <summary>
