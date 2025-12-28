@@ -371,13 +371,13 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
     }
 
     /// <summary>
-    /// Checks if a collection of strings is null, empty, or contains only whitespace in its first element.
+    /// Determines whether a collection of strings is null, empty, or its first element is null, empty, or whitespace.
     /// </summary>
     /// <param name="collection">
-    /// IReadOnlyCollection of strings to check.
+    /// The collection of strings to check.
     /// </param>
     /// <returns>
-    /// <c>true</c> if the collection is null, empty, or its first element is null, empty, or whitespace; otherwise, <c>false</c>.
+    /// <c>true</c> if <paramref name="collection"/> is <c>null</c>, empty, or its first element is null, empty, or whitespace; otherwise, <c>false</c>.
     /// </returns>
     private static bool IsNullOrEmptyStringCollection(IReadOnlyCollection<string>? collection)
     {
