@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using BookShop.API.Exceptions;
+using BookShop.API.Infrastructure;
 using BookShop.API.Models;
 using BookShop.API.Repositories;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using System.Threading.Tasks;
 
 namespace BookShop.API.Services;
@@ -216,6 +218,95 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
         return _mapper.Map<BookDto>(await _bookRepository.DeleteBookByIdAsync(id));
     }
 
+    /// <summary>
+    /// Asynchronously updates an existing book in the data source.
+    /// All fields in <paramref name="bookDto"/> are applied to the existing record.
+    /// </summary>
+    /// <param name="bookDto">
+    /// A <see cref="BookDto"/> containing the updated data. Cannot be <c>null</c> and must include a valid book ID.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task"/> representing the asynchronous operation.
+    /// The task result contains the updated <see cref="BookDto"/> object.
+    /// </returns>
+    /// <exception cref="NotFoundException">
+    /// Thrown when a book with the specified ID does not exist.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the update operation fails.
+    /// </exception>
+    public async Task<BookDto> UpdateBookAsync(BookDto bookDto)
+    {
+        ValidateBookDto(bookDto);
+        ValidateObjectId(bookDto.Id);
+
+        if (!await IsBookExistsAsync(bookDto.Id))
+        {
+            throw new NotFoundException($"Book with ID '{bookDto.Id}' not found.");
+        }
+
+        var updatedBook = await _bookRepository.UpdateBookAsync(_mapper.Map<Book>(bookDto)) ??
+            throw new InvalidOperationException("Book update failed.");
+
+        return _mapper.Map<BookDto>(updatedBook);
+    }
+
+    /// <summary>
+    /// Partially updates an existing book in the data source using PATCH semantics.
+    /// Only fields provided and considered valid in <paramref name="bookDto"/> are applied; other fields remain unchanged.
+    /// </summary>
+    /// <param name="bookDto">
+    /// A <see cref="BookUpdateDto"/> containing the fields to update. Cannot be <c>null</c> and must include a valid book ID.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task"/> representing the asynchronous operation.
+    /// The task result contains the updated <see cref="BookDto"/> object.
+    /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when <paramref name="bookDto"/> is <c>null</c> or contains no valid fields to update.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown when a book with the specified ID does not exist in the data source.
+    /// </exception>
+    /// <remarks>
+    /// Each field is only updated if it passes the corresponding validation defined in the service.
+    /// For example, string fields must not be null or whitespace, numeric fields must be positive, and collections must not be empty.
+    /// </remarks>
+    public async Task<BookDto> UpdateBookPartlyAsync(BookUpdateDto bookDto)
+    {
+        if (bookDto is null)
+        {
+            throw new ValidationException("Book data cannot be null.");
+        }
+
+        ValidateObjectId(bookDto.Id);
+
+        var updates = new List<UpdateDefinition<Book>>();
+
+        updates.AddIfNotNull(bookDto.Title, b => b.Title, v => !string.IsNullOrWhiteSpace(v));
+        updates.AddIfNotNull(bookDto.Publisher, b => b.Publisher, v => !string.IsNullOrWhiteSpace(v));
+        updates.AddIfNotNull(bookDto.Language, b => b.Language, v => !string.IsNullOrWhiteSpace(v));
+        updates.AddIfNotNull(bookDto.Annotation, b => b.Annotation, v => !string.IsNullOrWhiteSpace(v));
+        updates.AddIfNotNull(bookDto.Authors, b => b.Authors, v => !IsNullOrEmptyStringCollection(v));
+        updates.AddIfNotNull(bookDto.Genres, b => b.Genres, v => !IsNullOrEmptyStringCollection(v));
+        updates.AddIfNotNull(bookDto.Price, b => b.Price, v => v > 0);
+        updates.AddIfNotNull(bookDto.Pages, b => b.Pages, v => v > 0);
+        updates.AddIfNotNull(bookDto.Link, b => b.Link, v => !string.IsNullOrWhiteSpace(v.ToString()) && Uri.IsWellFormedUriString(v.ToString(), UriKind.Absolute));
+        updates.AddIfNotNull(bookDto.IsAvailable, b => b.IsAvailable, v => v is not null);
+
+        if (updates.Count == 0)
+        {
+            throw new ValidationException("No valid fields provided for update.");
+        }
+
+        var updatedBook = await _bookRepository.UpdateBookPartlyAsync(updates, bookDto.Id);
+
+        return updatedBook is not null 
+            ? _mapper.Map<BookDto>(updatedBook) 
+            : throw new NotFoundException($"Book with ID '{bookDto.Id}' not found.");
+            
+    }
+
     #endregion Setters
 
     #region Helpers
@@ -264,19 +355,33 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
         }
 
         bool inValid = string.IsNullOrWhiteSpace(bookDto.Title) ||
-                       bookDto.Authors is null || bookDto.Authors.Count == 0 ||
-                       bookDto.Price <= 0 || Decimal.TryParse(bookDto.Price.ToString(), out _) == false ||
-                       bookDto.Pages <= 0 || Int32.TryParse(bookDto.Pages.ToString(), out _) == false ||
-                       string.IsNullOrWhiteSpace(bookDto.Publisher) ||
-                       string.IsNullOrWhiteSpace(bookDto.Language) ||
-                       bookDto.Genres is null || bookDto.Genres.Count == 0 ||
-                       string.IsNullOrWhiteSpace(bookDto.Annotation) ||
-                       bookDto.Link is null || !Uri.IsWellFormedUriString(bookDto.Link.ToString(), UriKind.Absolute);
+            IsNullOrEmptyStringCollection(bookDto.Authors) ||
+            bookDto.Price <= 0 || Decimal.TryParse(bookDto.Price.ToString(), out _) == false ||
+            bookDto.Pages <= 0 || Int32.TryParse(bookDto.Pages.ToString(), out _) == false ||
+            string.IsNullOrWhiteSpace(bookDto.Publisher) ||
+            string.IsNullOrWhiteSpace(bookDto.Language) ||
+            IsNullOrEmptyStringCollection(bookDto.Genres) ||
+            string.IsNullOrWhiteSpace(bookDto.Annotation) ||
+            bookDto.Link is null || !Uri.IsWellFormedUriString(bookDto.Link.ToString(), UriKind.Absolute) || string.IsNullOrWhiteSpace(bookDto.Link.ToString());
 
         if (inValid)
         {
             throw new ValidationException("Book fields cannot be empty.");
         }
+    }
+
+    /// <summary>
+    /// Checks if a collection of strings is null, empty, or contains only whitespace in its first element.
+    /// </summary>
+    /// <param name="collection">
+    /// IReadOnlyCollection of strings to check.
+    /// </param>
+    /// <returns>
+    /// <c>true</c> if the collection is null, empty, or its first element is null, empty, or whitespace; otherwise, <c>false</c>.
+    /// </returns>
+    private static bool IsNullOrEmptyStringCollection(IReadOnlyCollection<string>? collection)
+    {
+        return collection is null || collection.Count == 0 || string.IsNullOrWhiteSpace(collection.First());
     }
 
     #endregion Helpers
