@@ -3,6 +3,7 @@ using BookShop.API.Exceptions;
 using BookShop.API.Models;
 using BookShop.API.Repositories;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using MongoDB.Bson;
 
 namespace BookShop.API.Services;
@@ -137,6 +138,33 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
     }
     #endregion Getters
 
+    #region Setters
+
+    /// <summary>
+    /// Asynchronously adds a new book to the data source.
+    /// </summary>
+    /// <param name="bookDto">
+    /// A <see cref="BookDto"/> object containing the details of the book to be added.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task{BookDto}"/> representing the asynchronous operation.
+    /// The task result contains the added <see cref="BookDto"/> object, including the generated Id.
+    /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown if <paramref name="bookDto"/> is invalid according to business rules.
+    /// </exception>
+    public async Task<BookDto> CreateBookAsync(BookDto bookDto)
+    {
+        ValidateBookDto(bookDto);
+
+        var book = _mapper.Map<Book>(bookDto);
+        var addedBook = await _bookRepository.AddBookAsync(book);
+
+        return _mapper.Map<BookDto>(addedBook);
+    }
+
+    #endregion Setters
+
     #region Helpers
 
     /// <summary>
@@ -154,6 +182,29 @@ public class BookService(IBookRepository bookRepository, IMapper mapper)
         if(!ObjectId.TryParse(id, out _))
         {
             throw new ValidationException("Invalid Book ID format.");
+        }
+    }
+
+    private static void ValidateBookDto(BookDto bookDto)
+    {
+        if (bookDto is null)
+        {
+            throw new ValidationException("Book data cannot be null.");
+        }
+
+        bool inValid = string.IsNullOrWhiteSpace(bookDto.Title) ||
+                       bookDto.Authors is null || bookDto.Authors.Count == 0 ||
+                       bookDto.Price <= 0 || Decimal.TryParse(bookDto.Price.ToString(), out _) == false ||
+                       bookDto.Pages <= 0 || Int32.TryParse(bookDto.Pages.ToString(), out _) == false ||
+                       string.IsNullOrWhiteSpace(bookDto.Publisher) ||
+                       string.IsNullOrWhiteSpace(bookDto.Language) ||
+                       bookDto.Genres is null || bookDto.Genres.Count == 0 ||
+                       string.IsNullOrWhiteSpace(bookDto.Annotation) ||
+                       bookDto.Link is null || !Uri.IsWellFormedUriString(bookDto.Link.ToString(), UriKind.Absolute);
+
+        if (inValid)
+        {
+            throw new ValidationException("Book fields cannot be empty.");
         }
     }
 
