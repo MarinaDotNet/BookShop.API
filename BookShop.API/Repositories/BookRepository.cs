@@ -143,6 +143,23 @@ public class BookRepository(MongoDbContext context) : IBookRepository
         return await _booksCollection.Find(filter).ToListAsync();
     }
 
+    /// <summary>
+    /// Asynchronously checks if a book with the specified ID exists in the collection.
+    /// </summary>
+    /// <param name="id">
+    /// The unique identifier of the book to check. Cannot be <c>null</c> or empty.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task{Boolean}"/> representing the asynchronous operation.
+    /// The task result is <c>true</c> if the book exists; otherwise, <c>false</c>.
+    /// </returns>
+    public async Task<bool> GetBookByIdAnyAsync(string id)
+    {
+        var filter = Builders<Book>.Filter.Eq(b => b.Id, id);
+
+        return await _booksCollection.Find(filter).AnyAsync();
+    }
+
     #region Setters
 
     /// <summary>
@@ -159,6 +176,29 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     {
         await _booksCollection.InsertOneAsync(book);
         return book;
+    }
+
+    /// <summary>
+    /// Asynchronously deletes the <see cref="Book"/> with the specified identifier from the data source.
+    /// </summary>
+    /// <param name="id">
+    /// The unique identifier of the book to be deleted. Cannot be <c>null</c> or empty.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task{Book}"/> representing the asynchronous operation.
+    /// The task result contains the deleted <see cref="Book"/> object.
+    /// </returns>
+    /// <remarks>
+    /// If the book with the specified ID does not exist, a <see cref="NotFoundException"/>
+    /// is typically thrown by the service layer.
+    /// </remarks>
+    public async Task<Book> DeleteBookByIdAsync(string id)
+    {
+        var filter = Builders<Book>.Filter.Eq(b => b.Id, id);
+
+        var deletedBook = await _booksCollection.FindOneAndDeleteAsync(filter);
+
+        return deletedBook;
     }
 
     #endregion Setters
