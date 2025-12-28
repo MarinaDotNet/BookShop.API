@@ -63,4 +63,16 @@ public interface IBookRepository
     /// A task that represents the asynchronous operation. The task result contains a collection of books.
     /// </returns>
     Task<IReadOnlyCollection<Book>> GetBooksByPartialMatchAsync(string searchTerm, bool? isAvailable);
+
+    /// <summary>
+    /// Asynchronously adds a new <see cref="Book"/> to the data source.
+    /// </summary>
+    /// <param name="book">
+    /// The <see cref="Book"/> object containing the details of the book to be added.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task{Book}"/> representing the asynchronous operation.
+    /// The task result contains the added <see cref="Book"/> object, including the generated Id.
+    /// </returns>
+    Task<Book> AddBookAsync(Book book);
 }
