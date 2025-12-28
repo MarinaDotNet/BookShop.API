@@ -2,6 +2,8 @@
 using BookShop.API.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -105,4 +107,78 @@ public class BookRepository(MongoDbContext context) : IBookRepository
 
         return await _booksCollection.Find(searchFilter).ToListAsync();
     }
+
+    /// <summary>
+    /// Asynchronously retrieves <see cref="Book"/> documents from MongoDB that contain the specified
+    /// <paramref name="searchTerm"/> as a partial, case-insensitive match in one of the searchable fields
+    /// (Title, Authors, Publisher, Genres, Annotation), with an optional availability filter.
+    /// </summary>
+    /// <param name="searchTerm">
+    /// The value to search for in the searchable fields.
+    /// </param>
+    /// <param name="isAvailable">
+    /// An optional parameter to filter books by their availability status.
+    /// If <c>null</c>, no availability filter is applied.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// The task result contains a read-only collection of matching books.
+    /// </returns>
+    public async Task<IReadOnlyCollection<Book>> GetBooksByPartialMatchAsync(string searchTerm, bool? isAvailable)
+    {
+        var regex = BuildCaseInsensitiveRegex(searchTerm);
+
+        var filter = Builders<Book>.Filter.Or(
+            Builders<Book>.Filter.Regex(b => b.Title, regex),
+            Builders<Book>.Filter.Regex(b => b.Language, regex),
+            Builders<Book>.Filter.Regex(b => b.Annotation, regex),
+            Builders<Book>.Filter.Regex(b => b.Publisher, regex),
+
+            Builders<Book>.Filter.Regex("Authors", regex),
+            Builders<Book>.Filter.Regex("Genres", regex)
+            );
+
+        if(isAvailable.HasValue)
+        {
+            var availabilityFilter =
+            Builders<Book>.Filter.Eq(b => b.IsAvailable, isAvailable.Value);
+            filter = Builders<Book>.Filter.And(filter, availabilityFilter);
+        }
+
+        return await _booksCollection.Find(filter).ToListAsync();
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Normalizes the provided string by trimming any leading or trailing whitespace 
+    /// and converting it to lowercase using the invariant culture.
+    /// </summary>
+    /// <param name="input">
+    /// The string to be normalized. Must not be <c>null</c>.
+    /// </param>
+    /// <returns>
+    /// A trimmed, lowercase version of the input string.
+    /// </returns>
+    /// <remarks>
+    /// This method is intendent for internal use to ensure consistent, 
+    /// case-insensitive string comparisons during search operations.
+    /// </remarks>
+    private static string NormalizeString(string input) => input.Trim().ToLower();
+
+    /// <summary>
+    /// Creates a case-insensitive MongoDB <see cref="BsonRegularExpression"/>
+    /// </summary>
+    /// <param name="input">
+    /// The input string used to build the regular expression.
+    /// </param>
+    /// <returns>
+    /// A case-insensitive <see cref="BsonRegularExpression"/> for MongoDB queries.
+    /// </returns>
+    private static BsonRegularExpression BuildCaseInsensitiveRegex(string input)
+    {
+        var normalized = NormalizeString(input);
+        return new BsonRegularExpression(normalized, "i");
+    }
+    #endregion Helpers
 }
