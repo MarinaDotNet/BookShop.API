@@ -62,4 +62,20 @@ public class BooksController(BookService service) : ControllerBase
     {
         return Ok( await _service.GetBooksByExactMatchAsync(request));
     }
+
+    /// <summary>
+    /// Retrieves books that match the specified search criteria partially.
+    /// </summary>
+    /// <param name="request">
+    /// The search criteria encapsulated in a <see cref="BookSearchRequestDto"/> object.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> containing a read-only collection of <see cref="BookDto"/>
+    /// objects that partially match the search criteria. Returns HTTP 200 status code.
+    /// </returns>
+    [HttpGet("search-partial-match")]
+    public async Task<IActionResult> GetByPartialMatch([FromQuery] BookSearchRequestDto request)
+    {
+        return Ok( await _service.GetBooksByPartialMatchAsync(request));
+    }
 }
