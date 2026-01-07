@@ -32,7 +32,7 @@ This project demonstrates competencies relevant to a **Junior .NET Backend Devel
 
 ## Architectural Principles
 The solution follows a layered **architecture**:
-#### Controllers
+### Controllers
 Handle HTTP requests and responses only:
 * BooksController.cs — Manages CRUD operations for books (GET, POST, PUT, DELETE)
 ### Services
