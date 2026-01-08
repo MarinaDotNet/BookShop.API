@@ -19,6 +19,15 @@ builder.Services.AddScoped<BookService>();
 // Auto Mapper Configurations
 builder.Services.AddAutoMapper(typeof(BookMapingProfile));
 
+// Add ProblemDetails middleware
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = ctx =>
+    {
+        ctx.ProblemDetails.Extensions["traceId"] = ctx.HttpContext.TraceIdentifier;
+    };
+});
+
 builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

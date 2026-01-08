@@ -5,82 +5,129 @@ using System.Net;
 namespace BookShop.API.Middleware;
 
 /// <summary>
-/// Middleware that provides centralized exception handling for HTTP requests in the ASP.NET Core pipeline.
+/// Middleware that provides centralized exception handling for HTTP requests in the ASP.NET Core request pipeline.
 /// </summary>
-/// <remarks>This middleware intercepts exceptions thrown during request processing and returns appropriate HTTP
-/// status codes and error messages for known exception types. Unhandled exceptions are logged and result in a generic
-/// 500 Internal Server Error response. Place this middleware early in the pipeline to ensure consistent error handling
-/// across the application.</remarks>
-/// <param name="next">The next middleware delegate in the request processing pipeline. Cannot be null.</param>
-/// <param name="logger">The logger used to record exception details and diagnostic information. Cannot be null.</param>
-public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+/// <remarks>
+/// This middleware intercepts exceptions thrown during request processing and
+/// converts them into appropriate HTTP error responses. Known exception types
+/// are mapped to corresponding HTTP status codes, while unhandled exceptions
+/// are logged and result in a generic 500 Internal Server Error response.
+///
+/// This middleware should be registered early in the pipeline to ensure
+/// consistent error handling across the application.
+/// </remarks>
+/// <param name="next">
+/// The next middleware delegate in the request pipeline.
+/// </param>
+/// <param name="logger">
+/// The logger used to record exception details and diagnostic information.
+/// </param>
+public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
     private readonly RequestDelegate _next = next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger = logger;
 
     /// <summary>
-    /// Processes the incoming HTTP request and handles specific exceptions by returning appropriate HTTP status codes
-    /// and error messages to the client.
+    /// Processes the incoming HTTP request and handles exceptions thrown by
+    /// downstream middleware or request handlers.
     /// </summary>
-    /// <remarks>If a known exception is thrown during request processing, the method logs the exception and
-    /// writes an error response with a corresponding status code. Unhandled exceptions result in a 500 Internal Server
-    /// Error response. This method should be used as middleware in the ASP.NET Core request pipeline.</remarks>
-    /// <param name="context">The HTTP context for the current request. Provides access to request and response information.</param>
-    /// <returns>A task that represents the asynchronous operation of processing the HTTP request.</returns>
+    /// <remarks>
+    /// If a known exception is thrown during request processing, the exception
+    /// is logged and an HTTP response with an appropriate status code is written.
+    /// Unhandled exceptions result in a 500 Internal Server Error response.
+    /// </remarks>
+    /// <param name="context">
+    /// The HTTP context for the current request.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
     public async Task InvokeAsync(HttpContext context)
     {
         try
         {
             await _next(context);
         }
-        catch (NotFoundException ex)
-        {
-            _logger.LogWarning(ex, "NotFoundException caught.");
-            await WriteErrorAsync(context, StatusCodes.Status404NotFound, ex.Message);
-        }
-        catch(ValidationException ex)
-        {
-            _logger.LogWarning(ex, "ValidationException caught.");
-            await WriteErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message);
-        }
-        catch(ConflictException ex)
-        {
-            _logger.LogWarning(ex, "ConflictException caught.");
-            await WriteErrorAsync(context, StatusCodes.Status409Conflict, ex.Message);
-        }
-        catch(ForbiddenException ex)
-        {
-            _logger.LogWarning(ex, "ForbidenException caught.");
-            await WriteErrorAsync(context, StatusCodes.Status403Forbidden, ex.Message);
-        }
         catch(Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception caught.");
-            await WriteErrorAsync(context, StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            _logger.LogError(ex, ex.Message);
+            await HandleExceptionAsync(context, ex);
         }
 
     }
 
     /// <summary>
-    /// Asynchronously writes a JSON-formatted error response to the specified HTTP context with the given status code
-    /// and error message.
+    /// Middleware responsible for global exception handling.
     /// </summary>
-    /// <remarks>The response content type is set to "application/json". The response body will contain a
-    /// single property named "error" with the provided message.</remarks>
-    /// <param name="context">The HTTP context to which the error response will be written. Must not be null.</param>
-    /// <param name="statusCode">The HTTP status code to set for the response. Common values include 400 for bad requests or 500 for server
-    /// errors.</param>
-    /// <param name="message">The error message to include in the JSON response body. Cannot be null.</param>
-    /// <returns>A task that represents the asynchronous write operation.</returns>
-    private static async Task WriteErrorAsync(HttpContext context, int statusCode, string message)
+    /// <remarks>
+    /// This middleware intercepts unhandled exceptions thrown during request processing
+    /// and converts them into standardized HTTP error responses using
+    /// <see cref="Microsoft.AspNetCore.Mvc.ProblemDetails"/>.
+    ///
+    /// It ensures a single, consistent error-handling strategy across the application
+    /// and prevents leaking internal exception details to API consumers.
+    ///
+    /// The middleware maps known application exceptions to appropriate HTTP status codes:
+    /// <list type="bullet">
+    /// <item>
+    /// <description><see cref="ValidationException"/> → 400 (Bad Request)</description>
+    /// </item>
+    /// <item>
+    /// <description><see cref="NotFoundException"/> → 404 (Not Found)</description>
+    /// </item>
+    /// <item>
+    /// <description>Any other <see cref="ForbiddenException"/> → 403 (Forbidden)</description>
+    /// </item>
+    /// <item>
+    /// <description>Any other <see cref="UnauthorizedAccessException"/> → 401 (Unauthorized)</description>
+    /// </item>
+    /// <item>
+    /// <description><see cref="InvalidOperationException"/> → 409 (Conflict)</description>
+    /// </item>
+    /// <item>
+    /// <description>Any other <see cref="Exception"/> → 500 (Internal Server Error)</description>
+    /// </item>
+    /// </list>
+    ///
+    /// All error responses follow the ProblemDetails format and include:
+    /// <list type="bullet">
+    /// <item>
+    /// <description><c>status</c> — HTTP status code</description>
+    /// </item>
+    /// <item>
+    /// <description><c>title</c> — error message</description>
+    /// </item>
+    /// <item>
+    /// <description><c>detail</c> — inner error message (when applicable)</description>
+    /// </item>
+    /// <item>
+    /// <description><c>instance</c> — request path</description>
+    /// </item>
+    /// </list>
+    /// </remarks>
+    private static Task HandleExceptionAsync(HttpContext context, Exception ex) 
     {
-        context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/json";
-
-        await context.Response.WriteAsJsonAsync(new
+        var code = ex switch
         {
-            error = message
-        });
-    }
+            ValidationException => StatusCodes.Status400BadRequest,
+            NotFoundException => StatusCodes.Status404NotFound,
+            ForbiddenException => StatusCodes.Status403Forbidden,
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+            InvalidOperationException => StatusCodes.Status409Conflict,
+            _ => StatusCodes.Status500InternalServerError
+        };
 
+        var problem = new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Status = code,
+            Title = ex.Message,
+            Detail = ex.InnerException?.Message,
+            Instance = context.Request.Path
+        };
+
+        context.Response.ContentType = "application/problem+json";
+        context.Response.StatusCode = code;
+
+        return context.Response.WriteAsJsonAsync(problem);
+    }
 }
