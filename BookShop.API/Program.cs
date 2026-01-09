@@ -14,6 +14,7 @@ builder.Configuration.AddUserSecrets<StartupBase>();
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDB"));
 builder.Services.AddSingleton<MongoDbContext>();
 
+// Configure PostgreSQL DbContext
 builder.Services.AddDbContext<AuthDbContext>(options => 
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql")));
 
