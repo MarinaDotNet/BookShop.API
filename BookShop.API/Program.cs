@@ -3,6 +3,8 @@ using BookShop.API.Mappings;
 using BookShop.API.Middleware;
 using BookShop.API.Repositories;
 using BookShop.API.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddUserSecrets<StartupBase>();
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDB"));
 builder.Services.AddSingleton<MongoDbContext>();
+
+builder.Services.AddDbContext<AuthDbContext>(options => 
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql")));
 
 /// Dependency Injection
 builder.Services.AddSingleton<IBookRepository, BookRepository>();
