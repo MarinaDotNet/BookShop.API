@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BookShop.API.Models;
+namespace BookShop.API.Models.Auth;
 
 /// <summary>
 /// Represents an application user.

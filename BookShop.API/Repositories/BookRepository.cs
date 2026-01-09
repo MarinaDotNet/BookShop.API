@@ -1,5 +1,5 @@
 ﻿using BookShop.API.Infrastructure.Persistence;
-using BookShop.API.Models;
+using BookShop.API.Models.Catalog;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System;

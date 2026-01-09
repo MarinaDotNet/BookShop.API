@@ -1,4 +1,4 @@
-﻿using BookShop.API.Models;
+﻿using BookShop.API.Models.Catalog;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;

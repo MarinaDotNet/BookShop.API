@@ -1,4 +1,4 @@
-﻿using BookShop.API.Models;
+﻿using BookShop.API.Models.Auth;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookShop.API.Infrastructure.Persistence;

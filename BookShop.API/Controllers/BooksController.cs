@@ -1,4 +1,4 @@
-﻿using BookShop.API.Models;
+﻿using BookShop.API.DTOs.Catalog;
 using BookShop.API.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;

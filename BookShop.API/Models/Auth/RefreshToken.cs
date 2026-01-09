@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BookShop.API.Models;
+namespace BookShop.API.Models.Auth;
 
 /// <summary>
 /// Represents a refresh token for a user's session.

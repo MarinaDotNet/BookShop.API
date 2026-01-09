@@ -1,4 +1,4 @@
-﻿using BookShop.API.Models;
+﻿using BookShop.API.Models.Catalog;
 using MongoDB.Driver;
 using System.Linq.Expressions;
 

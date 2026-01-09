@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
-using BookShop.API.Models;
+using BookShop.API.DTOs.Catalog;
+using BookShop.API.Models.Catalog;
 
 namespace BookShop.API.Mappings;
 

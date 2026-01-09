@@ -1,4 +1,4 @@
-﻿namespace BookShop.API.Models;
+﻿namespace BookShop.API.DTOs.Catalog;
 
 /// <summary>
 /// Data Transfer Object (DTO) representing a book.

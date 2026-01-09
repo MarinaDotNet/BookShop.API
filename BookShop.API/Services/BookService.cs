@@ -1,7 +1,8 @@
 ﻿using AutoMapper;
+using BookShop.API.DTOs.Catalog;
 using BookShop.API.Exceptions;
 using BookShop.API.Infrastructure;
-using BookShop.API.Models;
+using BookShop.API.Models.Catalog;
 using BookShop.API.Repositories;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;

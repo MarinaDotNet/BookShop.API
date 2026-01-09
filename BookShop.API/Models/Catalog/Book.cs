@@ -3,7 +3,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookShop.API.Models;
+namespace BookShop.API.Models.Catalog;
 
 /// <summary>
 /// Book entity stored in or from the MongoDB collection.
