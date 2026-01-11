@@ -39,53 +39,142 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
     /// <param name="modelBuilder">The builder used to configure entity mappings.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<User>()
-            .HasQueryFilter(u => !u.IsDeleted);
+        base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<User>()
-            .HasIndex(u => u.Username)
-            .HasFilter("IsDeleted = false")
+        modelBuilder.Entity<User>(entity => 
+        {
+            entity.HasQueryFilter(u => !u.IsDeleted);
+
+            entity.HasIndex(u => u.NormalizedUsername)
+            .HasFilter("\"IsDeleted\" = false")
             .IsUnique();
 
-        modelBuilder.Entity<User>()
-            .HasIndex(u => u.Email)
-            .HasFilter("IsDeleted = false")
+            entity.HasIndex(u => u.NormalizedEmail)
+            .HasFilter("\"IsDeleted\" = false")
             .IsUnique();
 
-        modelBuilder.Entity<User>()
-            .Property(u => u.CreatedAt)
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(u => u.Id).HasColumnName("Id");
 
-        modelBuilder.Entity<User>()
-            .Property(u => u.UpdatedAt)
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(u => u.UserName)
+            .HasColumnName("UserName")
+            .HasMaxLength(50)
+            .IsRequired();
 
-        modelBuilder.Entity<Role>()
-            .HasIndex(r => r.Name)
-            .IsUnique();
+            entity.Property(u => u.NormalizedUsername)
+            .HasColumnName("NormalizedUsername")
+            .HasMaxLength(50)
+            .IsRequired();
 
-        modelBuilder.Entity<UserRole>()
-            .HasKey(ur => new { ur.UserId, ur.RoleId });
+            entity.Property(u => u.Email)
+            .HasColumnName("Email")
+            .HasMaxLength(100)
+            .IsRequired();
 
-        modelBuilder.Entity<UserRole>()
-            .HasOne(ur => ur.User)
+            entity.Property(u => u.NormalizedEmail)
+            .HasColumnName("NormalizedEmail")
+            .HasMaxLength(100)
+            .IsRequired();
+
+            entity.Property(u => u.PasswordHash)
+            .HasColumnType("TEXT")
+            .HasColumnName("PasswordHash")
+            .IsRequired();
+
+            entity.Property(u => u.IsActive)
+            .HasColumnName("IsActive")
+            .HasDefaultValue(true);
+
+            entity.Property(u => u.IsDeleted)
+            .HasColumnName("IsDeleted")
+            .HasDefaultValue(false);
+
+            entity.Property(u => u.CreatedAt)
+            .HasColumnType("timestamp without time zone")
+            .HasColumnName("CreatedAt");
+
+            entity.Property(u => u.UpdatedAt)
+            .HasColumnType("timestamp without time zone")
+            .HasColumnName("UpdatedAt");
+
+        });
+
+        modelBuilder.Entity<Role>(entity => 
+        {
+            entity.Property(r => r.Id).HasColumnName("Id");
+
+            entity.Property(r => r.Name)
+            .HasColumnName("Name")
+            .HasMaxLength(50)
+            .IsRequired();
+
+            entity.HasIndex(r => r.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<UserRole>(entity =>
+        {
+            entity.HasIndex(ur => ur.RoleId);
+
+            entity.HasKey(ur => new { ur.UserId, ur.RoleId });
+
+            entity.HasOne(ur => ur.User)
             .WithMany(u => u.UserRoles)
             .HasForeignKey(ur => ur.UserId);
 
-        modelBuilder.Entity<UserRole>()
-            .HasOne(ur => ur.Role)
+            entity.HasOne(ur => ur.Role)
             .WithMany(r => r.UserRoles)
             .HasForeignKey(ur => ur.RoleId);
+        });
 
-        modelBuilder.Entity<RefreshToken>()
-            .HasOne(rt => rt.User)
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasOne(rt => rt.User)
             .WithMany(u => u.Tokens)
             .HasForeignKey(rt => rt.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<RefreshToken>()
-            .HasIndex(rt => rt.Token)
-            .IsUnique();
+            entity.HasIndex(rt => rt.TokenHash).IsUnique();
+
+            entity.HasIndex(rt => rt.UserId);
+
+            entity.HasIndex(rt => rt.ExpiresAt);
+
+            entity.Property(rt => rt.TokenHash)
+            .HasColumnName("TokenHash")
+            .HasMaxLength(128)
+            .IsRequired();
+
+            
+            entity.Property(rt => rt.RevokedAt)
+            .HasColumnType("timestamp without time zone")
+            .HasColumnName("RevokedAt");
+
+            entity.Property(rt => rt.ReplacedByTokenHash)
+            .HasColumnName("ReplacedByTokenHash")
+            .HasMaxLength(128);
+
+            entity.Property(rt => rt.CreatedByIp)
+            .HasColumnName("CreatedByIp")
+            .HasMaxLength(45);
+
+            entity.Property(rt => rt.UserAgent)
+            .HasColumnName("UserAgent")
+            .HasMaxLength(512);
+
+            entity.Property(rt => rt.CreatedAt)
+            .HasColumnType("timestamp without time zone")
+            .HasColumnName("CreatedAt");
+
+            entity.Property(rt => rt.ExpiresAt)
+            .HasColumnType("timestamp without time zone")
+            .HasColumnName("ExpiresAt");
+
+            entity.Property(rt => rt.UserId)
+            .HasColumnName("UserId");
+
+            entity.Property(rt => rt.Id)
+            .HasColumnName("Id");
+        });
 
         modelBuilder.Entity<User>().ToTable("Users");
         modelBuilder.Entity<Role>().ToTable("Roles");
