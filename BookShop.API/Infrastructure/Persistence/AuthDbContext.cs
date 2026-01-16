@@ -1,4 +1,5 @@
 ﻿using BookShop.API.Models.Auth;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookShop.API.Infrastructure.Persistence;
@@ -41,7 +42,7 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<User>(entity => 
+        modelBuilder.Entity<User>(entity =>
         {
             entity.HasQueryFilter(u => !u.IsDeleted);
 
@@ -88,6 +89,11 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
             .HasColumnName("IsDeleted")
             .HasDefaultValue(false);
 
+            entity.Property(u => u.IsEmailConfirmed)
+            .HasColumnName("IsEmailConfirmed")
+            .HasDefaultValue(false)
+            .IsRequired();
+
             entity.Property(u => u.CreatedAt)
             .HasColumnType("timestamp without time zone")
             .HasColumnName("CreatedAt");
@@ -98,7 +104,7 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
 
         });
 
-        modelBuilder.Entity<Role>(entity => 
+        modelBuilder.Entity<Role>(entity =>
         {
             entity.Property(r => r.Id).HasColumnName("Id");
 
@@ -112,9 +118,11 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
 
         modelBuilder.Entity<UserRole>(entity =>
         {
+            entity.HasKey(ur => new { ur.UserId, ur.RoleId });
+
             entity.HasIndex(ur => ur.RoleId);
 
-            entity.HasKey(ur => new { ur.UserId, ur.RoleId });
+            entity.HasIndex(ur => ur.UserId);
 
             entity.HasOne(ur => ur.User)
             .WithMany(u => u.UserRoles)
@@ -124,7 +132,6 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
             .WithMany(r => r.UserRoles)
             .HasForeignKey(ur => ur.RoleId);
         });
-
 
         modelBuilder.Entity<RefreshToken>(entity =>
         {
@@ -144,7 +151,7 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
             .HasMaxLength(128)
             .IsRequired();
 
-            
+
             entity.Property(rt => rt.RevokedAt)
             .HasColumnType("timestamp without time zone")
             .HasColumnName("RevokedAt");
@@ -180,8 +187,37 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
         modelBuilder.Entity<Role>().ToTable("Roles");
         modelBuilder.Entity<UserRole>().ToTable("UserRoles");
         modelBuilder.Entity<RefreshToken>().ToTable("RefreshTokens");
-    }
 
+        //The seed data
+        modelBuilder.Entity<Role>().HasData(
+            new Role { Id = 1, Name = "admin" },
+            new Role { Id = 2, Name = "user" }
+        );
+
+        string admin = "admin";
+        string adminEmail = "admin@bookshop.api.com";
+        var seededAt = new DateTime(2026, 01, 15, 0, 0, 0, DateTimeKind.Unspecified);
+
+        modelBuilder.Entity<User>().HasData(
+            new User
+            {
+                Id = 1,
+                UserName = admin,
+                NormalizedUsername = NormalizeString(admin),
+                Email = adminEmail,
+                NormalizedEmail = NormalizeString(adminEmail),
+                IsActive = true,
+                IsDeleted = false,
+                IsEmailConfirmed = true,
+                CreatedAt = seededAt,
+                UpdatedAt = seededAt,
+                PasswordHash = "AQAAAAEAACcQAAAAEFWDfK8QnvlZsT6wjuSYyw2Xe4P1HTcaW5MavWsfHOaFY4CpvcPtbDZWP6XrT3Jkgg=="
+            }
+         );
+
+        modelBuilder.Entity<UserRole>().HasData(new UserRole { UserId = 1, RoleId = 1 });
+
+    }
     /// <summary>
     /// Saves all changes made in this context to the database, updating timestamps as needed.
     /// </summary>
@@ -238,4 +274,11 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
             RefreshTokens.Remove(token);
         }
     }
+
+    /// <summary>
+    /// Converts the specified string to its uppercase equivalent using the casing rules of the invariant culture.
+    /// </summary>
+    /// <param name="input">The string to normalize. Can be null.</param>
+    /// <returns>A string in uppercase using the invariant culture, or null if the input is null.</returns>
+    private static string NormalizeString(string input) => input.ToUpperInvariant();
 }
