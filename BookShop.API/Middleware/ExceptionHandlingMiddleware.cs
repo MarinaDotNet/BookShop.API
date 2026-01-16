@@ -1,4 +1,5 @@
 ﻿using BookShop.API.Exceptions;
+using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson.IO;
 using System.Net;
 
@@ -85,6 +86,9 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
     /// <description><see cref="InvalidOperationException"/> → 409 (Conflict)</description>
     /// </item>
     /// <item>
+    /// <description><see cref="DbUpdateException"/> → 409 (Conflict)</description>
+    /// </item>
+    /// <item>
     /// <description>Any other <see cref="Exception"/> → 500 (Internal Server Error)</description>
     /// </item>
     /// </list>
@@ -114,6 +118,7 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
             ForbiddenException => StatusCodes.Status403Forbidden,
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             InvalidOperationException => StatusCodes.Status409Conflict,
+            DbUpdateException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
         };
 
