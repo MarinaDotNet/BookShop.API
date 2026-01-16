@@ -1,8 +1,10 @@
 using BookShop.API.Infrastructure.Persistence;
 using BookShop.API.Mappings;
 using BookShop.API.Middleware;
+using BookShop.API.Models.Auth;
 using BookShop.API.Repositories;
 using BookShop.API.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
@@ -13,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddUserSecrets<StartupBase>();
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDB"));
 builder.Services.AddSingleton<MongoDbContext>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 // Configure PostgreSQL DbContext
 builder.Services.AddDbContext<AuthDbContext>(options => 
