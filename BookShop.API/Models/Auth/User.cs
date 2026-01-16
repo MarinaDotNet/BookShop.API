@@ -25,6 +25,8 @@ public class User
 
     public bool IsDeleted { get; set; } = false;
 
+    public bool IsEmailConfirmed { get; set; } = false;
+
     public DateTime  CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; } 
