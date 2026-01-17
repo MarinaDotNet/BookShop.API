@@ -1,3 +1,4 @@
+using BookShop.API.Infrastructure;
 using BookShop.API.Infrastructure.Persistence;
 using BookShop.API.Mappings;
 using BookShop.API.Middleware;
@@ -16,6 +17,9 @@ builder.Configuration.AddUserSecrets<StartupBase>();
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDB"));
 builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+builder.Services.AddScoped<IAuthEmailSender, SendGridAuthEmailSender>();
+builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection("SendGrid"));
 
 // Configure PostgreSQL DbContext
 builder.Services.AddDbContext<AuthDbContext>(options => 
