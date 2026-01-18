@@ -7,7 +7,6 @@ using BookShop.API.Repositories;
 using BookShop.API.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +19,9 @@ builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 builder.Services.AddScoped<IAuthEmailSender, SendGridAuthEmailSender>();
 builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection("SendGrid"));
+
+builder.Services.AddDataProtection();
+builder.Services.AddScoped<IAuthTokenService, AuthTokenService>();
 
 // Configure PostgreSQL DbContext
 builder.Services.AddDbContext<AuthDbContext>(options => 
