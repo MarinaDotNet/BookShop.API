@@ -23,6 +23,9 @@ builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection("Se
 builder.Services.AddDataProtection();
 builder.Services.AddScoped<IAuthTokenService, AuthTokenService>();
 
+builder.Services.Configure<AppUrlOptions>(builder.Configuration.GetSection("App"));
+builder.Services.AddSingleton<IAuthLinkGenerator, AuthLinkGenerator>();
+
 // Configure PostgreSQL DbContext
 builder.Services.AddDbContext<AuthDbContext>(options => 
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql")));
