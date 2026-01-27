@@ -17,8 +17,20 @@ builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("Mo
 builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
-builder.Services.AddScoped<IAuthEmailSender, SendGridAuthEmailSender>();
-builder.Services.Configure<SendGridOptions>(builder.Configuration.GetSection("SendGrid"));
+builder.Services.Configure<BrevoOptions>(builder.Configuration.GetSection("Brevo"));
+builder.Services.AddHttpClient<IAuthEmailSender, BrevoAuthEmailSender>((sp, http) =>
+{
+    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<BrevoOptions>>().Value;
+    if(string.IsNullOrWhiteSpace(options.BaseAddress))
+        throw new InvalidOperationException("Brevo:BaseAddress is not configured.");
+    if(string.IsNullOrWhiteSpace(options.ApiKey))
+        throw new InvalidOperationException("Brevo:ApiKey is not configured.");
+
+    http.BaseAddress = new Uri(options.BaseAddress);
+    http.DefaultRequestHeaders.TryAddWithoutValidation("api-key", options.ApiKey);
+
+    http.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+});
 
 builder.Services.AddDataProtection();
 builder.Services.AddScoped<IAuthTokenService, AuthTokenService>();
@@ -33,6 +45,9 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 /// Dependency Injection
 builder.Services.AddSingleton<IBookRepository, BookRepository>();
 builder.Services.AddScoped<BookService>();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<AuthServices>();
 
 // Auto Mapper Configurations
 builder.Services.AddAutoMapper(typeof(BookMapingProfile));
