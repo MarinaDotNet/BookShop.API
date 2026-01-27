@@ -1,6 +1,4 @@
-﻿using SendGrid.Helpers.Mail;
-
-namespace BookShop.API.Services;
+﻿namespace BookShop.API.Services;
 
 /// <summary>
 /// Defines methods for sending authentication-related emails, such as confirmation, password reset, and account change
