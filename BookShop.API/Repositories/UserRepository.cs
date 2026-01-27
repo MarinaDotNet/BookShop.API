@@ -63,6 +63,44 @@ public class UserRepository(AuthDbContext context) : IUserRepository
         return await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.NormalizedUsername == normalizedUsername, cancellationToken);
     }
 
+    /// <summary>
+    /// Asynchronously retrieves a user by their unique identifier.
+    /// </summary>
+    /// <param name="userId">
+    /// The unique identifier of the user to retrieve.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the user with the specified identifier,
+    /// </returns>
+    public async Task<User?> GetUserByIdAsync(int userId, CancellationToken cancellationToken)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Asynchronously updates an existing user in the data store.
+    /// </summary>
+    /// <param name="user">
+    /// The user entity to update. Cannot be null.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the updated user entity,
+    /// </returns>
+    public async Task<User?> UpdateUserAsync(User user, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(user, nameof(user));
+
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return user;
+    }
     #endregion of User Management
 
     #region of Role Management

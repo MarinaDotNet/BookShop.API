@@ -20,6 +20,34 @@ public interface IUserRepository
     Task<User> AddUserAsync(User user, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Gets a <see cref="User"/> by its unique identifier asynchronously.
+    /// </summary>
+    /// <param name="userId">
+    /// The unique identifier of the <see cref="User"/> to retrieve.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A Task that returns the <see cref="User"/> entity if found.
+    /// </returns>
+    Task<User?> GetUserByIdAsync(int userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Updates an existing <see cref="User"/> in the database and persists the change asynchronously.
+    /// </summary>
+    /// <param name="user">
+    /// The <see cref="User"/> entity to update.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A Task that returns the updated <see cref="User"/> entity.
+    /// </returns>
+    Task<User?> UpdateUserAsync(User user, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Asynchronously retrieves a user whose normalized email address matches the specified value.
     /// </summary>
     /// <param name="normalizedEmail">The normalized email address to search for. This value should be in uppercase and free of leading or trailing
