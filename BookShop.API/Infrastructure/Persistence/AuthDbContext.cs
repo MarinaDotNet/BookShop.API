@@ -95,11 +95,11 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
             .IsRequired();
 
             entity.Property(u => u.CreatedAt)
-            .HasColumnType("timestamp without time zone")
+            .HasColumnType("timestamp with time zone")
             .HasColumnName("CreatedAt");
 
             entity.Property(u => u.UpdatedAt)
-            .HasColumnType("timestamp without time zone")
+            .HasColumnType("timestamp with time zone")
             .HasColumnName("UpdatedAt");
 
         });
@@ -153,7 +153,7 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
 
 
             entity.Property(rt => rt.RevokedAt)
-            .HasColumnType("timestamp without time zone")
+            .HasColumnType("timestamp with time zone")
             .HasColumnName("RevokedAt");
 
             entity.Property(rt => rt.ReplacedByTokenHash)
@@ -169,11 +169,11 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
             .HasMaxLength(512);
 
             entity.Property(rt => rt.CreatedAt)
-            .HasColumnType("timestamp without time zone")
+            .HasColumnType("timestamp with time zone")
             .HasColumnName("CreatedAt");
 
             entity.Property(rt => rt.ExpiresAt)
-            .HasColumnType("timestamp without time zone")
+            .HasColumnType("timestamp with time zone")
             .HasColumnName("ExpiresAt");
 
             entity.Property(rt => rt.UserId)
@@ -196,7 +196,7 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
 
         string admin = "admin";
         string adminEmail = "admin@bookshop.api.com";
-        var seededAt = new DateTime(2026, 01, 15, 0, 0, 0, DateTimeKind.Unspecified);
+        var seededAt = new DateTime(2026, 01, 15, 0, 0, 0, DateTimeKind.Utc);
 
         modelBuilder.Entity<User>().HasData(
             new User
