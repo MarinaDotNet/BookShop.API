@@ -66,8 +66,8 @@ public class AuthServices(
         //Create User
         var user = CreateUserEntity(userRegisterDto, normalizedUsername, normalizedEmail);
 
-        //Assign Default Role
-        await AssignDefaultRoleAsync(user, cancellationToken);
+        //Assign Role
+        await AssignRoleAsync(user, "user", cancellationToken);
 
         //Save user
         var userCreated = await _userRepository.AddUserAsync(user, cancellationToken);
@@ -129,6 +129,45 @@ public class AuthServices(
         await _userRepository.UpdateUserAsync(user, cancellationToken);
     }
 
+    /// <summary>
+    /// Registers a new administrator asynchronously using the specified registration details.
+    /// </summary>
+    /// <param name="userRegisterDto">
+    /// An object containing the administrator's registration information, including username, email, and password. Cannot be
+    /// null.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the registration operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the unique identifier of the newly
+    /// registered user.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if a user with the provided username or email already exists, or if the default user role cannot be
+    /// found.
+    /// </exception>
+
+    public async Task<int> RegisterAdminAsync(UserRegisterDto userRegisterDto, CancellationToken cancellationToken)
+    {
+        ValidateRegistrationInput(userRegisterDto);
+
+        var normalizedAdminName = NormalizeInput(userRegisterDto.Username);
+        var normalizedEmail = NormalizeInput(userRegisterDto.Email);
+        await EnsureUserDoesNotExists(normalizedAdminName, normalizedEmail, cancellationToken);
+
+        var user = CreateUserEntity(userRegisterDto, normalizedAdminName, normalizedEmail);
+
+        await AssignRoleAsync(user, "admin", cancellationToken);
+
+        var userCreated = await _userRepository.AddUserAsync(user, cancellationToken);
+
+        var confirmationLink = CreateEmailConfirmationLink(userCreated.Id);
+
+        await _emailSender.SendEmailConfirmationAsync(userCreated.Email, confirmationLink, cancellationToken);
+
+        return userCreated.Id;
+    }
     #region of private methods
     /// <summary>
     /// Generates an email confirmation link for the specified user ID.
@@ -146,24 +185,41 @@ public class AuthServices(
     }
 
     /// <summary>
-    /// Assigns the default role ("user") to the specified user.
+    /// Assigns the specified role to the user.
     /// </summary>
     /// <param name="user">
-    /// The user entity to which the default role will be assigned.
+    /// The user entity to which the specified role will be assigned.
     /// </param>
     /// <param name="cancellationToken">
     /// The cancellation token that can be used to cancel the operation.
+    /// </param>
+    /// <param name="roleName">
+    /// The specified role name to assign.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// </returns>
     /// <exception cref="InvalidOperationException">
-    /// Thrown if the default role "user" cannot be found in the repository.
+    /// Thrown if the specified role cannot be found in the repository.
     /// </exception>
-    private async Task AssignDefaultRoleAsync(User user, CancellationToken cancellationToken)
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if the <paramref name="user"/> is null.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown if the <paramref name="roleName"/> is null or consists of white spaces
+    /// </exception>
+    private async Task AssignRoleAsync(User user, string roleName, CancellationToken cancellationToken)
     {
-        var role = await _userRepository.GetRoleByNameAsync("user", cancellationToken)
-            ?? throw new InvalidOperationException("Default role 'user' not found.");
+        ArgumentNullException.ThrowIfNull(user, nameof(user));
+        ArgumentException.ThrowIfNullOrWhiteSpace(roleName, nameof(roleName));
+
+        var role = await _userRepository.GetRoleByNameAsync(roleName, cancellationToken)
+            ?? throw new InvalidOperationException($"Role '{roleName}' not found.");
+        
+        if(user.UserRoles.Any(ur => ur.RoleId == role.Id))
+        {
+            return;
+        }
 
         user.UserRoles.Add(new UserRole()
         {
