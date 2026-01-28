@@ -58,81 +58,24 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
     }
 
     /// <summary>
-    /// Middleware responsible for global exception handling.
+    /// Converts an unhandled exception into an RFC 7807 ProblemDetails response and writes it to the HTTP response.
     /// </summary>
-    /// <remarks>
-    /// This middleware intercepts unhandled exceptions thrown during request processing
-    /// and converts them into standardized HTTP error responses using
-    /// <see cref="Microsoft.AspNetCore.Mvc.ProblemDetails"/>.
-    ///
-    /// It ensures a single, consistent error-handling strategy across the application
-    /// and prevents leaking internal exception details to API consumers.
-    ///
-    /// The middleware maps known application exceptions to appropriate HTTP status codes:
-    /// <list type="bullet">
-    /// <item>
-    /// <description><see cref="ValidationException"/> → 400 (Bad Request)</description>
-    /// </item>
-    /// <item>
-    /// <description><see cref="NotFoundException"/> → 404 (Not Found)</description>
-    /// </item>
-    /// <item>
-    /// <description>Any other <see cref="ForbiddenException"/> → 403 (Forbidden)</description>
-    /// </item>
-    /// <item>
-    /// <description>Any other <see cref="UnauthorizedAccessException"/> → 401 (Unauthorized)</description>
-    /// </item>
-    /// <item>
-    /// <description><see cref="InvalidOperationException"/> → 409 (Conflict)</description>
-    /// </item>
-    /// <item>
-    /// <description><see cref="DbUpdateException"/> → 409 (Conflict)</description>
-    /// </item>
-    /// <item>
-    /// <description>Any other <see cref="Exception"/> → 500 (Internal Server Error)</description>
-    /// </item>
-    /// </list>
-    ///
-    /// All error responses follow the ProblemDetails format and include:
-    /// <list type="bullet">
-    /// <item>
-    /// <description><c>status</c> — HTTP status code</description>
-    /// </item>
-    /// <item>
-    /// <description><c>title</c> — error message</description>
-    /// </item>
-    /// <item>
-    /// <description><c>detail</c> — inner error message (when applicable)</description>
-    /// </item>
-    /// <item>
-    /// <description><c>instance</c> — request path</description>
-    /// </item>
-    /// </list>
-    /// </remarks>
-    private static Task HandleExceptionAsync(HttpContext context, Exception ex) 
+    /// <param name="context">
+    /// The current HTTP context.
+    /// </param>
+    /// <param name="exception">
+    /// The exception to handle.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous write operation.
+    /// </returns>
+    private static async Task HandleExceptionAsync(HttpContext context, Exception exception) 
     {
-        var code = ex switch
-        {
-            ValidationException => StatusCodes.Status400BadRequest,
-            NotFoundException => StatusCodes.Status404NotFound,
-            ForbiddenException => StatusCodes.Status403Forbidden,
-            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
-            InvalidOperationException => StatusCodes.Status409Conflict,
-            DbUpdateException => StatusCodes.Status409Conflict,
-            _ => StatusCodes.Status500InternalServerError
-        };
+        var problem = ProblemDetailsBuilder.Build(context, exception);
 
-        var problem = new Microsoft.AspNetCore.Mvc.ProblemDetails
-        {
-            Status = code,
-            Title = ex.Message,
-            Detail = ex.InnerException?.Message,
-            Instance = context.Request.Path
-        };
-
+        context.Response.StatusCode = problem.Status!.Value;
         context.Response.ContentType = "application/problem+json";
-        context.Response.StatusCode = code;
 
-        return context.Response.WriteAsJsonAsync(problem);
+        await context.Response.WriteAsJsonAsync(problem);
     }
 }
