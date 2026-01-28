@@ -1,4 +1,5 @@
 ﻿using BookShop.API.DTOs.Auth;
+using BookShop.API.Exceptions;
 using BookShop.API.Models.Auth;
 using BookShop.API.Repositories;
 using Microsoft.AspNetCore.Identity;
@@ -100,7 +101,7 @@ public class AuthServices(
     /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="token"/> is null or empty.
     /// </exception>
-    /// <exception cref="InvalidOperationException">
+    /// <exception cref="InvalidTokenException">
     /// Thrown if the token is invalid, expired, or does not match the expected purpose.
     /// </exception>
     /// <exception cref="KeyNotFoundException">
@@ -112,7 +113,7 @@ public class AuthServices(
 
         if(!_authTokenService.TryValidateToken(token, AuthTokenPurpose.EmailConfirmation ,out var payload))
         {
-            throw new InvalidOperationException("Invalid or expired email confirmation token.");
+            throw new InvalidTokenException();
         }
 
         var user = await _userRepository.GetUserByIdAsync(payload!.UserId, cancellationToken)
