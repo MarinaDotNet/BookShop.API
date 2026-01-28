@@ -63,4 +63,23 @@ public class AuthController(AuthServices auth) : ControllerBase
         return CreatedAtAction(nameof(RegisterUser), new {id});
     }
 
+    /// <summary>
+    /// Registers a new administrator account
+    /// </summary>
+    /// <param name="dto">
+    /// The registration payload containing the username, email, and password.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancelation token that can be used to cancel the request.
+    /// </param>
+    /// <returns>
+    /// (201) <see cref="CreatedResult"/> with the created admin's identifier.
+    /// </returns>
+    [HttpPost("admin/register")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<IActionResult> RegisterAdmin([FromBody] UserRegisterDto dto, CancellationToken cancellationToken)
+    {
+        int id = await _auth.RegisterAdminAsync(dto, cancellationToken);
+        return CreatedAtAction(nameof(RegisterAdmin), new { id });
+    }
 }
