@@ -82,4 +82,24 @@ public class AuthController(AuthServices auth) : ControllerBase
         int id = await _auth.RegisterAdminAsync(dto, cancellationToken);
         return CreatedAtAction(nameof(RegisterAdmin), new { id });
     }
+
+    /// <summary>
+    /// Resends the email confirmation link.
+    /// </summary>
+    /// <param name="dto">
+    /// The resend email confirmation payload containing the email.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancelation token that can be used to cancel the request.
+    /// </param>
+    /// <returns>
+    /// (204) <see cref="NoContentResult"/> when the resend operation is completed successfully.
+    /// </returns>
+    [HttpPost("resend-email-confirmation")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> ResendEmailConfirmation([FromBody] ResendEmailConfirmationDto dto, CancellationToken cancellationToken)
+    {
+        await _auth.ResendEmailConfirmationLink(dto.Email, cancellationToken);
+        return NoContent();
+    }
 }

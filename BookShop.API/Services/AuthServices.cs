@@ -72,16 +72,7 @@ public class AuthServices(
         //Save user
         var userCreated = await _userRepository.AddUserAsync(user, cancellationToken);
 
-        //Create Confirmation Link
-        var confirmationLink = CreateEmailConfirmationLink(userCreated.Id);
-
-        //Send Confirmation Email
-        await _emailSender.SendEmailConfirmationAsync(userCreated.Email, confirmationLink, cancellationToken);
-
-        //Save when the confirmation link was sended
-        userCreated.EmailConfirmationSentAt = DateTime.UtcNow;
-        userCreated.UpdatedAt = DateTime.UtcNow;
-        await _userRepository.UpdateUserAsync(userCreated, cancellationToken);
+        await SendEmailConfirmationLinkAsync(userCreated, cancellationToken);
 
         return userCreated.Id;
     }
@@ -167,16 +158,52 @@ public class AuthServices(
 
         var userCreated = await _userRepository.AddUserAsync(user, cancellationToken);
 
-        var confirmationLink = CreateEmailConfirmationLink(userCreated.Id);
-
-        await _emailSender.SendEmailConfirmationAsync(userCreated.Email, confirmationLink, cancellationToken);
-
-        //Save when the confirmation link was sended
-        userCreated.EmailConfirmationSentAt = DateTime.UtcNow;
-        userCreated.UpdatedAt = DateTime.UtcNow;
-        await _userRepository.UpdateUserAsync(userCreated, cancellationToken);
+        await SendEmailConfirmationLinkAsync(userCreated, cancellationToken);
 
         return userCreated.Id;
+    }
+
+    /// <summary>
+    /// Resends the email confirmation link asynchronously using the specified email. 
+    /// If more than <c>3 minutes</c> have passed since the last time of the current operation.
+    /// </summary>
+    /// <param name="toEmail">
+    /// The requested email to confirm.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the resend confirmation link operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="NotFoundException">
+    /// Thrown if a user with the specified email not exists.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown if the requested email is null or consists of whitespaces.
+    /// </exception>
+    public async Task ResendEmailConfirmationLink(string toEmail, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(toEmail, nameof(toEmail));
+
+        ValidateEmailPatern(toEmail);
+
+        var normalizedEmail = NormalizeInput(toEmail);
+        var user = await _userRepository.GetUserByNormalizedEmailAsync(normalizedEmail, cancellationToken)
+            ?? throw new NotFoundException();
+
+        if (user.IsEmailConfirmed)
+        {
+            return;
+        }
+
+        if(user.EmailConfirmationSentAt.HasValue && user.EmailConfirmationSentAt > DateTime.UtcNow.AddMinutes(-3))
+        {
+            return;
+        }
+
+        await SendEmailConfirmationLinkAsync(user, cancellationToken);
+
     }
     #region of private methods
     /// <summary>
@@ -398,5 +425,29 @@ public class AuthServices(
         }
     }
 
+    /// <summary>
+    /// Resends the confirmation link asynchronously to the requested user. Updates the user entity, when last time the confirmation link was last sent and 
+    /// when last time the entity was last updated.
+    /// </summary>
+    /// <param name="user">
+    /// The user that requested the resend confirmation link operation.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The cancellation token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// The task representing the asynchronous operation.
+    /// </returns>
+    private async Task SendEmailConfirmationLinkAsync(User user, CancellationToken cancellationToken)
+    {
+        var confirmationLink = CreateEmailConfirmationLink(user.Id);
+
+        await _emailSender.SendEmailConfirmationAsync(user.Email, confirmationLink, cancellationToken);
+
+        //Save when the confirmation link was sended
+        user.EmailConfirmationSentAt = DateTime.UtcNow;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateUserAsync(user, cancellationToken);
+    }
     #endregion of private methods
 }
