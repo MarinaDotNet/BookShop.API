@@ -31,6 +31,8 @@ public class User
 
     public DateTime UpdatedAt { get; set; } 
 
+    public DateTime? EmailConfirmationSentAt { get; set; }
+
     public ICollection<RefreshToken> Tokens { get; set; } = new HashSet<RefreshToken>();
 
     public ICollection<UserRole> UserRoles { get; set; } = new HashSet<UserRole>();

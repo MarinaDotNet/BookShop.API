@@ -102,6 +102,9 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : DbContext(
             .HasColumnType("timestamp with time zone")
             .HasColumnName("UpdatedAt");
 
+            entity.Property(u => u.EmailConfirmationSentAt)
+            .HasColumnType("timestamp with time zone")
+            .HasColumnName("EmailConfirmationSentAt");
         });
 
         modelBuilder.Entity<Role>(entity =>
