@@ -171,6 +171,11 @@ public class AuthServices(
 
         await _emailSender.SendEmailConfirmationAsync(userCreated.Email, confirmationLink, cancellationToken);
 
+        //Save when the confirmation link was sended
+        userCreated.EmailConfirmationSentAt = DateTime.UtcNow;
+        userCreated.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateUserAsync(userCreated, cancellationToken);
+
         return userCreated.Id;
     }
     #region of private methods
