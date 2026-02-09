@@ -49,6 +49,13 @@ builder.Services.AddScoped<BookService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<AuthServices>();
 
+builder.Services.Configure<JwtServiceConfiguration>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+
+
+builder.Services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
+builder.Services.AddSingleton<IRefreshTokenHasher, RefreshTokenHasher>();
+
 // Auto Mapper Configurations
 builder.Services.AddAutoMapper(typeof(BookMapingProfile));
 
