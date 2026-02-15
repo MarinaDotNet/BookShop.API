@@ -86,5 +86,33 @@ public interface IUserRepository
     /// <returns>A task that represents the asynchronous operation. The task result contains the added user role, or null if the
     /// operation fails.</returns>
     Task<UserRole?> AddUserRoleAsync(UserRole entity, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Asynchronously retrieves the names of the roles associated with a specific user.
+    /// </summary>
+    /// <param name="userId">
+    /// The unique identifier of the user whose role names are to be retrieved.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a collection of role names associated with the specified user, or an empty collection if the user has no roles.
+    /// </returns>
+    Task<ICollection<UserRole>> GetUserRolesAsync(int userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Asynchronously saves a refresh token to the data store for later retrieval and validation.
+    /// </summary>
+    /// <param name="refreshToken">
+    /// The refresh token to save. This token should contain all necessary information for later validation, such as the token value, expiration time, and associated user identifier.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    Task SaveRefreshTokenAsync(RefreshToken refreshToken, CancellationToken cancellationToken);
     #endregion
 }

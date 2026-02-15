@@ -35,14 +35,20 @@ public class AuthServices(
     IPasswordHasher<User> passwordHasher, 
     IAuthTokenService authTokenService, 
     IAuthLinkGenerator authLinkGenerator,
-    IAuthEmailSender emailSender)
+    IAuthEmailSender emailSender,
+    IRefreshTokenGenerator refreshTokenGenerator,
+    IRefreshTokenHasher refreshTokenHasher,
+    IJwtTokenService jwtTokenService
+    ) 
 {
     private readonly IUserRepository _userRepository = userRepository;
     private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;
     private readonly IAuthTokenService _authTokenService = authTokenService;
     private readonly IAuthLinkGenerator _authLinkGenerator = authLinkGenerator;
     private readonly IAuthEmailSender _emailSender = emailSender;
-
+    private readonly IRefreshTokenGenerator _refreshTokenGenerator = refreshTokenGenerator;
+    private readonly IRefreshTokenHasher _refreshTokenHasher = refreshTokenHasher;
+    private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
     /// <summary>
     /// Registers a new user asynchronously using the specified registration details.
     /// </summary>
@@ -205,6 +211,41 @@ public class AuthServices(
         await SendEmailConfirmationLinkAsync(user, cancellationToken);
 
     }
+    
+    /// <summary>
+    /// Authenticates a user asynchronously using the specified login details and generates access and refresh tokens upon successful authentication.
+    /// </summary>
+    /// <param name="userLoginDto">
+    /// The user's login details, including email and password. Cannot be null.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the login operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous login operation. The task result contains a <see cref="LoginResultDto"/> with the generated access and refresh tokens.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the user's email is not confirmed or the login credentials are invalid.
+    /// </exception>
+    public async Task<LoginResultDto> LoginAsync(
+        UserLoginDto userLoginDto, 
+        string? ip, 
+        string? userAgent, 
+        CancellationToken cancellationToken)
+    {
+        ValidateLoginInput(userLoginDto);
+
+        var user = await GetActiveUserByEmailAsync(userLoginDto.Email, cancellationToken);
+
+        VerifyPasswordOrThrow(user, userLoginDto.Password);
+
+        var roles = await GetRolesOrThrow(user.Id, cancellationToken);
+
+        var accessToken = CreateAccessToken(user, roles);
+        var refreshToken = await CreateRefreshTokenAsync(user.Id, ip, userAgent, cancellationToken);
+
+        return new LoginResultDto(accessToken, refreshToken);
+    }
     #region of private methods
     /// <summary>
     /// Generates an email confirmation link for the specified user ID.
@@ -310,6 +351,178 @@ public class AuthServices(
         ValidateUserRegisterDto(dto);
         ValidateEmailPatern(dto.Email);
         ValidatePasswordPatern(dto.Password);
+    }
+
+    /// <summary>
+    /// Validates the user login input for required fields and email format.
+    /// </summary>
+    /// <param name="dto">
+    /// The login DTO to validate
+    /// </param>
+    private static void ValidateLoginInput(UserLoginDto dto)
+    {
+        ValidateUserLoginDto(dto);
+        ValidateEmailPatern(dto.Email);
+    }
+    
+    /// <summary>
+    /// Retrieves an active user by their email address. This method checks if a user with the specified email exists and is active (not deleted and marked as active and email confirmed).
+    /// If the user is not found or is inactive or not email confirmed, an <see cref="UnauthorizedAccessException"/> is thrown to indicate invalid login credentials.
+    /// </summary>
+    /// <param name="email">
+    /// The email address of the user to retrieve. This value is normalized to ensure a case-insensitive search. Cannot be null or empty.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the active user with the specified email, or an exception is thrown if the user is not found or inactive.
+    /// </returns>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown if no active user with the specified email is found, indicating invalid login credentials.
+    /// </exception>
+    private async Task<User> GetActiveUserByEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        var normalizedEmail = NormalizeInput(email);
+        var user = await _userRepository.GetUserByNormalizedEmailAsync(normalizedEmail, cancellationToken);
+        if (user is null || !user.IsActive || user.IsDeleted || !user.IsEmailConfirmed)
+        {
+            throw new UnauthorizedAccessException("Invalid email or password.");
+        }
+        return user;
+    }
+
+    /// <summary>
+    /// Verifies the provided password against the stored password hash for the given user. If the verification fails, an <see cref="UnauthorizedAccessException"/> is thrown to indicate invalid login credentials.
+    /// </summary>
+    /// <param name="user">
+    /// The user whose password is to be verified. Must not be null.
+    /// </param>
+    /// <param name="password">
+    /// The password to verify against the user's stored password hash. Must not be null or empty.
+    /// </param>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown if the password verification fails, indicating invalid login credentials.
+    /// </exception>
+    private void VerifyPasswordOrThrow(User user, string password)
+    {
+        var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+        if (result == PasswordVerificationResult.Failed)
+        {
+            throw new UnauthorizedAccessException("Invalid email or password.");
+        }
+    }
+
+    /// <summary>
+    /// Validates the specified user login data transfer object to ensure all required fields are present and valid.
+    /// </summary>
+    /// <param name="dto">
+    /// The user login DTO to validate. Must not be null and must contain non-empty values for Email and Password.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="dto"/> is null, or if the Email or Password properties of <paramref name="dto"/> are null or empty.
+    /// </exception>
+    private static void ValidateUserLoginDto(UserLoginDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
+
+        if (string.IsNullOrEmpty(dto.Email) ||
+           string.IsNullOrEmpty(dto.Password))
+        {
+            throw new ArgumentException("Email and Password are required.");
+        }
+    }
+
+    /// <summary>
+    /// Validates that the user has at least one role and that all roles are properly loaded. If the user has no roles or if any role is not loaded, an <see cref="InvalidOperationException"/> is thrown.
+    /// </summary>
+    /// <param name="userId">
+    /// The ID of the user whose roles are to be validated.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a read-only collection of the user's roles if validation is successful; otherwise, an exception is thrown.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the user has no roles or if any of the user's roles are not properly loaded, indicating an invalid user state for authentication.
+    /// </exception>
+    private async Task<IReadOnlyCollection<Role>> GetRolesOrThrow(int userId, CancellationToken cancellationToken)
+    {
+        var userRoles = await _userRepository.GetUserRolesAsync(userId, cancellationToken);
+        var roles = userRoles.Select(ur => ur.Role).ToList();
+
+        if(roles.Count == 0)
+        {
+            throw new InvalidOperationException("User must have at least one role.");
+        }
+
+        if(roles.Any(r => r is null))
+        {
+            throw new InvalidOperationException("User roles are not loaded properly.");
+        }
+
+        return roles;
+    }
+
+    /// <summary>
+    /// Creates an access token for the specified user and their associated roles. This method generates a JWT access token that includes the user's identity and role claims, allowing the user to authenticate and authorize access to protected resources based on their assigned roles.
+    /// </summary>
+    /// <param name="user">
+    /// The user for whom the access token is being created. Must not be null.
+    /// </param>
+    /// <param name="roles">
+    /// The roles associated with the user. Must not be null or empty.
+    /// </param>
+    /// <returns>
+    /// A JWT access token string that includes the user's identity and role claims.
+    /// </returns>
+    private string CreateAccessToken(User user, IReadOnlyCollection<Role> roles) =>
+        _jwtTokenService.CreateAccessToken(user, roles);
+
+    /// <summary>
+    /// Creates a refresh token for the specified user and stores it in the database. This method generates a secure refresh token, hashes it for storage, and associates it with the user's account. The refresh token can be used to obtain new access tokens without requiring the user to re-authenticate, providing a seamless authentication experience while maintaining security.
+    /// </summary>
+    /// <param name="userId">
+    /// The unique identifier of the user for whom the refresh token is being created. Must be a positive integer corresponding to an existing user in the database.
+    /// </param>
+    /// <param name="ip">
+    /// The IP address of the client requesting the refresh token. This value is stored for security auditing and tracking purposes.
+    /// </param>
+    /// <param name="userAgent">
+    /// The user agent string of the client requesting the refresh token. This value is stored for security auditing and tracking purposes, and is truncated to a maximum length of 512 characters if necessary.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the generated refresh token string.
+    /// </returns>
+    private async Task<string> CreateRefreshTokenAsync(
+        int userId, 
+        string? ip,
+        string? userAgent,
+        CancellationToken cancellationToken)
+    {
+        var refreshToken = _refreshTokenGenerator.GenerateRefreshToken();
+        var refreshTokenHash = _refreshTokenHasher.Hash(refreshToken);
+
+        var now = DateTime.UtcNow;
+        RefreshToken refreshTokenEntity = new()
+        {
+            UserId = userId,
+            TokenHash = refreshTokenHash,
+            ExpiresAt = now.AddDays(7),
+            CreatedAt = now,
+            CreatedByIp = ip,
+            UserAgent = userAgent?.Length > 512
+                ? userAgent[..512]
+                : userAgent
+        };
+
+        await _userRepository.SaveRefreshTokenAsync(refreshTokenEntity, cancellationToken);
+        return refreshToken;
     }
 
     /// <summary>

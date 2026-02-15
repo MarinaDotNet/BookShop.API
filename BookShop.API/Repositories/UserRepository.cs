@@ -137,6 +137,50 @@ public class UserRepository(AuthDbContext context) : IUserRepository
         return entity;
     }
 
+    /// <summary>
+    /// Asynchronously retrieves the roles associated with a specific user by their unique identifier.
+    /// </summary>
+    /// <param name="userId">
+    /// The unique identifier of the user whose roles are to be retrieved.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a collection of <see cref="UserRole"/> entities associated with the specified user. If the user has no roles, the collection will be empty.
+    /// </returns>
+    public async Task<ICollection<UserRole>> GetUserRolesAsync(int userId, CancellationToken cancellationToken)
+    {
+        if(userId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(userId), "User ID must be a positive integer.");
+        }
+
+        return await _context.UserRoles
+        .Include(ur => ur.Role)
+        .Where(ur => ur.UserId == userId)
+        .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Asynchronously saves a refresh token to the data store for a specific user. This method adds the provided refresh token entity to the context and persists the changes to the database. The refresh token is associated with a user and can be used for token renewal processes in authentication workflows.
+    /// </summary>
+    /// <param name="refreshToken">
+    /// The <see cref="RefreshToken"/> entity to be saved. This entity should contain the necessary information such as the token value, expiration time, and associated user ID. Cannot be null.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation. This allows the caller to gracefully handle cancellation requests, such as when a user logs out or when the application is shutting down.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task completes when the refresh token has been successfully saved to the data store. If the operation fails, an exception may be thrown.
+    /// </returns>
+    public async Task SaveRefreshTokenAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(refreshToken, nameof(refreshToken));
+
+        await _context.RefreshTokens.AddAsync(refreshToken, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
     #endregion of Role Management
 
 }
