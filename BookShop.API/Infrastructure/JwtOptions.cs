@@ -1,21 +1,9 @@
-﻿namespace BookShop.API.Infrastructure;
+namespace BookShop.API.Infrastructure;
 
-/// <summary>
-/// Configuration wrapper for JWT-related settings.
-/// Used for biniding configuration section that contains <see cref="JwtSettings"/>
-/// </summary>
-public class JwtServiceConfiguration
-{
-    /// <summary>
-    /// JWT configuration values such as secret, issuer, audience and token lifetime.
-    /// </summary>
-    public JwtSettings JwtSettings { get; set; } = null!;
-}
-
-/// <summary>
+// <summary>
 /// Defines settings requered to generate and validate JWT access tokens.
 /// </summary>
-public class JwtSettings
+public class JwtOptions
 {
     /// <summary>
     /// Symmetric secret key used to sign JWT tokens.

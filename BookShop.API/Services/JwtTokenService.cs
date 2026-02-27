@@ -16,9 +16,9 @@ namespace BookShop.API.Services;
 /// This service creates signed access tokens containing user identity and role claims. Token lifetime, issuer, audience, and secret key 
 /// are configured via appliation settings.
 /// </remarks>
-public class JwtTokenService(IOptions<JwtServiceConfiguration> options) : IJwtTokenService
+public class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
 {
-    private readonly JwtServiceConfiguration _options = options.Value;
+    private readonly JwtOptions _options = options.Value;
 
     /// <summary>
     /// Creates a signed JWT access token for the specified user.
@@ -51,7 +51,7 @@ public class JwtTokenService(IOptions<JwtServiceConfiguration> options) : IJwtTo
 
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        var key = Encoding.UTF8.GetBytes(_options.JwtSettings.Secret);
+        var key = Encoding.UTF8.GetBytes(_options.Secret);
 
         ClaimsIdentity subject = new(
         [
@@ -69,9 +69,9 @@ public class JwtTokenService(IOptions<JwtServiceConfiguration> options) : IJwtTo
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = subject,
-            Expires = DateTime.UtcNow.Add(_options.JwtSettings.TokenLifeTime),
-            Issuer = _options.JwtSettings.Issuer,
-            Audience = _options.JwtSettings.Audience,
+            Expires = DateTime.UtcNow.Add(_options.TokenLifeTime),
+            Issuer = _options.Issuer,
+            Audience = _options.Audience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 
@@ -92,15 +92,15 @@ public class JwtTokenService(IOptions<JwtServiceConfiguration> options) : IJwtTo
     /// </exception>
     private void ValidateJwtSettingsConfiguration()
     {
-        if (string.IsNullOrWhiteSpace(_options.JwtSettings.Issuer))
+        if (string.IsNullOrWhiteSpace(_options.Issuer))
         {
             throw new InvalidOperationException("JwtSettings:Issuer is not configured.");
         }
-        if (string.IsNullOrWhiteSpace(_options.JwtSettings.Audience))
+        if (string.IsNullOrWhiteSpace(_options.Audience))
         {
             throw new InvalidOperationException("JwtSettings:Audience is not configured.");
         }
-        if (string.IsNullOrWhiteSpace(_options.JwtSettings.Secret))
+        if (string.IsNullOrWhiteSpace(_options.Secret))
         {
             throw new InvalidOperationException("JwtSettings:Secret is not configured.");
         }
