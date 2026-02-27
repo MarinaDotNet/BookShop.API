@@ -13,8 +13,8 @@ namespace BookShop.API.Services;
 /// </remarks>
 public sealed class RefreshTokenHasher(IConfiguration configuration) : IRefreshTokenHasher
 {
-    private readonly byte[] _pepperBytes = WebEncoders.Base64UrlDecode(configuration["Security:RefreshTokenPepper"]
-        ?? throw new InvalidOperationException("Security:RefreshTokenPepper not configured"));
+    private readonly string _pepper = configuration["Security:RefreshTokenPepper"]
+        ?? throw new InvalidOperationException("Security:RefreshTokenPepper not configured");
 
     /// <summary>
     /// Computes a secure hash of the specified refresh token.
@@ -33,7 +33,7 @@ public sealed class RefreshTokenHasher(IConfiguration configuration) : IRefreshT
         ArgumentException.ThrowIfNullOrWhiteSpace(token, nameof(token));
 
         var tokenBytes = Encoding.UTF8.GetBytes(token);
-        var hash = HMACSHA256.HashData(_pepperBytes, tokenBytes);
+        var hash = HMACSHA256.HashData(Encoding.UTF8.GetBytes(_pepper), tokenBytes);
 
         return Convert.ToHexString(hash);
     }
