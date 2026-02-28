@@ -102,4 +102,14 @@ public class AuthController(AuthServices auth) : ControllerBase
         await _auth.ResendEmailConfirmationLink(dto.Email, cancellationToken);
         return NoContent();
     }
+
+    [HttpPost("login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Login([FromBody] UserLoginDto dto, CancellationToken cancellationToken)
+    {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAgent = Request.Headers.UserAgent.ToString();
+        var result = await _auth.LoginAsync(dto, ip, userAgent, cancellationToken);
+        return Ok(new { result });
+    }
 }
