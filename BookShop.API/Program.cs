@@ -117,9 +117,9 @@ builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwa
 
 builder.Services.AddCors(options =>
 {
-    var publicOrigins = builder.Configuration.GetSection("Cors:WebAppOrigins").Get<string[]>() 
+    var publicOrigins = builder.Configuration["Cors:WebAppOrigins"]
         ?? throw new InvalidOperationException("Cors:WebAppOrigins not configured");
-    var adminOrigins = builder.Configuration.GetSection("Cors:AdminPanelOrigins").Get<string[]>() 
+    var adminOrigins = builder.Configuration["Cors:AdminPanelOrigins"]
         ?? throw new InvalidOperationException("Cors:AdminPanelOrigins not configured");
 
     options.AddPolicy("AdminPolicy", policy =>
