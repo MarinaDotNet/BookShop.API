@@ -11,7 +11,10 @@ using MongoDB.Driver;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.OpenApi;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +63,46 @@ builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
 builder.Services.AddSingleton<IRefreshTokenHasher, RefreshTokenHasher>();
 
+builder.Services.AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+    })
+    .AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    });
+
+builder.Services.AddCors(options =>
+{
+   options.AddPolicy("MyPolicyForAdmin", policy =>
+   {
+       policy.WithHeaders(["ApiVersion : 1"])
+       .AllowAnyMethod()
+       .DisallowCredentials()
+       .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+   });
+
+   options.AddPolicy("MyPolicyForClient", policy =>
+   {
+       policy.WithHeaders(["ApiVersion : 2"])
+       .AllowAnyMethod()
+       .DisallowCredentials()
+       .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+   });
+
+   options.AddPolicy("DefaultPolicy", policy =>
+   {
+       policy.WithHeaders(["ApiVersion : 3"])
+       .WithMethods("GET", "OPTIONS")
+       .DisallowCredentials()
+       .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+   });
+});
+
+
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtOptions>() 
 ?? throw new InvalidOperationException("JWT settings are not properly configured. Please ensure that 'JwtSettings' section is set in the configuration.");
 
@@ -96,37 +139,9 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Version = "v1",
-        Title = "BookShop API",
-        Description = "An ASP.NET Core Web API for managing a book shop, including user authentication and book catalog operations.",
-        Contact = new OpenApiContact
-        {
-            Name = "Marina",
-            Email = "msichova@outlook.com",
-            Url = new Uri("https://marinadotnet.github.io/")
-        }
-    });
+builder.Services.AddSwaggerGen();
 
-    options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
-    {        
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Enter: {your JWT token} to authenticate."
-    });
-
-    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-    {
-        [new OpenApiSecuritySchemeReference("bearer", document)] = []
-    });
-});
-
+builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 
 var app = builder.Build();
 
@@ -144,9 +159,16 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    app.UseSwaggerUI(options =>
     {
-        c.EnablePersistAuthorization();
+        options.EnablePersistAuthorization();
+
+        var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
+        foreach(var description in provider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+        }
     });
 }
 
