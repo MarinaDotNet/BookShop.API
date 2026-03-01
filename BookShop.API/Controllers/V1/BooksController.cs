@@ -1,5 +1,8 @@
-﻿using BookShop.API.DTOs.Catalog;
+﻿using Asp.Versioning;
+using BookShop.API.DTOs.Catalog;
 using BookShop.API.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -12,7 +15,10 @@ namespace BookShop.API.Controllers;
 /// It relies on dependency injection to obtain an instance of BookService.</remarks>
 /// <param name="service">The service used to perform book-related operations. Cannot be null.</param>
 [ApiController]
-[Route("api/[controller]")]
+[EnableCors("AdminPolicy")]
+[Authorize(Roles = "Admin")]
+[ApiVersion(1.0)]
+[Route("api/v{version:apiVersion}/[controller]/books")]
 public class BooksController(BookService service) : ControllerBase
 {
     private readonly BookService _service = service;

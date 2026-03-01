@@ -1,8 +1,9 @@
-﻿using BookShop.API.DTOs.Auth;
+﻿using Asp.Versioning;
+using BookShop.API.DTOs.Auth;
 using BookShop.API.Services;
-using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.AspNetCore.Authorization;
 namespace BookShop.API.Controllers;
 
 /// <summary>
@@ -18,7 +19,9 @@ namespace BookShop.API.Controllers;
 /// </remarks>
 /// <param name="auth"></param>
 [ApiController]
-[Route("auth")]
+[EnableCors("PublicPolicy")]
+[ApiVersion(1.0)]
+[Route("api/v{version:apiVersion}/auth")]
 public class AuthController(AuthServices auth) : ControllerBase
 {
     private readonly AuthServices _auth = auth;
@@ -36,6 +39,7 @@ public class AuthController(AuthServices auth) : ControllerBase
     /// <see cref="NoContentResult"/> (204) when the email confirmation is completed successfully.
     /// </returns>
     [HttpGet("confirm-email")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> ConfirmEmail([FromQuery] string token, CancellationToken cancellationToken)
     {
@@ -56,6 +60,7 @@ public class AuthController(AuthServices auth) : ControllerBase
     /// (201) <see cref="CreatedResult"/> with the created users's identifier.
     /// </returns>
     [HttpPost("register")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> RegisterUser([FromBody] UserRegisterDto dto, CancellationToken cancellationToken)
     {
@@ -77,6 +82,8 @@ public class AuthController(AuthServices auth) : ControllerBase
     /// </returns>
     [HttpPost("admin/register")]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [EnableCors("AdminPolicy")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> RegisterAdmin([FromBody] UserRegisterDto dto, CancellationToken cancellationToken)
     {
         int id = await _auth.RegisterAdminAsync(dto, cancellationToken);
@@ -97,6 +104,7 @@ public class AuthController(AuthServices auth) : ControllerBase
     /// </returns>
     [HttpPost("resend-email-confirmation")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [AllowAnonymous]
     public async Task<IActionResult> ResendEmailConfirmation([FromBody] ResendEmailConfirmationDto dto, CancellationToken cancellationToken)
     {
         await _auth.ResendEmailConfirmationLink(dto.Email, cancellationToken);
@@ -105,6 +113,7 @@ public class AuthController(AuthServices auth) : ControllerBase
 
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] UserLoginDto dto, CancellationToken cancellationToken)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
