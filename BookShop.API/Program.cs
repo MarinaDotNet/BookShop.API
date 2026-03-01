@@ -75,34 +75,6 @@ builder.Services.AddApiVersioning(options =>
         options.SubstituteApiVersionInUrl = true;
     });
 
-builder.Services.AddCors(options =>
-{
-   options.AddPolicy("MyPolicyForAdmin", policy =>
-   {
-       policy.WithHeaders(["ApiVersion : 1"])
-       .AllowAnyMethod()
-       .DisallowCredentials()
-       .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
-   });
-
-   options.AddPolicy("MyPolicyForClient", policy =>
-   {
-       policy.WithHeaders(["ApiVersion : 2"])
-       .AllowAnyMethod()
-       .DisallowCredentials()
-       .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
-   });
-
-   options.AddPolicy("DefaultPolicy", policy =>
-   {
-       policy.WithHeaders(["ApiVersion : 3"])
-       .WithMethods("GET", "OPTIONS")
-       .DisallowCredentials()
-       .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
-   });
-});
-
-
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtOptions>() 
 ?? throw new InvalidOperationException("JWT settings are not properly configured. Please ensure that 'JwtSettings' section is set in the configuration.");
 
@@ -143,6 +115,46 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 
+builder.Services.AddCors(options =>
+{
+    var publicOrigins = builder.Configuration.GetSection("Cors:WebAppOrigins").Get<string[]>() 
+        ?? throw new InvalidOperationException("Cors:WebAppOrigins not configured");
+    var adminOrigins = builder.Configuration.GetSection("Cors:AdminPanelOrigins").Get<string[]>() 
+        ?? throw new InvalidOperationException("Cors:AdminPanelOrigins not configured");
+
+    options.AddPolicy("AdminPolicy", policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowAnyOrigin();
+        }
+        else
+        {
+            policy.WithOrigins(adminOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+        } 
+    });
+    
+    options.AddPolicy("PublicPolicy", policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.AllowAnyHeader()
+              .WithMethods("GET")
+              .AllowAnyOrigin();
+        }
+        else
+        {
+            policy.WithOrigins(publicOrigins)
+              .AllowAnyHeader()
+              .WithMethods("GET");
+        }
+    });
+});
+
 var app = builder.Build();
 
 var port = Environment.GetEnvironmentVariable("PORT");
@@ -176,6 +188,8 @@ if(!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
