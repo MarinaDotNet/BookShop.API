@@ -78,6 +78,24 @@ public interface IBookRepository
     Task<bool> GetBookByIdAnyAsync(string id);
 
     /// <summary>
+    /// Asynchronously retrieves the top cheapest books from the collection, with optional filter for availability.
+     /// The number of books returned is determined by the <paramref name="count"/> parameter.
+    /// </summary>
+    /// <param name="count">
+    /// The maximum number of cheapest books to retrieve. Must be a positive integer.
+    /// </param>
+    /// <param name="isAvailable">
+    /// An optional parameter to filter books by their availability status. 
+    /// If provided, only books match the specified availability status will be returned.
+    /// If null, no avialability filter is applied.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a collection of the top N cheapest books
+    /// that match the specified criteria. The collection is empty if no matching books are found.
+    /// </returns>
+    Task<IReadOnlyCollection<Book>> GetTopCheapestBooksAsync(int count, bool? isAvailable);
+
+    /// <summary>
     /// Asynchronously adds a new <see cref="Book"/> to the data source.
     /// </summary>
     /// <param name="book">
