@@ -4,21 +4,26 @@ using BookShop.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
-namespace BookShop.API.Controllers;
+namespace BookShop.API.Controllers.V1;
 
 /// <summary>
 /// Represents an API controller that provides endpoints for managing and retrieving books.
+/// This controller is part of version 1.0 of the API and is secured with role-based authorization, allowing access only to users 
+/// with "admin" role. It also enables CORS for the "AdminPolicy" to allow cross-origin requests from authorized clients.
 /// </summary>
-/// <remarks>This controller is configured with the route 'books' and exposes endpoints for accessing book data.
-/// It relies on dependency injection to obtain an instance of BookService.</remarks>
-/// <param name="service">The service used to perform book-related operations. Cannot be null.</param>
+/// <remarks>
+/// This controller is configured with the route 'books' and exposes endpoints for accessing book data.
+/// It relies on dependency injection to obtain an instance of BookService.
+/// </remarks>
+/// <param name="service">
+/// The service used to perform book-related operations. Cannot be null.
+/// </param>
 [ApiController]
 [EnableCors("AdminPolicy")]
-[Authorize(Roles = "Admin")]
-[ApiVersion(1.0)]
-[Route("api/v{version:apiVersion}/[controller]/books")]
+[Authorize(Roles = "admin")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class BooksController(BookService service) : ControllerBase
 {
     private readonly BookService _service = service;
@@ -35,6 +40,7 @@ public class BooksController(BookService service) : ControllerBase
     /// Returned with HTTP 200 status code.
     /// </returns>
     [HttpGet("all")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> GetAll(bool? isAvailable)
     {
         return Ok( await _service.GetAllBooksAsync(isAvailable));
@@ -50,6 +56,7 @@ public class BooksController(BookService service) : ControllerBase
     /// An <see cref="IActionResult"/> containing the book with the specified identifier.
     /// </returns>
     [HttpGet("{id}")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> GetById(string id)
     {
         return Ok( await _service.GetBookByIdAsync(id));
@@ -64,7 +71,8 @@ public class BooksController(BookService service) : ControllerBase
     /// <returns>
     /// An <see cref="IActionResult"/> containing the list of books that exactly match the search criteria.
     /// </returns>
-    [HttpGet("search-exact") ]
+    [HttpGet("search-exact")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request)
     {
         return Ok( await _service.GetBooksByExactMatchAsync(request));
@@ -81,6 +89,7 @@ public class BooksController(BookService service) : ControllerBase
     /// objects that partially match the search criteria. Returns HTTP 200 status code.
     /// </returns>
     [HttpGet("search-partial-match")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> GetByPartialMatch([FromQuery] BookSearchRequestDto request)
     {
         return Ok( await _service.GetBooksByPartialMatchAsync(request));
@@ -99,6 +108,7 @@ public class BooksController(BookService service) : ControllerBase
     /// <response code="404">A book with the specified identifier does not exist.</response>
     /// <response code="400">The provided identifier is invalid.</response>
     [HttpGet("is-exists/{id}")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> Exists(string id)
     {
         var exists = await _service.IsBookExistsAsync(id);
@@ -121,6 +131,7 @@ public class BooksController(BookService service) : ControllerBase
     /// Calls <see cref="BookService.CreateBookAsync"/> to perform the creation.
     /// </remarks>
     [HttpPost("add")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> CreateBook([FromBody] BookDto bookDto)
     {
         var createdBook = await _service.CreateBookAsync(bookDto);
@@ -141,6 +152,7 @@ public class BooksController(BookService service) : ControllerBase
     /// <response code="400">The provided identifier is invalid.</response>
     /// <response code="404">A book with the specified identifier was not found.</response>
     [HttpDelete("{id}")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> DeleteById(string id)
     {
        await _service.DeleteBookByIdAsync(id);
@@ -158,6 +170,7 @@ public class BooksController(BookService service) : ControllerBase
     /// or <c>400 Bad Request</c> if the route ID does not match the body ID.
     /// </returns>
     [HttpPut("{id}")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> UpdateBook(string id, [FromBody]BookDto bookDto)
     {
         if (!id.Equals(bookDto.Id, StringComparison.OrdinalIgnoreCase))
@@ -180,6 +193,7 @@ public class BooksController(BookService service) : ControllerBase
     /// or <c>400 Bad Request</c> if the route ID does not match the body ID.
     /// </returns>
     [HttpPatch("update-partly/{id}")]
+    [MapToApiVersion("1.0")]
     public async Task<IActionResult> UpdatePartlyBook(string id, [FromBody]BookUpdateDto bookDto)
     {
         if(!id.Equals(bookDto.Id, StringComparison.OrdinalIgnoreCase))
