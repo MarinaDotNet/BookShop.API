@@ -246,6 +246,34 @@ public class AuthServices(
 
         return new LoginResultDto(accessToken, refreshToken);
     }
+
+    /// <summary>
+    /// Logs out a user by invalidating the provided refresh token. This method marks the refresh token as revoked in 
+    /// the database, preventing its future use for obtaining new access tokens.
+    /// </summary>
+    /// <param name="refreshToken">
+    /// The refresh token to be invalidated. Cannot be null or empty.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the logout operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    public async Task LogoutAsync(string refreshToken, CancellationToken cancellationToken)
+    {
+        var hash = _refreshTokenHasher.Hash(refreshToken);
+
+        var token = await _userRepository.GetRefreshTokenByHashAsync(hash, cancellationToken);
+
+        if(token is null)
+        {
+            return;
+        }
+
+        token.RevokedAt = DateTime.UtcNow;
+        await _userRepository.SaveChangesAsync(cancellationToken);
+    }
     #region of private methods
     /// <summary>
     /// Generates an email confirmation link for the specified user ID.

@@ -181,6 +181,49 @@ public class UserRepository(AuthDbContext context) : IUserRepository
         await _context.RefreshTokens.AddAsync(refreshToken, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    /// <summary>
+    /// Asynchronously retrieves a refresh token entity from the data store based on its hashed value. This method is used to find 
+    /// a refresh token that matches the provided hash, which is typically generated from the original token value for security purposes. The returned refresh token can be used to validate token renewal requests or to manage active sessions for users.
+    /// </summary>
+    /// <param name="hash">
+    /// The hashed value of the refresh token to be retrieved. This should be a non-null, non-empty string that represents the 
+    /// hash of the original refresh token. The method will search for a refresh token entity in the data store that matches this 
+    /// hash.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation. This allows the caller to gracefully handle 
+    /// cancellation requests, such as when a user logs out or when the application is shutting down.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the refresh token entity if found, or null if 
+    /// not found.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the provided hash is null, empty, or consists only of whitespace characters.
+    /// </exception>
+    public async Task<RefreshToken?> GetRefreshTokenByHashAsync(string hash, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(hash, nameof(hash));
+
+        return await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.TokenHash == hash, cancellationToken);
+    }
+
+    /// <summary>
+    /// Asynchronously saves any pending changes in the context to the data store. This method is typically used to persist changes 
+    /// made to user and role entities after performing operations such as adding or updating records. The method accepts a 
+    /// cancellation token that can be used to cancel the save operation if needed, allowing for graceful handling of cancellation 
+    /// requests in scenarios such as application shutdown or user logout.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
+     _context.SaveChangesAsync(cancellationToken);
+
     #endregion of Role Management
 
 }

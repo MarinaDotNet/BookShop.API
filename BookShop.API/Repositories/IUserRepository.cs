@@ -114,5 +114,32 @@ public interface IUserRepository
     /// A task that represents the asynchronous operation.
     /// </returns>
     Task SaveRefreshTokenAsync(RefreshToken refreshToken, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Asynchronously retrieves a refresh token from the data store by its hashed value.
+    /// </summary>
+    /// <param name="hash">
+    /// The hashed value of the refresh token to retrieve. This value should be the result of hashing the original refresh token 
+    /// using the same hashing algorithm and salt used when saving the token.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the refresh token entity if found, or null 
+    /// if not found.
+    /// </returns>
+    Task<RefreshToken?> GetRefreshTokenByHashAsync(string hash, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Asynchronously removes a refresh token from the data store, effectively invalidating it for future use.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    Task SaveChangesAsync(CancellationToken cancellationToken);
     #endregion
 }

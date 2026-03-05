@@ -134,4 +134,25 @@ public class AuthController(AuthServices auth) : ControllerBase
         var result = await _auth.LoginAsync(dto, ip, userAgent, cancellationToken);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Logs out the user and invalidates their refresh token.
+    /// </summary>
+    /// <param name="logoutDto">
+    /// The logout payload containing the refresh token to be invalidated.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the request.
+    /// </param>
+    /// <returns>
+    /// (204) <see cref="NoContentResult"/> when the logout operation is completed successfully.
+    /// </returns>
+    [HttpPost("logout")]
+    [Authorize(Roles = "user, admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Logout([FromBody] LogoutDto logoutDto, CancellationToken cancellationToken)
+    {
+        await _auth.LogoutAsync(logoutDto.RefreshToken, cancellationToken);
+        return NoContent();
+    }
 }
