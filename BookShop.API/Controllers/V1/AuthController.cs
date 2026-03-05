@@ -114,11 +114,12 @@ public class AuthController(AuthServices auth) : ControllerBase
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Login([FromBody] UserLoginDto dto, CancellationToken cancellationToken)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var userAgent = Request.Headers.UserAgent.ToString();
         var result = await _auth.LoginAsync(dto, ip, userAgent, cancellationToken);
-        return Ok(new { result });
+        return Ok(result);
     }
 }
