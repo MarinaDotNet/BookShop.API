@@ -111,6 +111,18 @@ public class AuthController(AuthServices auth) : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Authenticates a user and issues a JWT token upon successful login.
+    /// </summary>
+    /// <param name="dto">
+    /// The login payload containing the username and password.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancelation token that can be used to cancel the request.
+    /// </param>
+    /// <returns>
+    /// (200) <see cref="OkObjectResult"/> with the issued JWT token.
+    /// </returns>
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [AllowAnonymous]
