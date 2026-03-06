@@ -179,4 +179,49 @@ public class AuthController(AuthServices auth) : ControllerBase
         var result = await _auth.RefreshTokenAsync(refreshToken.RefreshToken, ip, userAgent, cancellationToken);
         return Ok(result); 
     }
+
+    /// <summary>
+    /// Revokes all active refresh tokens for the currently authenticated user, effectively logging the user out from the all devices.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the request.
+    /// </param>
+    /// <returns>
+    /// Returns <see cref="StatusCodes.Status204NoContent"/> when the operation completes successfully.
+    /// </returns>
+    /// <remarks>
+    /// This endpoint requires authentication and uses the current user's identity from the access token to revoke all active refresh tokens.
+    /// </remarks>
+    [HttpPost("lougout-all")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> LogoutAll(CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+
+        await _auth.LogoutAllAsync(userId, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Retrieves the identifier of the currently authenticated user from the claims contained in the access token.
+    /// </summary>
+    /// <returns>
+    /// The identifier of the authenticated user.
+    /// </returns>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown when the user identifier claim is missing or invalid.
+    /// </exception>
+    private int GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if(!int.TryParse(userIdClaim, out var userId))
+        {
+            throw new UnauthorizedAccessException("Invalid user identifier.");
+        }
+
+        return userId;
+    }
 }
