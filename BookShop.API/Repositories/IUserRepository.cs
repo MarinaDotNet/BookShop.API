@@ -141,5 +141,24 @@ public interface IUserRepository
     /// A task that represents the asynchronous operation.
     /// </returns>
     Task SaveChangesAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Asynchronously revokes all refresh tokens associated with a specific user, typically used when a user's credentials are 
+    /// compromised or when they log out from all devices. This method should update the relevant refresh token records in the 
+    /// data store to mark them as revoked, using the provided timestamp to indicate when the revocation occurred.
+    /// </summary>
+    /// <param name="userId">
+    /// The unique identifier of the user whose refresh tokens are to be revoked.
+    /// </param>
+    /// <param name="revokedAt">
+    /// The date and time when the refresh tokens are to be marked as revoked.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    Task RevokeAllRefreshTokensForUserAsync(int userId, DateTime revokedAt, CancellationToken cancellationToken);
     #endregion
 }

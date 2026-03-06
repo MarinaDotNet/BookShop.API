@@ -224,6 +224,46 @@ public class UserRepository(AuthDbContext context) : IUserRepository
     public Task SaveChangesAsync(CancellationToken cancellationToken) =>
      _context.SaveChangesAsync(cancellationToken);
 
+    /// <summary>
+    /// Asynchronously revokes all active refresh tokens associated with a specific user by setting their revoked timestamp. 
+    /// This method is typically used when a user logs out or when there is a need to invalidate all existing sessions for a user. 
+    /// The method retrieves all refresh tokens for the specified user that have not yet been revoked, updates their revoked 
+    /// timestamp to the provided value, and saves the changes to the data store. If there are no active tokens to revoke, 
+    /// the method simply returns without making any changes.
+    /// </summary>
+    /// <param name="userId">
+    /// The unique identifier of the user whose refresh tokens are to be revoked. This should be a positive integer 
+    /// corresponding to an existing user in the data store.
+    /// </param>
+    /// <param name="revokedAt">
+    /// The date and time when the refresh tokens are to be marked as revoked.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when the provided userId is less than or equal to zero, indicating an invalid user identifier.
+    /// </exception>
+     public async Task RevokeAllRefreshTokensForUserAsync(int userId, DateTime revokedAt, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId, nameof(userId));
+        
+        var tokens = await _context.RefreshTokens.Where(rt => rt.UserId == userId && rt.RevokedAt == null).ToListAsync(cancellationToken);
+        
+        if(tokens.Count == 0)
+        {
+            return; // No active tokens to revoke
+        }
+        
+        foreach (var token in tokens)
+        {
+            token.RevokedAt = revokedAt;
+        }
+        await _context.SaveChangesAsync(cancellationToken);
+    }
     #endregion of Role Management
 
 }
