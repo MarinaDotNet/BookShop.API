@@ -1,8 +1,10 @@
-﻿using BookShop.API.DTOs.Auth;
+using BookShop.API.DTOs.Auth;
 using BookShop.API.Exceptions;
 using BookShop.API.Models.Auth;
 using BookShop.API.Repositories;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.StaticAssets;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using static BookShop.API.Models.AuthTokens;
@@ -273,6 +275,54 @@ public class AuthServices(
 
         token.RevokedAt = DateTime.UtcNow;
         await _userRepository.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Exchanges a valid refresh token for a new access token and refresh token. Performs refresh token rotation by revoking
+    /// the current token and issuing a new pair.
+    /// </summary>
+    /// <param name="refreshToken">
+    /// The refresh token provided by the client.
+    /// </param>
+    /// <param name="ip">
+    /// The IP address of the client.
+    /// </param>
+    /// <param name="userAgent">
+    /// The user agent string of the client device.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the refresh token operation.
+    /// </param>
+    /// <returns>
+    /// A <see cref="LoginResultDto"/> containing a new access and refresh tokens.
+    /// </returns>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown if the user is not found in data base.
+    /// </exception>
+    public async Task<LoginResultDto> RefreshTokenAsync(
+        string refreshToken, 
+        string? ip, 
+        string? userAgent, 
+        CancellationToken cancellationToken)
+    {
+        var oldHash = HashRefreshToken(refreshToken);
+
+        var existingToken = await _userRepository.GetRefreshTokenByHashAsync(oldHash, cancellationToken) ?? throw new UnauthorizedAccessException("Invalid refresh token.");
+        
+        await ValidateExistingRefreshToken(existingToken, cancellationToken);
+
+        var user = await _userRepository.GetUserByIdAsync(existingToken.UserId, cancellationToken) 
+        ?? throw new UnauthorizedAccessException("User not found.");
+
+        var roles = await GetRolesOrThrow(user.Id, cancellationToken);
+
+        var tokenPair = await CreateTokenPairAsync(user, roles, ip, userAgent, cancellationToken);
+
+        RevokeToken(existingToken, tokenPair.RefreshTokenHash);
+
+        await _userRepository.SaveChangesAsync(cancellationToken);
+
+        return new LoginResultDto(tokenPair.AccessToken, tokenPair.RefreshToken);
     }
     #region of private methods
     /// <summary>
@@ -689,6 +739,115 @@ public class AuthServices(
         user.EmailConfirmationSentAt = DateTime.UtcNow;
         user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateUserAsync(user, cancellationToken);
+    }
+    
+    /// <summary>
+    /// Computes a secure hash of the provided refresh token. The hash is issued for storage and lookup instead of the raw token  value.
+    /// </summary>
+    /// <param name="refreshToken">
+    /// The refresh token to hash.
+    /// </param>
+    /// <returns>
+    /// The hashed representation of the refresh token.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown if the <paramref name="refreshToken"/> is null or consists of white spaces.
+    /// </exception>
+    private string HashRefreshToken(string refreshToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(refreshToken, nameof(refreshToken));
+
+        return _refreshTokenHasher.Hash(refreshToken);
+    }
+
+    /// <summary>
+    /// Validates the state of an existing refresh token. Ensures the token has not expired or been revoked.
+    /// </summary>
+    /// <param name="token">
+    /// The refresh token to validate.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the operation of revoking all refresh tokens of the user if the provided
+    /// <paramref name="token"/> is not null. This operation should be run for security purposes in case of the data leakage.
+    /// </param>
+    /// <returns>
+    /// A task representing an asynchronous operation.
+    /// </returns>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown if the token is expired or revoked.
+    /// </exception>
+    private async Task ValidateExistingRefreshToken(RefreshToken token, CancellationToken cancellationToken)
+    {
+        if (token.RevokedAt is not null)
+        {
+            await _userRepository.RevokeAllRefreshTokensForUserAsync(token.UserId, DateTime.UtcNow, cancellationToken);
+            throw new UnauthorizedAccessException("Refresh token has been revoked.");
+        }
+
+        if(token.ExpiresAt <= DateTime.UtcNow)
+        {
+            throw new UnauthorizedAccessException("Refresh token has expired.");
+        }
+    }
+
+    /// <summary>
+    /// Revokes a refresh token and records the hash of the token that replaced it.
+    /// </summary>
+    /// <param name="token">
+    /// The refresh token to revoke.
+    /// </param>
+    /// <param name="replacedByTokenHash">
+    /// Hash of the new refresh token that rplaced the revoked token.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if the provided <paramref name="token"/> is null.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown if the provided <paramref name="replacedByTokenHash"/> is null or consists of the white spaces.
+    /// </exception> 
+    private static void RevokeToken(RefreshToken token, string replacedByTokenHash)
+    {
+        ArgumentNullException.ThrowIfNull(token, nameof(token));
+        ArgumentException.ThrowIfNullOrWhiteSpace(replacedByTokenHash, nameof(replacedByTokenHash));
+
+        token.RevokedAt = DateTime.UtcNow;
+        token.ReplacedByTokenHash = replacedByTokenHash;
+    }
+
+    /// <summary>
+    /// Generates a new access token and refresh token for the specified user. The refresh token is persisted in 
+    /// the data store and its hash is returned for rotation tracking.
+    /// </summary>
+    /// <param name="user">
+    /// The authenticated user.
+    /// </param>
+    /// <param name="roles">
+    /// Roles associated with the current <paramref name="user"/>.
+    /// </param>
+    /// <param name="ip">
+    /// The client IP address.
+    /// </param>
+    /// <param name="userAgent">
+    /// The client user agent.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the operation of creating a refresh token.
+    /// </param>
+    /// <returns>
+    /// A tuple containing the access token, refresh token. and refresh token hash.
+    /// </returns>
+    private async Task<(string AccessToken, string RefreshToken, string RefreshTokenHash)> CreateTokenPairAsync(
+        User user, 
+        IReadOnlyCollection<Role> roles, 
+        string?  ip, 
+        string? userAgent, 
+        CancellationToken cancellationToken)
+    {
+        var accessToken = CreateAccessToken(user, roles);
+        var refreshToken = await CreateRefreshTokenAsync(user.Id, ip, userAgent, cancellationToken);
+        var refreshTokenHash = _refreshTokenHasher.Hash(refreshToken);
+
+        return (accessToken, refreshToken, refreshTokenHash);
     }
     #endregion of private methods
 }
