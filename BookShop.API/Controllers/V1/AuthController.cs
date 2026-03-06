@@ -22,7 +22,7 @@ namespace BookShop.API.Controllers;
 [EnableCors("PublicPolicy")]
 [ApiVersion(1.0)]
 [Route("api/v{version:apiVersion}/auth")]
-public class AuthController(AuthServices auth) : ControllerBase
+public class AuthController(AuthServices auth) : BaseApiController
 {
     private readonly AuthServices _auth = auth;
 
@@ -202,26 +202,5 @@ public class AuthController(AuthServices auth) : ControllerBase
 
         await _auth.LogoutAllAsync(userId, cancellationToken);
         return NoContent();
-    }
-
-    /// <summary>
-    /// Retrieves the identifier of the currently authenticated user from the claims contained in the access token.
-    /// </summary>
-    /// <returns>
-    /// The identifier of the authenticated user.
-    /// </returns>
-    /// <exception cref="UnauthorizedAccessException">
-    /// Thrown when the user identifier claim is missing or invalid.
-    /// </exception>
-    private int GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-        if(!int.TryParse(userIdClaim, out var userId))
-        {
-            throw new UnauthorizedAccessException("Invalid user identifier.");
-        }
-
-        return userId;
     }
 }
