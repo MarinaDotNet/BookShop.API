@@ -155,4 +155,28 @@ public class AuthController(AuthServices auth) : ControllerBase
         await _auth.LogoutAsync(logoutDto.RefreshToken, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>
+    /// Refreshes the user's authentication token.
+    /// </summary>
+    /// <param name="refreshToken">
+    /// The refresh token provided in the request body to obtain a new JWT token.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the request.
+    /// </param>
+    /// <returns>
+    /// (200) <see cref="OkObjectResult"/> with the refreshed JWT token.
+    /// </returns>
+    [HttpPost("refresh-token")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RefreshToken([FromBody] LogoutDto refreshToken, CancellationToken cancellationToken)
+    {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAgent = Request.Headers.UserAgent.ToString();
+        var result = await _auth.RefreshTokenAsync(refreshToken.RefreshToken, ip, userAgent, cancellationToken);
+        return Ok(result); 
+    }
 }
