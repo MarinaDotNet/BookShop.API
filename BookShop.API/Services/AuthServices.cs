@@ -324,6 +324,27 @@ public class AuthServices(
 
         return new LoginResultDto(tokenPair.AccessToken, tokenPair.RefreshToken);
     }
+    
+    /// <summary>
+    /// Revokes all active refresh tokens for the specified user.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the user whose refresh tokens will be revoked.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the refresh token operation.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown if the specified identifier is negative or zero.
+    /// </exception>
+    public async Task LogoutAllAsync(int userId, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId);
+        await _userRepository.RevokeAllRefreshTokensForUserAsync(userId, DateTime.UtcNow, cancellationToken);
+    }
     #region of private methods
     /// <summary>
     /// Generates an email confirmation link for the specified user ID.
