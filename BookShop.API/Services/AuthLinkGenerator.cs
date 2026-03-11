@@ -27,7 +27,7 @@ public class AuthLinkGenerator : IAuthLinkGenerator
         var _baseUrlString = options.Value.PublicBaseUrl
             ?? throw new InvalidOperationException("PublicBaseUrl not configured.");
 
-        _baseUri = new Uri($"https://{_baseUrlString}/");
+        _baseUri = new Uri($"{_baseUrlString}/api/v1/");
     }
 
     /// <summary>
