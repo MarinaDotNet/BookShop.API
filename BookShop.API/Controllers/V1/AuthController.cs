@@ -203,4 +203,65 @@ public class AuthController(AuthServices auth) : BaseApiController
         await _auth.LogoutAllAsync(userId, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>
+    /// Initiates deletion of the currently authenticated user's account by validation the provided password and sending an account
+    /// deletion confirmation link.
+    /// </summary>
+    /// <param name="dto">
+    /// The request model containing the user's current password.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="NoContentResult"/> when the deletion request is accepted and the confirmation email is sent. 
+    /// </returns>
+    /// <response code="204">
+    /// The account deletion request was accepted and the confiramtion email was sent.
+    /// </response>
+    /// <response code="401">
+    /// The user is not authorzed or provded inavlid credentials.
+    /// </response>
+    [HttpDelete("delete-account")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> DeleteUserAccount([FromBody] AccountDeleteDto dto, CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+        await _auth.RequestAccountDeletionAsync(userId, dto.Password, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Confirms account deletion using the token provided in the confirmation link and permanently marks the user account as deleted.
+    /// </summary>
+    /// <param name="token">
+    /// The account deletion confirmation token from the query string.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A plain-text confirmation message when account deletion is completed successfully.
+    /// </returns>
+    /// <response code="200">
+    /// The account deletion was confirmed successfully.
+    /// </response>
+    /// <response code="401">
+    /// The provided token is invalid or expired.
+    /// </response>
+    /// <response code="404">
+    /// The target user account was not found.
+    /// </response>
+    [HttpGet("confirm-account-deletion")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ConfirmAccountDeletion([FromQuery] string token, CancellationToken cancellationToken)
+    {
+        await _auth.ConfirmAccountDeletionAsync(token, cancellationToken);
+        return Content("Account deletion confirmed successfully.", "text/plain");
+    }
 }
