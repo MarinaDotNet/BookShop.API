@@ -4,6 +4,7 @@ using BookShop.API.Models.Auth;
 using BookShop.API.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.StaticAssets;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -344,6 +345,88 @@ public class AuthServices(
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId);
         await _userRepository.RevokeAllRefreshTokensForUserAsync(userId, DateTime.UtcNow, cancellationToken);
+    }
+    
+    /// <summary>
+    /// Initiates account deletion for the specified user by validating the provided password and sending an account deletion 
+    /// confirmation link to the user's confirmed email address.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the currently authenticated user requesting account deletion.
+    /// </param>
+    /// <param name="password">
+    /// The user's current password used to verify the deletion request.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="password"/> is null, empty, or consists only of white spaces.
+    /// </exception>
+    /// <exception cref="UnauthorizedAccessExcepiton">
+    /// Thrown when the user does not exists, is inactive, is deleted, is not email-confirmed, or when is provided password is invalid.
+    /// </exception>
+    public async Task RequestAccountDeletionAsync(int userId, string password, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(password, nameof(password));
+
+        var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
+
+        if(user == null || !user.IsActive || user.IsDeleted || !user.IsEmailConfirmed)
+        {
+            throw new UnauthorizedAccessException("Invalid credentials.");
+        }
+
+        VerifyPasswordOrThrow(user, password);
+
+        await SendAccountDeletionConfirmaitonLinkAsync(user, cancellationToken);
+    }
+
+    /// <summary>
+    /// Confirms account deletion using the provided account deletion token, revokes all refresh tokens for the user,
+    /// and marks the account as deleted.
+    /// </summary>
+    /// <param name="token">
+    /// The account deletion confirmation token received from the email link.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="InvalidTokenException">
+    /// Thrown when the provided token is invalid, expired, or does not match the expected purpose.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="token"/> is null, empty or consists only of white space.
+    /// </exception>
+    public async Task ConfirmAccountDeletionAsync(string token, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(token, nameof(token));
+
+        if(!_authTokenService.TryValidateToken(token, AuthTokenPurpose.AccountDeletion ,out var payload))
+        {
+            throw new InvalidTokenException();
+        }
+
+        var user = await _userRepository.GetUserByIdAsync(payload!.UserId, cancellationToken);
+
+        if (user is null || user.IsDeleted && !user.IsActive)
+        {
+            return;
+        }
+
+        user.IsDeleted = true;
+        user.IsActive = false;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _userRepository.RevokeAllRefreshTokensForUserAsync(user.Id, user.UpdatedAt ,cancellationToken);
+
+        await _userRepository.UpdateUserAsync(user, cancellationToken);
     }
     #region of private methods
     /// <summary>
@@ -870,5 +953,43 @@ public class AuthServices(
 
         return (accessToken, refreshToken, refreshTokenHash);
     }
+
+    /// <summary>
+    /// Generates and sends an account deletion confirmation link to the specified user's email address and updates the user's
+    /// last modification timestamp.
+    /// </summary>
+    /// <param name="user">
+    /// The user whose account deletion confirmation email should be sent.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the operation
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    private async Task SendAccountDeletionConfirmaitonLinkAsync(User user, CancellationToken cancellationToken)
+    {
+        var confirmationLink = CreateDeleteAccountConfirmationLink(user.Id);
+        await _emailSender.SendAccountDeletionConfirmationAsync(user.Email, confirmationLink, cancellationToken);
+
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateUserAsync(user, cancellationToken);
+    }
+
+    /// <summary>
+    /// Creates an account deletion confirmation link containing a time limited token for the specified user identifier.
+    /// </summary>
+    /// <param name="id">
+    /// The identifier of the user for whom the confirmation link is created.
+    /// </param>
+    /// <returns>
+    /// A fully qualified <see cref="Uri"/> that points to the account deletion confirmation endpoint 
+    /// </returns>
+    private Uri CreateDeleteAccountConfirmationLink(int id)
+    {
+        var token = _authTokenService.CreateToken(AuthTokenPurpose.AccountDeletion, id, DateTime.UtcNow.AddHours(24));
+        return _authLinkGenerator.CreateAccountDeletionConfirmationLink(token);
+    }
+
     #endregion of private methods
 }
