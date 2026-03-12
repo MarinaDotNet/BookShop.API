@@ -160,5 +160,30 @@ public interface IUserRepository
     /// A task that represents the asynchronous operation.
     /// </returns>
     Task RevokeAllRefreshTokensForUserAsync(int userId, DateTime revokedAt, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Asynchronously retrieves a deleted user whose normalized email matches the specified value.
+    /// </summary>
+    /// <remarks>This method performs a case-insensitive search using the normalized email value. The returned
+    /// user is not tracked by the context.</remarks>
+    /// <param name="normalizedEmail">The normalized email address to search for. Cannot be null.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the user whose normalized email
+    /// matches the specified value, or null if no such user exists.</returns>
+    Task<User?> GetDeletedUserByNormalizedEmailAsync(string normalizedEmail, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Asynchronously retrieves a deleted user by their unique identifier. Ignores query filters.
+    /// </summary>
+    /// <param name="userId">
+    /// The unique identifier of the user to retrieve.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the user with the specified identifier,
+    /// </returns>
+    Task<User?> GetDeletedUserByIdAsync(int id, CancellationToken cancellationToken);
     #endregion
 }
