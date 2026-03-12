@@ -61,6 +61,12 @@ public class AuthLinkGenerator : IAuthLinkGenerator
         Build("auth/confirm-sensitive-change", token);
 
     /// <summary>
+    /// Creates a confirmation link for account recovery for user verification.
+    /// </summary>
+    public Uri CreateAccountRecoveryConfirmationLink(string token) =>
+        Build("auth/confirm-account-recovery", token);
+
+    /// <summary>
     /// Builds an absolute authentication link by combining a route path with a URL-safe token.
     /// </summary>
     /// <remarks>
