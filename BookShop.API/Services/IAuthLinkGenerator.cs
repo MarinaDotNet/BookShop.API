@@ -40,4 +40,9 @@ public interface IAuthLinkGenerator
     /// Creates a confirmation link for sensitive information change verification.
     /// </summary>
     Uri CreateSensitiveChangeConfirmationLink(string token);
+
+    /// <summary>
+    /// Creates a confirmation link for account recovery for user verification.
+    /// </summary>
+    Uri CreateAccountRecoveryConfirmationLink(string token);
 }
