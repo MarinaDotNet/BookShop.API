@@ -15,7 +15,8 @@ public class AuthTokens
         PasswordReset,
         EmailChange,
         AccountDeletion,
-        SensitiveChange
+        SensitiveChange,
+        AccountRecovery
     }
 
     /// <summary>
