@@ -215,6 +215,47 @@ public class BrevoAuthEmailSender : IAuthEmailSender
     }
 
     /// <summary>
+    /// Sends an email to the specified address containing a confirmation link for a account recovery for account that was deleted.
+    /// </summary>
+    /// <remarks>
+    /// This method is typically used to verify user-initiated sensitive changes and helps prevent
+    /// unauthorized modifications. The email includes both HTML and plain text content for compatibility with various
+    /// email clients.
+    /// </remarks>
+    /// <param name="toEmail">
+    /// The recipient's email address to which the confirmation message will be sent. Cannot be null, empty, or consist
+    /// only of white-space characters.
+    /// </param>
+    /// <param name="confirmationLink">
+    /// The URI containing the confirmation link that the recipient must follow to confirm the account recovery. Cannot
+    /// be null.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the email sending operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation of sending the confirmation email.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">The <see cref="ArgumentNullException"/> thrown if the <paramref name="confirmationLink"/> is null. </exception>
+    public async Task SendAccountRecoveryConfirmationAsync(string toEmail, Uri confirmationLink, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(confirmationLink, nameof(confirmationLink));
+
+        string subject = "Confirm account recovery";
+        string textContent = $"Confirm account recovery: {confirmationLink}";
+        string htmlContent = $"""
+        <p>Please confirm account recovery by clicking the link below:</p>
+        <p><a href="{confirmationLink}">Confirm Account Recovery</a></p>
+        <p>If you did not request this, please ignore the email.</p>
+        <p>If the link doesn't work, copy and paste the following URL into your browser:</p>
+        <p>{confirmationLink}</p>
+        <p>Thank you,<br/>The BookShop Team</p>
+        """;
+
+        await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
+    }
+
+    /// <summary>
     /// Sends an email using http client.
     /// </summary>
     /// <param name="toEmail">

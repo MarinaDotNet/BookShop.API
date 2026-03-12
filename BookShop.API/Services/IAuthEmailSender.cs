@@ -63,4 +63,27 @@ public interface IAuthEmailSender
     /// <returns>A task that represents the asynchronous operation.</returns>
     Task SendSensitiveChangeConfirmationAsync(string toEmail, Uri confirmationLink, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Sends an email to the specified address containing a confirmation link for a account recovery for account that was deleted.
+    /// </summary>
+    /// <remarks>
+    /// This method is typically used to verify user-initiated sensitive changes and helps prevent
+    /// unauthorized modifications. The email includes both HTML and plain text content for compatibility with various
+    /// email clients.
+    /// </remarks>
+    /// <param name="toEmail">
+    /// The recipient's email address to which the confirmation message will be sent. Cannot be null, empty, or consist
+    /// only of white-space characters.
+    /// </param>
+    /// <param name="confirmationLink">
+    /// The URI containing the confirmation link that the recipient must follow to confirm the account recovery. Cannot
+    /// be null.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the email sending operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation of sending the confirmation email.
+    /// </returns>
+    Task SendAccountRecoveryConfirmationAsync(string toEmail, Uri confirmationLink, CancellationToken cancellationToken);
 }
