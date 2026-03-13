@@ -428,6 +428,82 @@ public class AuthServices(
 
         await _userRepository.UpdateUserAsync(user, cancellationToken);
     }
+
+    /// <summary>
+    /// Initiates account recovery for the provided email address, validating the provided email and sending an account recovery 
+    /// confirmation link to the provided email if it is a valid email address and exists in the database with a deleted flag.
+    /// </summary>
+    /// <param name="email">
+    /// The account email address that is requested to recover.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="email"/> is null, empty, or consists of white spaces.
+    /// </exception>
+    public async Task RequestAccountRecoveryAsync(string email, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email, nameof(email));
+        ValidateEmailPatern(email);
+
+        var normailzedEmail = NormalizeInput(email);
+
+        var user = await _userRepository.GetDeletedUserByNormalizedEmailAsync(normailzedEmail, cancellationToken);
+        if (user is null)
+        {
+            return;
+        }
+
+        await SendAccountRecoveryConfirmationLinkAsync(user, cancellationToken);
+    }
+
+    /// <summary>
+    /// Confirms account recovery using the provided recovery token, revokes all refresh tokens for the account, 
+    /// and marks the account as active and not deleted.
+    /// </summary>
+    /// <param name="token">
+    /// The account recovery confirmation token recieved from the email link.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A taks that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="InvalidTokenException">
+    /// Thrown when the provided token is invalid, expired, or doesn't match the expected purpose.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the <paramref name="token"/> is null, empty, or consists of white spaces.
+    /// </exception>
+    public async Task ConfirmAccountRecoveryAsync(string token, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(token, nameof(token));
+
+        if(!_authTokenService.TryValidateToken(token, AuthTokenPurpose.AccountRecovery, out var payload))
+        {
+            throw new InvalidTokenException();
+        }
+
+        var user = await _userRepository.GetDeletedUserByIdAsync(payload!.UserId, cancellationToken);
+
+        if(user is null || !user.IsDeleted)
+        {
+            return;
+        }
+
+        user.IsDeleted = false;
+        user.IsActive = true;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _userRepository.RevokeAllRefreshTokensForUserAsync(user.Id, user.UpdatedAt, cancellationToken);
+
+        await _userRepository.UpdateUserAsync(user, cancellationToken);
+    }
     #region of private methods
     /// <summary>
     /// Generates an email confirmation link for the specified user ID.
@@ -991,5 +1067,39 @@ public class AuthServices(
         return _authLinkGenerator.CreateAccountDeletionConfirmationLink(token);
     }
 
+    /// <summary>
+    /// Generates and sends an account recovery confirmation link to the specified user's email address and updates the user's
+    /// last modification timestamp.
+    /// </summary>
+    /// <param name="user">
+    /// The user whose account recovery confirmation email should be sent.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the operation
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    private async Task SendAccountRecoveryConfirmationLinkAsync(User user, CancellationToken cancellationToken)
+    {
+        Uri confirmationLink = CreateAccountRecoveryConfirmationLink(user.Id);
+
+        await _emailSender.SendAccountRecoveryConfirmationAsync(user.Email, confirmationLink, cancellationToken);
+    }
+
+    /// <summary>
+    /// Creates an account recovery confirmation link containing a time limited token for the specified user identifier.
+    /// </summary>
+    /// <param name="id">
+    /// The identifier of the user for whom the confirmation link is created.
+    /// </param>
+    /// <returns>
+    /// A fully qualified <see cref="Uri"/> that points to the account recovery confirmation endpoint 
+    /// </returns>
+    private Uri CreateAccountRecoveryConfirmationLink(int id)
+    {
+        var token = _authTokenService.CreateToken(AuthTokenPurpose.AccountRecovery, id, DateTime.UtcNow.AddHours(24));
+        return _authLinkGenerator.CreateAccountRecoveryConfirmationLink(token);
+    }
     #endregion of private methods
 }
