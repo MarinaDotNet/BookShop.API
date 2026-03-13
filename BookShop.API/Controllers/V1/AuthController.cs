@@ -264,4 +264,56 @@ public class AuthController(AuthServices auth) : BaseApiController
         await _auth.ConfirmAccountDeletionAsync(token, cancellationToken);
         return Content("Account deletion confirmed successfully.", "text/plain");
     }
+
+    /// <summary>
+    /// Initiates recovery of the requested account by validating the provided email address and sending an account
+    /// recovery confirmation link to the provided email address.
+    /// </summary>
+    /// <param name="dto">
+    /// The request model contains the email address of the requested account recovery.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="NoContentResult"/> when the recovery request is accepted and the confirmation email is sent. 
+    /// </returns>
+    /// <response code="204">
+    /// The account recovery request was accepted and the confiramtion email was sent.
+    /// </response>
+    [HttpPost("recover-account")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> RecoverAccount([FromBody] AccountRequestDto dto, CancellationToken cancellationToken)
+    {
+        await _auth.RequestAccountRecoveryAsync(dto.Email, cancellationToken);
+        return NoContent();
+    }
+    
+    /// <summary>
+    /// Confirms account recovery using the token provided in the confirmation link and marks the user account as undeleted.
+    /// </summary>
+    /// <param name="token">
+    /// The account recovery confirmation token from the query string.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A plain-text confirmation message when account recovery is completed successfully.
+    /// </returns>
+    /// <response code="200">
+    /// The account recovery was confirmed successfully.
+    /// </response>
+    /// <response code="401">
+    /// The provided token is invalid or expired.
+    /// </response>
+    [HttpGet("confirm-account-recovery")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ConfirmAccountRecovery([FromQuery] string token, CancellationToken cancellationToken)
+    {
+        await _auth.ConfirmAccountRecoveryAsync(token, cancellationToken);
+        return Content("Account recovery confirmed sucessfully.", "text/plain");
+    }
 }
