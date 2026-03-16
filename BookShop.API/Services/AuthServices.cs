@@ -554,6 +554,62 @@ public class AuthServices(
         await _userRepository.UpdateUserAsync(user, cancellationToken);
     }
 
+    /// <summary>
+    /// Updates the password of the specified user after validationg the current password and applying the password policy.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the current user.
+    /// </param>
+    /// <param name="dto">
+    /// The request containing the current and new passwords.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="userId"/> is less than or equal to zero.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="dto"/> is null.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the current or new password is empty.
+    /// </exception>
+    /// <exception cref="ForbiddenException">
+    /// Thrown when the user cannot be accessed for this operation.
+    /// </exception>
+    /// <exception cref="ValidationException">
+    /// Thrown when the new password does not meet the required policy or mathes the current password.
+    /// </exception>
+    public async Task UpdatePasswordAsync(int userId, UpdatePasswordDto dto, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId, nameof(userId));
+        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
+        if(string.IsNullOrWhiteSpace(dto.CurrentPassword) || string.IsNullOrWhiteSpace(dto.NewPassword))
+        {
+            throw new ArgumentException("The current and new passwords are required.");
+        }
+
+        var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
+        ?? throw new ForbiddenException("Access to the user account is denied.");
+
+        VerifyPasswordOrThrow(user, dto.CurrentPassword);
+        ValidatePasswordPatern(dto.NewPassword);
+
+        if(dto.CurrentPassword == dto.NewPassword)
+        {
+            throw new ValidationException("New password must be different from the current password.");
+        }
+
+        user.PasswordHash = PasswordHashing(dto.NewPassword, user);
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _userRepository.UpdateUserAsync(user, cancellationToken);
+        await _userRepository.RevokeAllRefreshTokensForUserAsync(user.Id, user.UpdatedAt, cancellationToken);
+    }
 
     #region of private methods
     /// <summary>
