@@ -354,4 +354,40 @@ public class AuthController(AuthServices auth) : BaseApiController
         return NoContent();
     }
 
+    /// <summary>
+    /// Updates the password of the currently authenticated user.
+    /// </summary>
+    /// <param name="dto">
+    /// The request containing the current and new passwords.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="NoContentResult"/> when the password is updated successfully. 
+    /// </returns>
+    /// <response code="204">
+    /// The password was updated successfully.
+    /// </response>
+    /// <response code="400">
+    /// The request payload is invalid.
+    /// </response>
+    /// <response code="401">
+    /// The user is not authenticated.
+    /// </response>
+    /// <response code="403">
+    /// The current user is not allowed to perform this action./
+    /// </response>
+    [HttpPatch("account/password")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDto dto, CancellationToken cancellationToken)
+    {
+        int userId = GetCurrentUserId();
+        await _auth.UpdatePasswordAsync(userId, dto, cancellationToken);
+        return NoContent();
+    }
 }
