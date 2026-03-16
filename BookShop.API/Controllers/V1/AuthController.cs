@@ -4,7 +4,7 @@ using BookShop.API.Services;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-namespace BookShop.API.Controllers;
+namespace BookShop.API.Controllers.V1;
 
 /// <summary>
 /// Provides authentication-related API endpoints (e.g. user registration, email confirmation and etc.).
@@ -316,4 +316,42 @@ public class AuthController(AuthServices auth) : BaseApiController
         await _auth.ConfirmAccountRecoveryAsync(token, cancellationToken);
         return Content("Account recovery confirmed sucessfully.", "text/plain");
     }
+
+    /// <summary>
+    /// Updates the username of the currently authenticated user.
+    /// </summary>
+    /// <param name="dto">
+    /// The request containing the new user name.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="NoContentResult"/> when the username is updated successfully or when the requested username mathces the current one. 
+    /// </returns>
+    /// <response code="204">
+    /// The username was updated successfully.
+    /// </response>
+    /// <response code="400">
+    /// The request payload is invalid.
+    /// </response>
+    /// <response code="403">
+    /// The user is not authenticated.
+    /// </response>
+    /// <response code="409">
+    /// The requested username is already taken.
+    /// </response>
+    [HttpPatch("account/username")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateUsername([FromBody] UpdateUsernameDto dto, CancellationToken cancellationToken)
+    {
+        int userId = GetCurrentUserId();
+        await _auth.UpdateUsernameAsync(userId, dto, cancellationToken);
+        return NoContent();
+    }
+
 }
