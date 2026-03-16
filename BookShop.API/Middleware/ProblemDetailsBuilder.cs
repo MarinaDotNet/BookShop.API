@@ -73,6 +73,7 @@ public static class ProblemDetailsBuilder
             //409 Conflict
             DbUpdateException => StatusCodes.Status409Conflict,
             MongoDuplicateKeyException => StatusCodes.Status409Conflict,
+            ConflictException => StatusCodes.Status409Conflict,
 
             _ => StatusCodes.Status500InternalServerError
         };
