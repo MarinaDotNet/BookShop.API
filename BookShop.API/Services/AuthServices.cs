@@ -504,6 +504,57 @@ public class AuthServices(
 
         await _userRepository.UpdateUserAsync(user, cancellationToken);
     }
+
+    /// <summary>
+    /// Updates the username of the specified user after validating the input and ensuring that the requested username is available.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the current user.
+    /// </param>
+    /// <param name="dto">
+    /// The request containing the new user name.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="userId"/> is less than or equal to zero.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the <see cref="UpdateUsernameDto"> is null.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the new username is null, empty, or consists only of white spaces.
+    /// </exception>
+    /// <exception cref="ForbiddenException">
+    /// Thrown when the requested username is already taken by another user.
+    /// </exception>
+    public async Task UpdateUsernameAsync(int userId, UpdateUsernameDto dto, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId, nameof(userId));
+        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
+        if (string.IsNullOrWhiteSpace(dto.NewUserName))
+        {
+            throw new ArgumentException("The new account username is required.");
+        }
+        var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
+        ?? throw new ForbiddenException("The user is not found.");
+        var normalizedUsername = NormalizeInput(dto.NewUserName);
+        if(user!.NormalizedUsername == normalizedUsername)
+        {
+            return;
+        }
+        await EnsureUsernameIsAvailable(normalizedUsername, cancellationToken);
+        user.UserName = dto.NewUserName;
+        user.NormalizedUsername = normalizedUsername;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateUserAsync(user, cancellationToken);
+    }
+
+
     #region of private methods
     /// <summary>
     /// Generates an email confirmation link for the specified user ID.
@@ -1100,6 +1151,31 @@ public class AuthServices(
     {
         var token = _authTokenService.CreateToken(AuthTokenPurpose.AccountRecovery, id, DateTime.UtcNow.AddHours(24));
         return _authLinkGenerator.CreateAccountRecoveryConfirmationLink(token);
+    }
+
+    /// <summary>
+    /// Ensures that the specified normalized username is available.
+    /// </summary>
+    /// <param name="normalizedUsername">
+    /// The normalized username to vlaidate.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the operation
+    /// </param>
+    /// <returns>
+    /// A task that represents an asynchronous operation.
+    /// </returns>
+    /// <exception cref="ConflictException">
+    /// Thrown when the specified username is already taken.
+    /// </exception> 
+    private async Task EnsureUsernameIsAvailable(string normalizedUsername, CancellationToken cancellationToken)
+    {
+        var existingUser = await _userRepository.GetUserByNormalizedUsernameAsync(normalizedUsername, cancellationToken);
+
+        if(existingUser is not null)
+        {
+            throw new ConflictException("Username is already taken.");
+        }
     }
     #endregion of private methods
 }
