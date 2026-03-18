@@ -611,6 +611,107 @@ public class AuthServices(
         await _userRepository.RevokeAllRefreshTokensForUserAsync(user.Id, user.UpdatedAt, cancellationToken);
     }
 
+    /// <summary>
+    /// Initiates email change for the specified user id, validating the provided new email and sending an email change
+    /// confirmation link to the provided new email if it is a valid email address and not exists in the database 
+    /// and if the requested account is active does not have a deleted flag.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the currently authenticated user requesting email address change.
+    /// </param>
+    /// <param name="dto">
+    /// The request containing the current password and new email address.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents an asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="userId"/> is less than or equal to zero.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="dto"/> is null.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the current password or new email address are null, empty or consits only of white spaces.
+    /// </exception>
+    /// <exception cref="ForbiddenException">
+    /// Thrown when the user cannot be accessed for this operation.
+    /// </exception>
+    /// <exception cref="ValidationException">
+    /// Thrown when the current email address and requested new email address are the same.
+    /// </exception>
+    public async Task RequestEmailChangeAsync(int userId, UpdateEmailDto dto, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId, nameof(userId));
+        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
+        if(string.IsNullOrWhiteSpace(dto.CurrentPassword) || string.IsNullOrWhiteSpace(dto.NewEmail))
+        {
+            throw new ArgumentException("The current password and new email are required.");
+        }
+        ValidateEmailPatern(dto.NewEmail);
+        var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
+        ?? throw new ForbiddenException("Access to the user account is denied.");
+        VerifyPasswordOrThrow(user, dto.CurrentPassword);
+
+        var normalizedEmail = NormalizeInput(dto.NewEmail);
+        if(normalizedEmail == user.NormalizedEmail)
+        {
+            throw new ValidationException("New email must be different from the current email.");
+        }
+        
+        await EnsureEmailIsAvailableAsync(normalizedEmail, cancellationToken);
+
+        await SendEmailChangeConfiramtionLink(userId, dto.NewEmail, cancellationToken);
+    }
+
+    /// <summary>
+    /// Confirms the email change using the provided recovery token, revokes all refresh tokens for the account, 
+    /// updates the email address to the new and marks the email address as confirmed.
+    /// </summary>
+    /// <param name="token">
+    /// The email change confirmation token recieved from the email link.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A taks that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="InvalidTokenException">
+    /// Thrown when the provided token is invalid, expired, or doesn't match the expected purpose.
+    /// </exception>
+    /// <exception cref="ArgumentNullxception">
+    /// Thrown when the <paramref name="token"/> is null, empty, or consists of white spaces.
+    /// </exception>
+    public async Task ConfirmEmailChangeAsync(string token, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(token, nameof(token));
+        if(!_authTokenService.TryValidateToken(token, AuthTokenPurpose.EmailChange, out var payload))
+        {
+            throw new InvalidTokenException();
+        }
+        var user = await _userRepository.GetUserByIdAsync(payload!.UserId, cancellationToken);
+        if(user is null || user.IsDeleted || !user.IsActive)
+        {
+            return;
+        }
+        var normalizedEmail = NormalizeInput(payload!.NewEmail!);
+        if(user.IsEmailConfirmed && user.NormalizedEmail == normalizedEmail)
+        {
+            return;
+        }      
+        await EnsureEmailIsAvailableAsync(normalizedEmail, cancellationToken);
+
+        user.Email = payload!.NewEmail!;
+        user.NormalizedEmail = normalizedEmail;
+        user.IsEmailConfirmed = true;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateUserAsync(user, cancellationToken);
+        await LogoutAllAsync(user.Id, cancellationToken);
+    }
     #region of private methods
     /// <summary>
     /// Generates an email confirmation link for the specified user ID.
@@ -1231,6 +1332,73 @@ public class AuthServices(
         if(existingUser is not null)
         {
             throw new ConflictException("Username is already taken.");
+        }
+    }
+
+    /// <summary>
+    /// Generates and sends a new email confirmation link to the new email address.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the user for whom the confirmation email is sent.
+    /// </param>
+    /// <param name="newEmail">
+    /// The new email address is where to send the confirmation link, and it needs to be included in the token payload.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents an asynchronous operation.
+    /// </returns>
+    private async Task SendEmailChangeConfiramtionLink(int userId, string newEmail, CancellationToken cancellationToken)
+    {
+        Uri confirmationLink = CreateEmailChangeConfirmationLink(userId, newEmail);
+        await _emailSender.SendEmailChangeConfirmationAsync(newEmail, confirmationLink, cancellationToken);
+    }
+
+    /// <summary>
+    /// Creates an email change confirmation link containing a time limited token, new email address for the specified user identifier.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the user for whom the confirmation link is created.
+    /// </param>
+    /// <param name="newEmail">
+    /// New email address that needs to be confirmed.
+    /// </param>
+    /// <returns>
+    /// A fully qualified <see cref="Uri"/> that point to the new email confirmation endpoint.
+    /// </returns>
+    private Uri CreateEmailChangeConfirmationLink(int userId, string newEmail)
+    {
+        var token = _authTokenService.CreateToken(AuthTokenPurpose.EmailChange, userId, DateTime.UtcNow.AddHours(24), newEmail);
+        return _authLinkGenerator.CreateEmailChangeConfirmationLink(token);
+    }
+
+    /// <summary>
+    /// Ensures that specified normalized email address is available.
+    /// </summary>
+    /// <param name="normalizedEmail">
+    /// The normalized email address to validate.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents an asynchronous operation.
+    /// </returns>
+    /// <exception cref="ConflictException">
+    /// Thrown when the <see cref="normalizedEmail"/>  is not available.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the <see cref="normalziedEmail"/> is null, empty, or consists only of white spaces 
+    /// </exception>
+    private async Task EnsureEmailIsAvailableAsync(string normalizedEmail, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(normalizedEmail, nameof(normalizedEmail));
+
+        if (await _userRepository.GetUserByNormalizedEmailAsync(normalizedEmail, cancellationToken) is not null)
+        {
+            throw new ConflictException("Email is already taken.");
         }
     }
     #endregion of private methods
