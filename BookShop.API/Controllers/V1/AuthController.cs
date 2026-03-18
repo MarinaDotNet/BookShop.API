@@ -390,4 +390,68 @@ public class AuthController(AuthServices auth) : BaseApiController
         await _auth.UpdatePasswordAsync(userId, dto, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>
+    /// Updates the account email address of the currently authenticated user.
+    /// </summary>
+    /// <param name="dto">
+    /// The request containing current account password and new email address.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="NoContentResult"/> when the email confirmation sent successfully. 
+    /// </returns>
+    /// <response code="204">
+    /// The confirmation email was sent successfully.
+    /// </response>
+    /// <response code="400">
+    /// The request payload is invalid.
+    /// </response>
+    /// <response code="401">
+    /// The user is not authenticated.
+    /// </response>
+    /// <response code="403">
+    /// The current user is not allowed to perform this action.
+    /// </response>
+    [HttpPatch("account/email")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailDto dto, CancellationToken cancellationToken)
+    {
+        int userId = GetCurrentUserId();
+        await _auth.RequestEmailChangeAsync(userId, dto, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Confirms email address update using the token provided in the confirmation link and marks the updated email address as confirmed.
+    /// </summary>
+    /// <param name="token">
+    /// The email update confirmation token from the query string.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A plain-text confirmation message when email update is completed successfully.
+    /// </returns>
+    /// <response code="200">
+    /// The email update was confirmed successfully.
+    /// </response>
+    /// <response code="401">
+    /// The provided token is invalid or expired.
+    /// </response>
+    [HttpGet("confirm-email-change")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ConfirmUpdateEmail([FromQuery]string token, CancellationToken cancellationToken)
+    {
+        await _auth.ConfirmEmailChangeAsync(token, cancellationToken);
+        return Content("Email address confirmed successfully.");
+    }
 }
