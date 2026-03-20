@@ -712,6 +712,96 @@ public class AuthServices(
         await _userRepository.UpdateUserAsync(user, cancellationToken);
         await LogoutAllAsync(user.Id, cancellationToken);
     }
+
+    /// <summary>
+    /// Initiates the password reset process for the specified email address.
+    /// </summary>
+    /// <param name="dto">
+    /// The request containing email address associated with the account.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents an asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentNullExcepiton">
+    /// Throw if <see cref="ForgotPasswordDto"/> is null. 
+    /// </exception>
+    /// <exception cref="ArgumentExcepiton">
+    /// Throw if <see cref="ForgotPasswordDto.Email"/> is null, empty, or consists only of white space characters.
+    /// </exception>
+    public async Task RequestPasswordResetAsync(ForgotPasswordDto dto, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
+        ArgumentException.ThrowIfNullOrWhiteSpace(dto.Email, nameof(dto));
+        ValidateEmailPatern(dto.Email);
+
+        var normalizedEmail = NormalizeInput(dto.Email);
+
+        var user = await _userRepository.GetUserByNormalizedEmailAsync(normalizedEmail, cancellationToken);
+        if(user is null || !user.IsActive || user.IsDeleted || !user.IsEmailConfirmed)
+        {
+            return;
+        }
+
+        var token = _authTokenService.CreateToken(AuthTokenPurpose.PasswordReset, user.Id, DateTime.UtcNow.AddHours(1));
+        Uri resetLink = _authLinkGenerator.CreatePasswordResetLink(token);
+
+        await _emailSender.SendPasswordResetAsync(user.Email, resetLink, cancellationToken);
+    }
+
+    /// <summary>
+    /// Resets the password for the user idenified by the provided password reset token.
+    /// </summary>
+    /// <param name="dto">
+    /// The request containing the password reset token and the new password.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents an asynchronous opertion.
+    /// </returns>
+    /// <exception cref="ArgumentNullExcepiton">
+    /// Throw if <see cref="ResetPasswordDto"/> is null. 
+    /// </exception>
+    /// <exception cref="ArgumentExcepiton">
+    /// Throw if <see cref="ResetPasswordDto.NewPassword"/> or <see cref="ResetPasswordDto.Token"/>  is null, empty, or consists only of white space characters.
+    /// </exception>
+    /// <exception cref="InvalidTokenException">
+    /// Thrown when the provided password reset token is invalid or exprired.
+    /// </exception>
+    /// <exception cref="ValidationException">
+    /// Thrown when the new password does not satisfy the password policy.
+    /// </exception>
+    public async Task ResetPasswordAsync(ResetPasswordDto dto, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
+        ArgumentException.ThrowIfNullOrWhiteSpace(dto.NewPassword, nameof(dto));
+        ArgumentException.ThrowIfNullOrWhiteSpace(dto.Token, nameof(dto));
+        if(! _authTokenService.TryValidateToken(dto.Token, AuthTokenPurpose.PasswordReset, out var payload))
+        {
+            throw new InvalidTokenException();
+        }
+        var user = await _userRepository.GetUserByIdAsync(payload!.UserId, cancellationToken);
+        if(user is null || user.IsDeleted || !user.IsActive || !user.IsEmailConfirmed)
+        {
+            return;
+        }
+        ValidatePasswordPatern(dto.NewPassword);
+        if(_passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.NewPassword) == PasswordVerificationResult.Success)
+        {
+            throw new ValidationException("New password must be different from the current password.");
+        }
+        user.PasswordHash = PasswordHashing(dto.NewPassword, user);
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateUserAsync(user, cancellationToken);
+        await LogoutAllAsync(user.Id, cancellationToken);
+
+        await _emailSender.SendPasswordChangedAsync(user.Email, cancellationToken);
+    }
+
     #region of private methods
     /// <summary>
     /// Generates an email confirmation link for the specified user ID.
