@@ -256,6 +256,42 @@ public class BrevoAuthEmailSender : IAuthEmailSender
     }
 
     /// <summary>
+    /// Sends a password change notification email to the specified recepient.
+    /// </summary>
+    /// <param name="toEmail">
+    /// The recepient email address.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents an asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="toEmail"/> is null, empty, or consists only of white space characters.
+    /// </exception>
+    public async Task SendPasswordChangedAsync(string toEmail, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(toEmail, nameof(toEmail));
+
+        string subject = "Your password has been changed";
+        string textContent = @"Your password has been successfully changed.
+
+        If you did not perform this action, please reset your password immediately or contact support.
+
+        Thank you,
+        BookShop Team";
+
+        string htmlContent = $@"
+        <p>Your password has been successfully changed.</p>
+        <p>If you did not perform this action, please reset your password immediately or contact support.</p>
+        <br/>
+        <p>Thank you,<br/>BookShop Team</p>";
+
+        await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
+    }
+
+    /// <summary>
     /// Sends an email using http client.
     /// </summary>
     /// <param name="toEmail">

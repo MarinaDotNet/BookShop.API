@@ -86,4 +86,18 @@ public interface IAuthEmailSender
     /// A task that represents the asynchronous operation of sending the confirmation email.
     /// </returns>
     Task SendAccountRecoveryConfirmationAsync(string toEmail, Uri confirmationLink, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Sends a notification email informing the user that the account password has been changed successfully.
+    /// </summary>
+    /// <param name="toEmail">
+    /// The recipient email address.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents an asynchronous operation.
+    /// </returns>
+    Task SendPasswordChangedAsync(string toEmail, CancellationToken cancellationToken);
 }
