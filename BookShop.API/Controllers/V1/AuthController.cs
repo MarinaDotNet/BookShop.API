@@ -454,4 +454,126 @@ public class AuthController(AuthServices auth) : BaseApiController
         await _auth.ConfirmEmailChangeAsync(token, cancellationToken);
         return Content("Email address confirmed successfully.");
     }
+
+
+    /// <summary>
+    /// Initiates the password reset process for the specified email address.
+    /// </summary>
+    /// <param name="dto">
+    /// The request containing the email address of the account.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="NoContentResult"/> regardless of whether a matching account exists, in order to avoid disclosing account existence. 
+    /// </returns>
+    /// <response code="204">
+    /// The password reset request was accepted. If the account exists.
+    /// </response>
+    /// <response code="400">
+    /// The request payload is invalid.
+    /// </response>
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ForgotPassword([FromBody]ForgotPasswordDto dto, CancellationToken cancellationToken)
+    {
+        await _auth.RequestPasswordResetAsync(dto, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Resets the password using a password reset token submitted from an HTML form.
+    /// </summary>
+    /// <param name="dto">
+    /// The request containing the password reset token and the new password.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operaion.
+    /// </param>
+    /// <returns>
+    /// <see cref="ContentResult"/> indicationg that the password has been reset successfully. 
+    /// </returns>
+    /// <response code="200">
+    /// The password was reset successfully.
+    /// </response>
+    /// <response code="400">
+    /// The request payload is invalid or the token is invalid.
+    /// </response>
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordDto dto, CancellationToken cancellationToken)
+    {
+        await _auth.ResetPasswordAsync(dto, cancellationToken);
+        return Content("The password has been resete successfully.");
+    }
+
+    /// <summary>
+    /// Resets the password using a password reset token submitted as JSON.
+    /// </summary>
+    /// <param name="dto">
+    /// The request containing the password reset token and the new password.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="ContentResult"/> indicating that the password has been reset successfully.
+    /// </returns>
+    /// <response code="200">
+    /// The password was reset successfully.
+    /// </response>
+    /// <response code="400">
+    /// The request payload is invalid or the token is invalid.
+    /// </response>
+    [HttpPost("reset-password-json")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPasswordJson([FromBody] ResetPasswordDto dto, CancellationToken cancellationToken)
+    {
+        await _auth.ResetPasswordAsync(dto, cancellationToken);
+        return Content("The password has been resete successfully.");
+    }
+
+    /// <summary>
+    /// Returns a simple HTML page with a password reset form for browser-based password reset flow.
+    /// </summary>
+    /// <param name="token">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="ContentResult"/> containing an HTML form that posts the token and the new password to the password reset endpoint. 
+    /// </returns>
+    /// <reponse code="200">
+    /// The password page was returned successfully.
+    /// </response>
+    /// <response code="400">
+    /// The request payload is invalid or the token is invalid.
+    /// </response>
+    [HttpGet("reset-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public IActionResult ResetPasswordPage([FromQuery]string token)
+    {
+        string html = $@"""
+        <html>
+            <body>
+                <h2>Reset Password.</h2>
+                <form method='post' action='/api/v1/auth/reset-password'>
+                    <input type='hidden' name='token' value='{token}' />
+                    <label>New Password: </label>
+                    <input type='password' name='newPassword' /> <br/><br/>
+                    <button type='submit'>Reset Password</button>
+                </form>
+            </body>
+        </html>
+        """;
+        return Content(html, "text/html");
+    }
 }
