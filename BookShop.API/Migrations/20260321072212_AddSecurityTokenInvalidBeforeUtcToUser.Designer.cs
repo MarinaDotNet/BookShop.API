@@ -3,6 +3,7 @@ using System;
 using BookShop.API.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BookShop.API.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260321072212_AddSecurityTokenInvalidBeforeUtcToUser")]
+    partial class AddSecurityTokenInvalidBeforeUtcToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -173,7 +176,7 @@ namespace BookShop.API.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("PasswordHash");
 
-                    b.Property<DateTime>("SecurityTokenInvalidBeforeUtc")
+                    b.Property<DateTime>("SecurityTokenInvlaidBeforeUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -210,7 +213,7 @@ namespace BookShop.API.Migrations
                             NormalizedEmail = "ADMIN@BOOKSHOP.API.COM",
                             NormalizedUsername = "ADMIN",
                             PasswordHash = "AQAAAAEAACcQAAAAEFWDfK8QnvlZsT6wjuSYyw2Xe4P1HTcaW5MavWsfHOaFY4CpvcPtbDZWP6XrT3Jkgg==",
-                            SecurityTokenInvalidBeforeUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            SecurityTokenInvlaidBeforeUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UpdatedAt = new DateTime(2026, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
                             UserName = "admin"
                         });
