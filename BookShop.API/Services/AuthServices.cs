@@ -344,10 +344,22 @@ public class AuthServices(
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown if the specified identifier is negative or zero.
     /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown when the user is null, or flagged as deleted or inactive.
+    /// </exception>
     public async Task LogoutAllAsync(int userId, CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId);
-        await _userRepository.RevokeAllRefreshTokensForUserAsync(userId, DateTime.UtcNow, cancellationToken);
+
+        var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
+            ?? throw new UnauthorizedAccessException();
+
+        if(user.IsDeleted || !user.IsActive)
+        {
+            throw new UnauthorizedAccessException();
+        }
+
+        await LogoutAllAsync(user, cancellationToken);
     }
     
     /// <summary>
@@ -587,6 +599,9 @@ public class AuthServices(
     /// <exception cref="ValidationException">
     /// Thrown when the new password does not meet the required policy or mathes the current password.
     /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown when the user is flagged as deleted or inactive.
+    /// </exception> 
     public async Task UpdatePasswordAsync(int userId, UpdatePasswordDto dto, CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId, nameof(userId));
@@ -595,23 +610,23 @@ public class AuthServices(
         {
             throw new ArgumentException("The current and new passwords are required.");
         }
-
         var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
-        ?? throw new ForbiddenException("Access to the user account is denied.");
+            ?? throw new ForbiddenException("Access to the user account is denied.");
 
+        if(user.IsDeleted || !user.IsActive)
+        {
+            throw new UnauthorizedAccessException();
+        }
         VerifyPasswordOrThrow(user, dto.CurrentPassword);
         ValidatePasswordPatern(dto.NewPassword);
-
         if(dto.CurrentPassword == dto.NewPassword)
         {
             throw new ValidationException("New password must be different from the current password.");
         }
-
         user.PasswordHash = PasswordHashing(dto.NewPassword, user);
         user.UpdatedAt = DateTime.UtcNow;
-
         await _userRepository.UpdateUserAsync(user, cancellationToken);
-        await _userRepository.RevokeAllRefreshTokensForUserAsync(user.Id, user.UpdatedAt, cancellationToken);
+        await LogoutAllAsync(user, cancellationToken);
     }
 
     /// <summary>
@@ -713,7 +728,7 @@ public class AuthServices(
         user.IsEmailConfirmed = true;
         user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateUserAsync(user, cancellationToken);
-        await LogoutAllAsync(user.Id, cancellationToken);
+        await LogoutAllAsync(user, cancellationToken);
     }
 
     /// <summary>
@@ -800,7 +815,7 @@ public class AuthServices(
         user.PasswordHash = PasswordHashing(dto.NewPassword, user);
         user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateUserAsync(user, cancellationToken);
-        await LogoutAllAsync(user.Id, cancellationToken);
+        await LogoutAllAsync(user, cancellationToken);
 
         await _emailSender.SendPasswordChangedAsync(user.Email, cancellationToken);
     }
@@ -837,6 +852,38 @@ public class AuthServices(
         return _mapper.Map<UserDto>(user);
     }
 
+    /// <summary>
+    /// Invalidates all active authentication sessions for the specified user by: 
+    /// - updating the <c>SecurityTokenInvalidBeforeUtc</c> timespamp to revoke all existing access tokens,
+    /// - revoking all active refresh tokens in the data store.
+    /// </summary>
+    /// <param name="user">
+    /// The user entity already loaded and tracked by the current <c>DbContext</c>
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <remarks>
+    /// This method assumes that the <paramref name="user"/> instance is already tracked by the current persistence context 
+    /// to avoid duplicate entity tracking issues. 
+    /// It is intendent for internal use within the service when the user entity is already available, such as during password 
+    /// updates or security-sensitive operations.
+    /// </remarks>
+    /// <exceptions cref="ArgumentNullException">
+    /// Thrown when the provided <paramref name="user"/> is null.
+    /// </exceptions>
+    private async Task LogoutAllAsync(User user, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(user, nameof(user));
+        
+        var dateTimeNow = DateTime.UtcNow;
+
+        user.SecurityTokenInvalidBeforeUtc = dateTimeNow;
+        user.UpdatedAt = dateTimeNow;
+
+        await _userRepository.UpdateUserAsync(user, cancellationToken);
+        await _userRepository.RevokeAllRefreshTokensForUserAsync(user.Id, dateTimeNow, cancellationToken);
+    }
     #region of private methods
     /// <summary>
     /// Generates an email confirmation link for the specified user ID.
