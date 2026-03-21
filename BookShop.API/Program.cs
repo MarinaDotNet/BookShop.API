@@ -97,6 +97,7 @@ builder.Services.AddAuthorization();
 
 // Auto Mapper Configurations
 builder.Services.AddAutoMapper(typeof(BookMapingProfile));
+builder.Services.AddAutoMapper(typeof(UserMapingProfile));
 
 // Add ProblemDetails middleware
 builder.Services.AddProblemDetails(options =>
