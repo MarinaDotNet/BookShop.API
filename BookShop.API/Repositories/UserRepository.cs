@@ -77,7 +77,11 @@ public class UserRepository(AuthDbContext context) : IUserRepository
     /// </returns>
     public async Task<User?> GetUserByIdAsync(int userId, CancellationToken cancellationToken)
     {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        return await _context.Users
+            .AsNoTracking()
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
     }
 
     /// <summary>
