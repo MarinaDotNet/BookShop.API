@@ -36,5 +36,7 @@ public class User
     public ICollection<RefreshToken> Tokens { get; set; } = new HashSet<RefreshToken>();
 
     public ICollection<UserRole> UserRoles { get; set; } = new HashSet<UserRole>();
+
+    public DateTime SecurityTokenInvalidBeforeUtc { get; set; }
 }
 
