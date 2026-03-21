@@ -1,3 +1,4 @@
+using AutoMapper;
 using BookShop.API.DTOs.Auth;
 using BookShop.API.Exceptions;
 using BookShop.API.Models.Auth;
@@ -41,7 +42,8 @@ public class AuthServices(
     IAuthEmailSender emailSender,
     IRefreshTokenGenerator refreshTokenGenerator,
     IRefreshTokenHasher refreshTokenHasher,
-    IJwtTokenService jwtTokenService
+    IJwtTokenService jwtTokenService,
+    IMapper mapper
     ) 
 {
     private readonly IUserRepository _userRepository = userRepository;
@@ -52,6 +54,7 @@ public class AuthServices(
     private readonly IRefreshTokenGenerator _refreshTokenGenerator = refreshTokenGenerator;
     private readonly IRefreshTokenHasher _refreshTokenHasher = refreshTokenHasher;
     private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
+    private readonly IMapper _mapper = mapper;
     /// <summary>
     /// Registers a new user asynchronously using the specified registration details.
     /// </summary>
@@ -800,6 +803,38 @@ public class AuthServices(
         await LogoutAllAsync(user.Id, cancellationToken);
 
         await _emailSender.SendPasswordChangedAsync(user.Email, cancellationToken);
+    }
+
+    /// <summary>
+    /// Retrieves the current authenticated user's profile information.
+    /// </summary>
+    /// <param name="userId">
+    /// The unique identifier of the authenticated user.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A <see cref="UserDto"/> containing the user's profile data.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Throw when <paramref name="userId"/> is less than or equal to zero.
+    /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    /// Thrown when the user does not exist, is deleted, or is inactive.
+    /// </exception>
+    public async Task<UserDto> GetCurrentUserAsync(int userId, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId, nameof(userId));
+
+        var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
+
+        if(user is null || user.IsDeleted || !user.IsActive)
+        {
+            throw new UnauthorizedAccessException();
+        }
+
+        return _mapper.Map<UserDto>(user);
     }
 
     #region of private methods
