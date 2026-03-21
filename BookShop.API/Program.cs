@@ -15,6 +15,8 @@ using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,9 +82,9 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtOptions
 ?? throw new InvalidOperationException("JWT settings are not properly configured. Please ensure that 'JwtSettings' section is set in the configuration.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-.AddJwtBearer(Options =>
+.AddJwtBearer(options =>
 {
-    Options.TokenValidationParameters = new TokenValidationParameters
+    options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
@@ -92,6 +94,50 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidAudience = jwtSettings.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret!))
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier);
+            var iatClaim = context.Principal?.FindFirst(JwtRegisteredClaimNames.Iat);
+
+            if(userIdClaim is null || iatClaim is null)
+            {
+                context.Fail("Invalid access token.");
+                return;
+            }
+
+            if(!int.TryParse(userIdClaim.Value, out var userId))
+            {
+                context.Fail("Invalid user identifier.");
+                return;
+            }
+
+            if(!long.TryParse(iatClaim.Value, out var issuedAtUnix))
+            {
+                context.Fail("Invalid token issue time.");
+                return;
+            }
+
+            var userRepository = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
+
+            var user = await userRepository.GetUserByIdAsync(userId, context.HttpContext.RequestAborted);
+
+            if(user is null || user.IsDeleted || !user.IsActive)
+            {
+                context.Fail("User is not available.");
+                return;
+            }
+
+            var issuedAtUtc = DateTimeOffset.FromUnixTimeSeconds(issuedAtUnix).UtcDateTime;
+            if(issuedAtUtc <= user.SecurityTokenInvalidBeforeUtc)
+            {
+                context.Fail("Access token is no longer valid.");
+            }
+        }
+    };
+
 });
 builder.Services.AddAuthorization();
 
