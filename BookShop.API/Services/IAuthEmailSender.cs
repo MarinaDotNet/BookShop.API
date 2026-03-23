@@ -101,9 +101,50 @@ public interface IAuthEmailSender
     /// </returns>
     Task SendPasswordChangedAsync(string toEmail, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Sends a notification email informing the user that the account email address has been changed.
+    /// </summary>
+    /// <param name="oldEmail">
+    /// The previous email address associated with the account. The notification is sent to this address so the user can be alerted
+    /// if the change was unauthorized.
+    /// </param>
+    /// <param name="newEmail">
+    /// The new email address associated with the account. The notification may also to be sent to this address 
+    /// to confirm the completed change.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
     Task SendEmailChangedAsync(string oldEmail, string newEmail, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Sends a notification email informing the user that the account has been deleted.
+    /// </summary>
+    /// <param name="email">
+    /// The email address that should recieve the deletion notificaiton.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchrounous operation.
+    /// </returns>
     Task SendAccountDeletedAsync(string email, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Sends a notification email informing the user that the account has been successfully recovered.
+    /// </summary>
+    /// <param name="email">
+    /// The email address that should receive the recovery notification.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
     Task SendAccountRecoveredAsync(string email, CancellationToken cancellationToken);
 }

@@ -291,6 +291,28 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
     }
 
+    /// <summary>
+    /// Sends a security notification email to the previous and new email addresses after the account email has 
+    /// been changed successfully.
+    /// </summary>
+    /// <param name="oldEmail">
+    /// The previous email address associated with the account. This address receives the notification to 
+    /// help detect unauthorized changes.
+    /// </param>
+    /// <param name="newEmail">
+    /// The new email address associated with the account. This address recieves the notification 
+    /// confirming that the change was completed.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="oldEmail"/> or <paramref name="newEmail"/> is null, empty, or consists only 
+    /// of white space characters.
+    /// </exception>
     public async Task SendEmailChangedAsync(string oldEmail, string newEmail, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(oldEmail, nameof(oldEmail));
@@ -322,6 +344,21 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         await SendAsync(newEmail, subject, textContent, htmlContent, cancellationToken);
     }
 
+    /// <summary>
+    /// Sends a security notification email confirming that the account has been deleted.
+    /// </summary>
+    /// <param name="email">
+    /// The email address that should receive the deltion notification.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="email"/> is null, empty, or consists only of white space characters.
+    /// </exception>
     public async Task SendAccountDeletedAsync(string email, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(email, nameof(email));
@@ -351,6 +388,21 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         await SendAsync(email, subject, textContent, htmlContent, cancellationToken);
     }
 
+    /// <summary>
+    /// Sends a security notification email confirming that the account has been recovered successfully.
+    /// </summary>
+    /// <param name="email">
+    /// The email address that should receive the recovery notification.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="email"/> is null, empty, or consists only of white space characters.
+    /// </exception>
     public async Task SendAccountRecoveredAsync(string email, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(email, nameof(email));
@@ -379,6 +431,7 @@ public class BrevoAuthEmailSender : IAuthEmailSender
 
         await SendAsync(email, subject, textContent, htmlContent, cancellationToken);
     }
+    
     /// <summary>
     /// Sends an email using http client.
     /// </summary>
