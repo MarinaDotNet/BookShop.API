@@ -520,6 +520,8 @@ public class AuthServices(
         await _userRepository.RevokeAllRefreshTokensForUserAsync(user.Id, user.UpdatedAt, cancellationToken);
 
         await _userRepository.UpdateUserAsync(user, cancellationToken);
+
+        await _emailSender.SendAccountRecoveredAsync(user.Email, cancellationToken);
     }
 
     /// <summary>

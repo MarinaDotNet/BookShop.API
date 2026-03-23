@@ -350,6 +350,35 @@ public class BrevoAuthEmailSender : IAuthEmailSender
 
         await SendAsync(email, subject, textContent, htmlContent, cancellationToken);
     }
+
+    public async Task SendAccountRecoveredAsync(string email, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(email, nameof(email));
+
+        string subject = "Your account has been restored";
+
+        var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+
+        string textContent = @$"Your account has been successfully restored.
+        
+        If you did not perform this action, please reset you password immediately.
+
+        Time: {dateTime} UTC
+
+        - BookShop Team";
+
+        string htmlContent = $@"
+        <p>Your account has been successfully restored.</p>
+        
+        <p>If you did not perform this action, please <b>reset you password immediately</b>.</p>
+        
+        <p>Time: {dateTime} UTC</p>
+        
+        <br/>
+        <p>- BookShop</p>";
+
+        await SendAsync(email, subject, textContent, htmlContent, cancellationToken);
+    }
     /// <summary>
     /// Sends an email using http client.
     /// </summary>
