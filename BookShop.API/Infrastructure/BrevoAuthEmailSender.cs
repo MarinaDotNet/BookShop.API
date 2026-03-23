@@ -322,6 +322,34 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         await SendAsync(newEmail, subject, textContent, htmlContent, cancellationToken);
     }
 
+    public async Task SendAccountDeletedAsync(string email, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(email, nameof(email));
+
+        string subject = "Your account has been deleted";
+
+        var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+
+        string textContent = @$"Your account has been successfully deleted.
+        
+        If you did not perform this action, please contact support immediately.
+
+        Time: {dateTime} UTC
+
+        - BookShop Team";
+
+        string htmlContent = $@"
+        <p>Your account has been successfully deleted.</p>
+        
+        <p>If you did not perform this action, please <b>contact support immediately</b>.</p>
+        
+        <p>Time: {dateTime} UTC</p>
+        
+        <br/>
+        <p>- BookShop</p>";
+
+        await SendAsync(email, subject, textContent, htmlContent, cancellationToken);
+    }
     /// <summary>
     /// Sends an email using http client.
     /// </summary>

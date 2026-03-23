@@ -442,6 +442,8 @@ public class AuthServices(
         await _userRepository.RevokeAllRefreshTokensForUserAsync(user.Id, user.UpdatedAt ,cancellationToken);
 
         await _userRepository.UpdateUserAsync(user, cancellationToken);
+
+        await _emailSender.SendAccountDeletedAsync(user.Email, cancellationToken);
     }
 
     /// <summary>

@@ -102,4 +102,6 @@ public interface IAuthEmailSender
     Task SendPasswordChangedAsync(string toEmail, CancellationToken cancellationToken);
 
     Task SendEmailChangedAsync(string oldEmail, string newEmail, CancellationToken cancellationToken);
+
+    Task SendAccountDeletedAsync(string email, CancellationToken cancellationToken);
 }
