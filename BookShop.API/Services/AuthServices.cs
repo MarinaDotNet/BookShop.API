@@ -723,12 +723,16 @@ public class AuthServices(
         }      
         await EnsureEmailIsAvailableAsync(normalizedEmail, cancellationToken);
 
+        var oldEmail = user.Email;
+
         user.Email = payload!.NewEmail!;
         user.NormalizedEmail = normalizedEmail;
         user.IsEmailConfirmed = true;
         user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateUserAsync(user, cancellationToken);
         await LogoutAllAsync(user, cancellationToken);
+
+        await _emailSender.SendEmailChangedAsync(oldEmail, user.Email, cancellationToken);
     }
 
     /// <summary>

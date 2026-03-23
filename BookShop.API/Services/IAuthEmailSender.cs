@@ -100,4 +100,6 @@ public interface IAuthEmailSender
     /// A task that represents an asynchronous operation.
     /// </returns>
     Task SendPasswordChangedAsync(string toEmail, CancellationToken cancellationToken);
+
+    Task SendEmailChangedAsync(string oldEmail, string newEmail, CancellationToken cancellationToken);
 }

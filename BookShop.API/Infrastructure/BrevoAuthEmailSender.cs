@@ -291,6 +291,37 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
     }
 
+    public async Task SendEmailChangedAsync(string oldEmail, string newEmail, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(oldEmail, nameof(oldEmail));
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(newEmail, nameof(newEmail));
+
+        string subject = "Your email address has been changed";
+
+        var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+
+        string textContent = @$"Your email address has been successfully changed.
+        
+        If you did not perform this action, please reset your password immediately or contact support.
+
+        Time: {dateTime} UTC
+
+        - BookShop Team";
+
+        string htmlContent = $@"
+        <p>Your email address has been successfully changed.</p>
+        
+        <p>If you did not perform this action, please <b>reset your password immediately</b> or conatct support.</p>
+        
+        <p>Time: {dateTime} UTC</p>
+        
+        <br/>
+        <p>- BookShop</p>";
+
+        await SendAsync(oldEmail, subject, textContent, htmlContent, cancellationToken);
+        await SendAsync(newEmail, subject, textContent, htmlContent, cancellationToken);
+    }
+
     /// <summary>
     /// Sends an email using http client.
     /// </summary>
