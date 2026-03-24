@@ -154,7 +154,7 @@ public class BrevoAuthEmailSender : IAuthEmailSender
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// </returns>
-    /// <exception cref="ArgumentNullException">The <see cref="ArgumentNullException"/> thrown if the <paramref name="confirmationLink"/> is null. </exception>
+    /// <exception cref="ArgumentNullException">The <see cref="ArgumentNullException"/> thrown if the <paramref name="resetLink"/> is null. </exception>
     public async Task SendPasswordResetAsync(string toEmail, Uri resetLink, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(resetLink, nameof(resetLink));

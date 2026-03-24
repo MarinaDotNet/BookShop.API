@@ -17,6 +17,7 @@ using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,7 +52,7 @@ builder.Services.AddSingleton<IAuthLinkGenerator, AuthLinkGenerator>();
 builder.Services.AddDbContext<AuthDbContext>(options => 
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql")));
 
-/// Dependency Injection
+// Dependency Injection
 builder.Services.AddSingleton<IBookRepository, BookRepository>();
 builder.Services.AddScoped<BookService>();
 
@@ -159,7 +160,12 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+});
 
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 

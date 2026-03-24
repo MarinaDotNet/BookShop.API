@@ -549,7 +549,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// <returns>
     /// <see cref="ContentResult"/> containing an HTML form that posts the token and the new password to the password reset endpoint. 
     /// </returns>
-    /// <reponse code="200">
+    /// <response code="200">
     /// The password page was returned successfully.
     /// </response>
     /// <response code="400">

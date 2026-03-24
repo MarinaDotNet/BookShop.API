@@ -34,6 +34,18 @@ namespace BookShop.API.Services;
 /// <param name="emailSender">
 /// The service responsible for sending authentication-related emails, such as email confirmation messages.
 /// </param>
+/// <param name="refreshTokenGenerator">
+/// The service responsible for generating the refresh tokens.
+/// </param>
+/// <param name="refreshTokenHasher">
+/// The service responsible for hashing the refresh tokens.
+/// </param>
+/// <param name="jwtTokenService">
+/// The service responsible for generating JWT access tokens for authenticated users.
+/// </param>
+/// <param name="mapper">
+/// The AutoMapper instance used to map domain models to DTO's.
+/// </param>
 public class AuthServices(
     IUserRepository userRepository, 
     IPasswordHasher<User> passwordHasher, 
@@ -233,6 +245,12 @@ public class AuthServices(
     /// <exception cref="InvalidOperationException">
     /// Thrown if the user's email is not confirmed or the login credentials are invalid.
     /// </exception>
+    /// <param name="ip">
+    /// The IP address of the client making the request.
+    /// </param>
+    /// <param name="userAgent">
+    /// The user agent string of the client.
+    /// </param>
     public async Task<LoginResultDto> LoginAsync(
         UserLoginDto userLoginDto, 
         string? ip, 
@@ -381,7 +399,7 @@ public class AuthServices(
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="password"/> is null, empty, or consists only of white spaces.
     /// </exception>
-    /// <exception cref="UnauthorizedAccessExcepiton">
+    /// <exception cref="UnauthorizedAccessException">
     /// Thrown when the user does not exists, is inactive, is deleted, is not email-confirmed, or when is provided password is invalid.
     /// </exception>
     public async Task RequestAccountDeletionAsync(int userId, string password, CancellationToken cancellationToken)
@@ -543,7 +561,7 @@ public class AuthServices(
     /// Thrown when <paramref name="userId"/> is less than or equal to zero.
     /// </exception>
     /// <exception cref="ArgumentNullException">
-    /// Thrown when the <see cref="UpdateUsernameDto"> is null.
+    /// Thrown when the <see cref="UpdateUsernameDto"/> is null.
     /// </exception>
     /// <exception cref="ArgumentException">
     /// Thrown when the new username is null, empty, or consists only of white spaces.
@@ -705,7 +723,7 @@ public class AuthServices(
     /// <exception cref="InvalidTokenException">
     /// Thrown when the provided token is invalid, expired, or doesn't match the expected purpose.
     /// </exception>
-    /// <exception cref="ArgumentNullxception">
+    /// <exception cref="ArgumentNullException">
     /// Thrown when the <paramref name="token"/> is null, empty, or consists of white spaces.
     /// </exception>
     public async Task ConfirmEmailChangeAsync(string token, CancellationToken cancellationToken)
@@ -751,10 +769,10 @@ public class AuthServices(
     /// <returns>
     /// A task that represents an asynchronous operation.
     /// </returns>
-    /// <exception cref="ArgumentNullExcepiton">
+    /// <exception cref="ArgumentNullException">
     /// Throw if <see cref="ForgotPasswordDto"/> is null. 
     /// </exception>
-    /// <exception cref="ArgumentExcepiton">
+    /// <exception cref="ArgumentException">
     /// Throw if <see cref="ForgotPasswordDto.Email"/> is null, empty, or consists only of white space characters.
     /// </exception>
     public async Task RequestPasswordResetAsync(ForgotPasswordDto dto, CancellationToken cancellationToken)
@@ -789,10 +807,10 @@ public class AuthServices(
     /// <returns>
     /// A task that represents an asynchronous opertion.
     /// </returns>
-    /// <exception cref="ArgumentNullExcepiton">
+    /// <exception cref="ArgumentNullException">
     /// Throw if <see cref="ResetPasswordDto"/> is null. 
     /// </exception>
-    /// <exception cref="ArgumentExcepiton">
+    /// <exception cref="ArgumentException">
     /// Throw if <see cref="ResetPasswordDto.NewPassword"/> or <see cref="ResetPasswordDto.Token"/>  is null, empty, or consists only of white space characters.
     /// </exception>
     /// <exception cref="InvalidTokenException">
@@ -1567,10 +1585,10 @@ public class AuthServices(
     /// A task that represents an asynchronous operation.
     /// </returns>
     /// <exception cref="ConflictException">
-    /// Thrown when the <see cref="normalizedEmail"/>  is not available.
+    /// Thrown when the <paramref name="normalizedEmail"/> is not available.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when the <see cref="normalziedEmail"/> is null, empty, or consists only of white spaces 
+    /// Thrown when the <paramref name="normalizedEmail"/> is null, empty, or consists only of white spaces 
     /// </exception>
     private async Task EnsureEmailIsAvailableAsync(string normalizedEmail, CancellationToken cancellationToken)
     {
