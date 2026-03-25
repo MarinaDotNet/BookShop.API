@@ -175,7 +175,7 @@ public interface IUserRepository
     /// <summary>
     /// Asynchronously retrieves a deleted user by their unique identifier. Ignores query filters.
     /// </summary>
-    /// <param name="userId">
+    /// <param name="id">
     /// The unique identifier of the user to retrieve.
     /// </param>
     /// <param name="cancellationToken">

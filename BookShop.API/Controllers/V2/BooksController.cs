@@ -30,7 +30,7 @@ public class BooksController(BookService service) : ControllerBase
      /// </summary>
      /// <returns>
      /// An <see cref="IActionResult"/> containing the list of available books. Returned with HTTP 200 status code.
-    /// </summary>
+    /// </returns>
     [HttpGet("all")]
     [MapToApiVersion("2.0")]
     public async Task<IActionResult> GetAll()

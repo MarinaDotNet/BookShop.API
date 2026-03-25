@@ -162,23 +162,11 @@ public class BookRepository(MongoDbContext context) : IBookRepository
 
     /// <summary>
     /// Asynchronously retrieves the top N cheapest books from the data source, with an optional filter for availability.
-     /// The books are sorted in ascending order by price, and only the specified number of books are returned.
-     /// If the availability filter is provided, only books that match the specified availability status will be included in the 
-     /// results.
-     /// If no books match the criteria, an empty collection is returned.
-     /// The method ensures efficient querying by leveraging MongoDB's sorting and limiting capabilities.
-     /// </summary>
-     /// <param name="count">
-     /// The maximum number of cheapest books to retrieve. Must be a positive integer.
-     /// </param>
-     /// <param name="isAvailable">
-     /// An optional parameter to filter books by their availability status. 
-     /// If provided, only books match the specified availability status will be returned. 
-     /// If null, no avialability filter is applied.
-     /// </param>
-     /// <returns>
-     /// A task that represents the asynchronous operation. The task result contains a collection of the top N cheapest books
-     /// that match the specified criteria. The collection is empty if no matching books are found.
+    /// The books are sorted in ascending order by price, and only the specified number of books are returned.
+    /// If the availability filter is provided, only books that match the specified availability status will be included in the 
+    /// results.
+    /// If no books match the criteria, an empty collection is returned.
+    /// The method ensures efficient querying by leveraging MongoDB's sorting and limiting capabilities.
     /// </summary>
     /// <param name="count">
     /// The maximum number of cheapest books to retrieve. Must be a positive integer.
@@ -229,7 +217,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// The task result contains the deleted <see cref="Book"/> object.
     /// </returns>
     /// <remarks>
-    /// If the book with the specified ID does not exist, a <see cref="NotFoundException"/>
+    /// If the book with the specified ID does not exist, a <see cref="Exceptions.NotFoundException"/>
     /// is typically thrown by the service layer.
     /// </remarks>
     public async Task<Book> DeleteBookByIdAsync(string id)
@@ -267,7 +255,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// <param name="updates">A list of update definitions specifying the fields to update.</param>
     /// <param name="id">The unique identifier of the book to update.</param>
     /// <returns>
-    /// A <see cref="Task{Book?}"/> representing the asynchronous operation.
+    /// A <see cref="Book"/> representing the asynchronous operation.
     /// The task result contains the updated <see cref="Book"/> if found; otherwise, <c>null</c>.
     /// </returns>
     public async Task<Book?> UpdateBookPartlyAsync(List<UpdateDefinition<Book>> updates, string id)

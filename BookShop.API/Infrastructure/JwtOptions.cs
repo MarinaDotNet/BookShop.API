@@ -1,6 +1,6 @@
 namespace BookShop.API.Infrastructure;
 
-// <summary>
+/// <summary>
 /// Defines settings requered to generate and validate JWT access tokens.
 /// </summary>
 public class JwtOptions

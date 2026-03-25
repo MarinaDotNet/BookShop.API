@@ -118,7 +118,7 @@ public interface IBookRepository
     /// The task result contains the deleted <see cref="Book"/> object.
     /// </returns>
     /// <remarks>
-    /// If the book with the specified ID does not exist, a <see cref="NotFoundException"/>
+    /// If the book with the specified ID does not exist, a <see cref="Exceptions.NotFoundException"/>
     /// is typically thrown by the service layer.
     /// </remarks>
     Task<Book> DeleteBookByIdAsync(string id);
@@ -139,7 +139,7 @@ public interface IBookRepository
     /// <param name="updates">A list of update definitions specifying the fields to update.</param>
     /// <param name="id">The unique identifier of the book to update.</param>
     /// <returns>
-    /// A <see cref="Task{Book?}"/> representing the asynchronous operation.
+    /// A <see cref="Book"/> representing the asynchronous operation.
     /// The task result contains the updated <see cref="Book"/> if found; otherwise, <c>null</c>.
     /// </returns>
     Task<Book?> UpdateBookPartlyAsync(List<UpdateDefinition<Book>> updates, string id);
