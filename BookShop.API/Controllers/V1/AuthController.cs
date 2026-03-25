@@ -26,26 +26,7 @@ public class AuthController(AuthServices auth) : BaseApiController
 {
     private readonly AuthServices _auth = auth;
 
-    /// <summary>
-    /// Confirms a user's email address using an email confirmation token.
-    /// </summary>
-    /// <param name="token">
-    /// The email confirmation token provided in the confirmation link query string.
-    /// </param>
-    /// <param name="cancellationToken">
-    /// A cancelation token that can be used to cancel the request.
-    /// </param>
-    /// <returns>
-    /// <see cref="NoContentResult"/> (204) when the email confirmation is completed successfully.
-    /// </returns>
-    [HttpGet("confirm-email")]
-    [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> ConfirmEmail([FromQuery] string token, CancellationToken cancellationToken)
-    {
-        await _auth.ConfirmEmailAsync(token, cancellationToken);
-        return NoContent();
-    }
+    #region Auth: Registration & Login
 
     /// <summary>
     /// Registers a new user account
@@ -62,6 +43,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [HttpPost("register")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [Tags("01 Auth: Registration & Login")]
     public async Task<IActionResult> RegisterUser([FromBody] UserRegisterDto dto, CancellationToken cancellationToken)
     {
         int id = await _auth.RegisterUserAsync(dto, cancellationToken);
@@ -84,31 +66,11 @@ public class AuthController(AuthServices auth) : BaseApiController
     [ProducesResponseType(StatusCodes.Status201Created)]
     [EnableCors("AdminPolicy")]
     [Authorize(Roles = "Admin")]
+    [Tags("01 Auth: Registration & Login")]
     public async Task<IActionResult> RegisterAdmin([FromBody] UserRegisterDto dto, CancellationToken cancellationToken)
     {
         int id = await _auth.RegisterAdminAsync(dto, cancellationToken);
         return CreatedAtAction(nameof(RegisterAdmin), new { id });
-    }
-
-    /// <summary>
-    /// Resends the email confirmation link.
-    /// </summary>
-    /// <param name="dto">
-    /// The resend email confirmation payload containing the email.
-    /// </param>
-    /// <param name="cancellationToken">
-    /// A cancelation token that can be used to cancel the request.
-    /// </param>
-    /// <returns>
-    /// (204) <see cref="NoContentResult"/> when the resend operation is completed successfully.
-    /// </returns>
-    [HttpPost("resend-email-confirmation")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [AllowAnonymous]
-    public async Task<IActionResult> ResendEmailConfirmation([FromBody] ResendEmailConfirmationDto dto, CancellationToken cancellationToken)
-    {
-        await _auth.ResendEmailConfirmationLink(dto.Email, cancellationToken);
-        return NoContent();
     }
 
     /// <summary>
@@ -127,33 +89,13 @@ public class AuthController(AuthServices auth) : BaseApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [AllowAnonymous]
     [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
+    [Tags("01 Auth: Registration & Login")]
     public async Task<IActionResult> Login([FromBody] UserLoginDto dto, CancellationToken cancellationToken)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var userAgent = Request.Headers.UserAgent.ToString();
         var result = await _auth.LoginAsync(dto, ip, userAgent, cancellationToken);
         return Ok(result);
-    }
-
-    /// <summary>
-    /// Logs out the user and invalidates their refresh token.
-    /// </summary>
-    /// <param name="logoutDto">
-    /// The logout payload containing the refresh token to be invalidated.
-    /// </param>
-    /// <param name="cancellationToken">
-    /// A cancellation token that can be used to cancel the request.
-    /// </param>
-    /// <returns>
-    /// (204) <see cref="NoContentResult"/> when the logout operation is completed successfully.
-    /// </returns>
-    [HttpPost("logout")]
-    [Authorize(Roles = "user, admin")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Logout([FromBody] LogoutDto logoutDto, CancellationToken cancellationToken)
-    {
-        await _auth.LogoutAsync(logoutDto.RefreshToken, cancellationToken);
-        return NoContent();
     }
 
     /// <summary>
@@ -172,12 +114,87 @@ public class AuthController(AuthServices auth) : BaseApiController
     [AllowAnonymous]
     [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [Tags("01 Auth: Registration & Login")]
     public async Task<IActionResult> RefreshToken([FromBody] LogoutDto refreshToken, CancellationToken cancellationToken)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var userAgent = Request.Headers.UserAgent.ToString();
         var result = await _auth.RefreshTokenAsync(refreshToken.RefreshToken, ip, userAgent, cancellationToken);
         return Ok(result); 
+    }
+
+    #endregion Auth: Registration & Login
+
+    #region Auth: Email Confirmation
+
+    /// <summary>
+    /// Confirms a user's email address using an email confirmation token.
+    /// </summary>
+    /// <param name="token">
+    /// The email confirmation token provided in the confirmation link query string.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancelation token that can be used to cancel the request.
+    /// </param>
+    /// <returns>
+    /// <see cref="NoContentResult"/> (204) when the email confirmation is completed successfully.
+    /// </returns>
+    [HttpGet("confirm-email")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [Tags("02 Auth: Email Confirmation")]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string token, CancellationToken cancellationToken)
+    {
+        await _auth.ConfirmEmailAsync(token, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Resends the email confirmation link.
+    /// </summary>
+    /// <param name="dto">
+    /// The resend email confirmation payload containing the email.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancelation token that can be used to cancel the request.
+    /// </param>
+    /// <returns>
+    /// (204) <see cref="NoContentResult"/> when the resend operation is completed successfully.
+    /// </returns>
+    [HttpPost("resend-email-confirmation")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [AllowAnonymous]
+    [Tags("02 Auth: Email Confirmation")]
+    public async Task<IActionResult> ResendEmailConfirmation([FromBody] ResendEmailConfirmationDto dto, CancellationToken cancellationToken)
+    {
+        await _auth.ResendEmailConfirmationLink(dto.Email, cancellationToken);
+        return NoContent();
+    }
+
+    #endregion Auth: Email Confirmation
+
+    #region Auth: Logout
+
+    /// <summary>
+    /// Logs out the user and invalidates their refresh token.
+    /// </summary>
+    /// <param name="logoutDto">
+    /// The logout payload containing the refresh token to be invalidated.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the request.
+    /// </param>
+    /// <returns>
+    /// (204) <see cref="NoContentResult"/> when the logout operation is completed successfully.
+    /// </returns>
+    [HttpPost("logout")]
+    [Authorize(Roles = "user, admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [Tags("03 Auth: Logout")]
+    public async Task<IActionResult> Logout([FromBody] LogoutDto logoutDto, CancellationToken cancellationToken)
+    {
+        await _auth.LogoutAsync(logoutDto.RefreshToken, cancellationToken);
+        return NoContent();
     }
 
     /// <summary>
@@ -196,6 +213,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [Tags("03 Auth: Logout")]
     public async Task<IActionResult> LogoutAll(CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
@@ -203,6 +221,10 @@ public class AuthController(AuthServices auth) : BaseApiController
         await _auth.LogoutAllAsync(userId, cancellationToken);
         return NoContent();
     }
+
+    #endregion Auth: Logout
+
+    #region Auth: Account Lifecycle
 
     /// <summary>
     /// Initiates deletion of the currently authenticated user's account by validation the provided password and sending an account
@@ -227,6 +249,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [Tags("04 Auth: Account Lifecycle")]
     public async Task<IActionResult> DeleteUserAccount([FromBody] AccountDeleteDto dto, CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
@@ -259,6 +282,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [Tags("04 Auth: Account Lifecycle")]
     public async Task<IActionResult> ConfirmAccountDeletion([FromQuery] string token, CancellationToken cancellationToken)
     {
         await _auth.ConfirmAccountDeletionAsync(token, cancellationToken);
@@ -284,12 +308,13 @@ public class AuthController(AuthServices auth) : BaseApiController
     [HttpPost("recover-account")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [Tags("04 Auth: Account Lifecycle")]
     public async Task<IActionResult> RecoverAccount([FromBody] AccountRequestDto dto, CancellationToken cancellationToken)
     {
         await _auth.RequestAccountRecoveryAsync(dto.Email, cancellationToken);
         return NoContent();
     }
-    
+
     /// <summary>
     /// Confirms account recovery using the token provided in the confirmation link and marks the user account as undeleted.
     /// </summary>
@@ -311,11 +336,16 @@ public class AuthController(AuthServices auth) : BaseApiController
     [HttpGet("confirm-account-recovery")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [Tags("04 Auth: Account Lifecycle")]
     public async Task<IActionResult> ConfirmAccountRecovery([FromQuery] string token, CancellationToken cancellationToken)
     {
         await _auth.ConfirmAccountRecoveryAsync(token, cancellationToken);
         return Content("Account recovery confirmed sucessfully.", "text/plain");
     }
+    
+    #endregion Auth: Account Lifecycle
+
+    #region Auth: Account Management
 
     /// <summary>
     /// Updates the username of the currently authenticated user.
@@ -347,47 +377,11 @@ public class AuthController(AuthServices auth) : BaseApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [Tags("05 Auth: Account Management")]
     public async Task<IActionResult> UpdateUsername([FromBody] UpdateUsernameDto dto, CancellationToken cancellationToken)
     {
         int userId = GetCurrentUserId();
         await _auth.UpdateUsernameAsync(userId, dto, cancellationToken);
-        return NoContent();
-    }
-
-    /// <summary>
-    /// Updates the password of the currently authenticated user.
-    /// </summary>
-    /// <param name="dto">
-    /// The request containing the current and new passwords.
-    /// </param>
-    /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operation.
-    /// </param>
-    /// <returns>
-    /// <see cref="NoContentResult"/> when the password is updated successfully. 
-    /// </returns>
-    /// <response code="204">
-    /// The password was updated successfully.
-    /// </response>
-    /// <response code="400">
-    /// The request payload is invalid.
-    /// </response>
-    /// <response code="401">
-    /// The user is not authenticated.
-    /// </response>
-    /// <response code="403">
-    /// The current user is not allowed to perform this action./
-    /// </response>
-    [HttpPatch("account/password")]
-    [Authorize]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDto dto, CancellationToken cancellationToken)
-    {
-        int userId = GetCurrentUserId();
-        await _auth.UpdatePasswordAsync(userId, dto, cancellationToken);
         return NoContent();
     }
 
@@ -421,13 +415,14 @@ public class AuthController(AuthServices auth) : BaseApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [Tags("05 Auth: Account Management")]
     public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailDto dto, CancellationToken cancellationToken)
     {
         int userId = GetCurrentUserId();
         await _auth.RequestEmailChangeAsync(userId, dto, cancellationToken);
         return NoContent();
     }
-
+    
     /// <summary>
     /// Confirms email address update using the token provided in the confirmation link and marks the updated email address as confirmed.
     /// </summary>
@@ -449,12 +444,54 @@ public class AuthController(AuthServices auth) : BaseApiController
     [HttpGet("confirm-email-change")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [Tags("05 Auth: Account Management")]
     public async Task<IActionResult> ConfirmUpdateEmail([FromQuery]string token, CancellationToken cancellationToken)
     {
         await _auth.ConfirmEmailChangeAsync(token, cancellationToken);
         return Content("Email address confirmed successfully.");
     }
 
+    /// <summary>
+    /// Updates the password of the currently authenticated user.
+    /// </summary>
+    /// <param name="dto">
+    /// The request containing the current and new passwords.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="NoContentResult"/> when the password is updated successfully. 
+    /// </returns>
+    /// <response code="204">
+    /// The password was updated successfully.
+    /// </response>
+    /// <response code="400">
+    /// The request payload is invalid.
+    /// </response>
+    /// <response code="401">
+    /// The user is not authenticated.
+    /// </response>
+    /// <response code="403">
+    /// The current user is not allowed to perform this action./
+    /// </response>
+    [HttpPatch("account/password")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [Tags("05 Auth: Account Management")]
+    public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDto dto, CancellationToken cancellationToken)
+    {
+        int userId = GetCurrentUserId();
+        await _auth.UpdatePasswordAsync(userId, dto, cancellationToken);
+        return NoContent();
+    }
+    
+    #endregion Auth: Account Management
+
+    #region Auth: Password Recovery
 
     /// <summary>
     /// Initiates the password reset process for the specified email address.
@@ -478,6 +515,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [Tags("06 Auth: Password Recovery")]
     public async Task<IActionResult> ForgotPassword([FromBody]ForgotPasswordDto dto, CancellationToken cancellationToken)
     {
         await _auth.RequestPasswordResetAsync(dto, cancellationToken);
@@ -506,35 +544,8 @@ public class AuthController(AuthServices auth) : BaseApiController
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [Tags("06 Auth: Password Recovery")]
     public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordDto dto, CancellationToken cancellationToken)
-    {
-        await _auth.ResetPasswordAsync(dto, cancellationToken);
-        return Content("The password has been resete successfully.");
-    }
-
-    /// <summary>
-    /// Resets the password using a password reset token submitted as JSON.
-    /// </summary>
-    /// <param name="dto">
-    /// The request containing the password reset token and the new password.
-    /// </param>
-    /// <param name="cancellationToken">
-    /// A cancellation token that can be used to cancell the operation.
-    /// </param>
-    /// <returns>
-    /// <see cref="ContentResult"/> indicating that the password has been reset successfully.
-    /// </returns>
-    /// <response code="200">
-    /// The password was reset successfully.
-    /// </response>
-    /// <response code="400">
-    /// The request payload is invalid or the token is invalid.
-    /// </response>
-    [HttpPost("reset-password-json")]
-    [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ResetPasswordJson([FromBody] ResetPasswordDto dto, CancellationToken cancellationToken)
     {
         await _auth.ResetPasswordAsync(dto, cancellationToken);
         return Content("The password has been resete successfully.");
@@ -559,6 +570,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [Tags("06 Auth: Password Recovery")]
     public IActionResult ResetPasswordPage([FromQuery]string token)
     {
         string html = $@"""
@@ -576,6 +588,39 @@ public class AuthController(AuthServices auth) : BaseApiController
         """;
         return Content(html, "text/html");
     }
+
+    /// <summary>
+    /// Resets the password using a password reset token submitted as JSON.
+    /// </summary>
+    /// <param name="dto">
+    /// The request containing the password reset token and the new password.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// <see cref="ContentResult"/> indicating that the password has been reset successfully.
+    /// </returns>
+    /// <response code="200">
+    /// The password was reset successfully.
+    /// </response>
+    /// <response code="400">
+    /// The request payload is invalid or the token is invalid.
+    /// </response>
+    [HttpPost("reset-password-json")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [Tags("06 Auth: Password Recovery")]
+    public async Task<IActionResult> ResetPasswordJson([FromBody] ResetPasswordDto dto, CancellationToken cancellationToken)
+    {
+        await _auth.ResetPasswordAsync(dto, cancellationToken);
+        return Content("The password has been resete successfully.");
+    }
+
+    #endregion Auth: Password Recovery
+
+    #region Auth: Current User
 
     /// <summary>
     /// Retrieves the profile of the currently authenticated user.
@@ -600,10 +645,56 @@ public class AuthController(AuthServices auth) : BaseApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [Tags("07 Auth: Current User")]
     public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
         var user = await _auth.GetCurrentUserAsync(userId, cancellationToken);
         return Ok(user);
     }
+
+    #endregion Auth: Current User
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
