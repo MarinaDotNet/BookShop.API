@@ -191,11 +191,27 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A cancelation token that can be used to cancel the request.
     /// </param>
     /// <returns>
-    /// <see cref="NoContentResult"/> (204) when the email confirmation is completed successfully.
+    /// Returns <see cref="NoContentResult"/> when the email confirmation is completed successfully.
     /// </returns>
+    /// <response code="204">
+    /// Email confirmation successful.
+    /// </response>
+    /// <response code="400">
+    /// The request is invalid. This can occur if:
+    /// - The token is missing,
+    /// - The token is malformed,
+    /// - The token is invalid or expired.
+    /// </response>
+    /// <response code="404">
+    /// The user account associated with the token was not found. This can occur if:
+    /// - The account was deleted after the token was issued,
+    /// - The token is valid but the account was never found (e.g., due to a bug or data inconsistency).
+    /// </response>
     [HttpGet("confirm-email")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Tags("02 Auth: Email Confirmation")]
     public async Task<IActionResult> ConfirmEmail([FromQuery] string token, CancellationToken cancellationToken)
     {
@@ -213,10 +229,20 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A cancelation token that can be used to cancel the request.
     /// </param>
     /// <returns>
-    /// (204) <see cref="NoContentResult"/> when the resend operation is completed successfully.
+    /// Returns <see cref="NoContentResult"/> when the resend operation is completed successfully.
     /// </returns>
+    /// <response code="204">
+    /// Resend email confirmation link successful. If the email exists and is not confirmed.
+    /// </response>
+    /// <response code="400">
+    /// The request is invalid. This can occur if:
+    /// - The email is missing,
+    /// - The email is malformed,
+    /// - The email is already confirmed.
+    /// </response>
     [HttpPost("resend-email-confirmation")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [AllowAnonymous]
     [Tags("02 Auth: Email Confirmation")]
     public async Task<IActionResult> ResendEmailConfirmation([FromBody] ResendEmailConfirmationDto dto, CancellationToken cancellationToken)

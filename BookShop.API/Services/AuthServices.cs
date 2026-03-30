@@ -200,9 +200,6 @@ public class AuthServices(
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// </returns>
-    /// <exception cref="NotFoundException">
-    /// Thrown if a user with the specified email not exists.
-    /// </exception>
     /// <exception cref="ArgumentException">
     /// Thrown if the requested email is null or consists of whitespaces.
     /// </exception>
@@ -213,10 +210,9 @@ public class AuthServices(
         ValidateEmailPatern(toEmail);
 
         var normalizedEmail = NormalizeInput(toEmail);
-        var user = await _userRepository.GetUserByNormalizedEmailAsync(normalizedEmail, cancellationToken)
-            ?? throw new NotFoundException();
+        var user = await _userRepository.GetUserByNormalizedEmailAsync(normalizedEmail, cancellationToken);
 
-        if (user.IsEmailConfirmed)
+        if (user is null || user.IsEmailConfirmed)
         {
             return;
         }
