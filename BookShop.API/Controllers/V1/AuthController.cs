@@ -265,11 +265,20 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A cancellation token that can be used to cancel the request.
     /// </param>
     /// <returns>
-    /// (204) <see cref="NoContentResult"/> when the logout operation is completed successfully.
+    /// Returns <see cref="NoContentResult"/> when the logout operation is completed successfully.
     /// </returns>
+    /// <response code="204">
+    /// Logout successful. The provided refresh token is invalidated.
+    /// </response>
+    /// <response code="400">
+    /// The request is invalid. This can occur if:
+    /// - The refresh token is missing,
+    /// - The refresh token is malformed.
+    /// </response>
     [HttpPost("logout")]
     [Authorize(Roles = "user, admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Tags("03 Auth: Logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutDto logoutDto, CancellationToken cancellationToken)
     {
@@ -289,10 +298,20 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// <remarks>
     /// This endpoint requires authentication and uses the current user's identity from the access token to revoke all active refresh tokens.
     /// </remarks>
+    /// <response code="204">
+    /// All refresh tokens for the current user were revoked successfully.
+    /// </response>
+    /// <response code="401">
+    /// The user is not authenticated or the access token is invalid.
+    /// </response>
+    /// <response code="400">
+    /// The request is invalid. This can occur if there is an error during the token revocation process.
+    /// </response>
     [HttpPost("lougout-all")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Tags("03 Auth: Logout")]
     public async Task<IActionResult> LogoutAll(CancellationToken cancellationToken)
     {
