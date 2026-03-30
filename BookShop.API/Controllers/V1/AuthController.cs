@@ -336,18 +336,29 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
-    /// <see cref="NoContentResult"/> when the deletion request is accepted and the confirmation email is sent. 
+    /// Returns <see cref="NoContentResult"/> when the deletion request is accepted and the confirmation email is sent. 
     /// </returns>
     /// <response code="204">
     /// The account deletion request was accepted and the confiramtion email was sent.
     /// </response>
     /// <response code="401">
-    /// The user is not authorzed or provded inavlid credentials.
+    /// Can occur when:
+    /// - The user is not authenticated,
+    /// - The user account is not found,
+    /// - The user account already deleted or marked as inactive,
+    /// - The provided email is not confirmed,
+    /// - The provided password is incorrect.
+    /// </response>
+    /// <response code="400">
+    /// The request payload is invalid. This can occur if:
+    /// - The password is missing,
+    /// - The password is incorrect.
     /// </response>
     [HttpDelete("delete-account")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Tags("04 Auth: Account Lifecycle")]
     public async Task<IActionResult> DeleteUserAccount([FromBody] AccountDeleteDto dto, CancellationToken cancellationToken)
     {
@@ -369,18 +380,21 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A plain-text confirmation message when account deletion is completed successfully.
     /// </returns>
     /// <response code="200">
-    /// The account deletion was confirmed successfully.
+    /// Can occur when:
+    /// - The account deletion was confirmed successfully,
+    /// - The account was already deleted or marked as inactive.
     /// </response>
-    /// <response code="401">
-    /// The provided token is invalid or expired.
-    /// </response>
-    /// <response code="404">
-    /// The target user account was not found.
+    /// <response code="400">
+    /// The request is invalid. This can occur if:
+    /// - The token is missing,
+    /// - The token is malformed,
+    /// - The token is invalid or expired,
+    /// - The account assosiated with the token is not found.
     /// </response>
     [HttpGet("confirm-account-deletion")]
     [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Tags("04 Auth: Account Lifecycle")]
     public async Task<IActionResult> ConfirmAccountDeletion([FromQuery] string token, CancellationToken cancellationToken)
     {
@@ -399,14 +413,21 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
-    /// <see cref="NoContentResult"/> when the recovery request is accepted and the confirmation email is sent. 
+    /// Returns <see cref="NoContentResult"/> when the recovery request is accepted and the confirmation email is sent. 
     /// </returns>
     /// <response code="204">
-    /// The account recovery request was accepted and the confiramtion email was sent.
+    /// Can occur when:
+    /// - The account recovery request was accepted and the confiramtion email was sent,
+    /// - The account was not found.
+    /// </response>
+    /// <response code="400">
+    /// Can occur when:
+    /// - The email is missing or invalid.
     /// </response>
     [HttpPost("recover-account")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Tags("04 Auth: Account Lifecycle")]
     public async Task<IActionResult> RecoverAccount([FromBody] AccountRequestDto dto, CancellationToken cancellationToken)
     {
@@ -427,14 +448,25 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A plain-text confirmation message when account recovery is completed successfully.
     /// </returns>
     /// <response code="200">
-    /// The account recovery was confirmed successfully.
+    /// Occur when:
+    /// - Plain text that the account recovery was confirmed successfully,
+    /// - The account was already active,
+    /// - The account was not found.
     /// </response>
     /// <response code="401">
     /// The provided token is invalid or expired.
     /// </response>
+    /// <response code="400">
+    /// Can occur when:
+    /// - The token is missing,
+    /// - The token is malformed,
+    /// - The token is invalid or expired.
+    /// </response>
     [HttpGet("confirm-account-recovery")]
     [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Tags("04 Auth: Account Lifecycle")]
     public async Task<IActionResult> ConfirmAccountRecovery([FromQuery] string token, CancellationToken cancellationToken)
     {
