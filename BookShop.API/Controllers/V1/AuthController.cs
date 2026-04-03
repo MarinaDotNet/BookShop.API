@@ -319,7 +319,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// <response code="400">
     /// The request is invalid. This can occur if there is an error during the token revocation process.
     /// </response>
-    [HttpPost("lougout-all")]
+    [HttpPost("logout-all")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
