@@ -283,10 +283,14 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// - The refresh token is missing,
     /// - The refresh token is malformed.
     /// </response>
+    /// <response code="401">
+    /// Occurs when the user is not authenticated.
+    /// </response>
     [HttpPost("logout")]
     [Authorize(Roles = "user, admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("03 Auth: Logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutDto logoutDto, CancellationToken cancellationToken)
     {
