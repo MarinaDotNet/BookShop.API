@@ -735,7 +735,7 @@ public class AuthServices(
             return;
         }
         var normalizedEmail = NormalizeInput(payload!.NewEmail!);
-        if(user.IsEmailConfirmed && user.NormalizedEmail == normalizedEmail)
+        if(!user.IsEmailConfirmed || user.NormalizedEmail == normalizedEmail)
         {
             return;
         }      

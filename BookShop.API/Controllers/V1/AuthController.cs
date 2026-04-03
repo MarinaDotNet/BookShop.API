@@ -488,16 +488,19 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
-    /// <see cref="NoContentResult"/> when the username is updated successfully or when the requested username mathces the current one. 
+    /// Returns <see cref="NoContentResult"/> when the username is updated successfully or when the requested username 
+    /// mathces the current one. 
     /// </returns>
     /// <response code="204">
-    /// The username was updated successfully.
+    /// Occurs when:
+    /// - The username was updated successfully,
+    /// - The requested username is the same as the current one.
     /// </response>
     /// <response code="400">
     /// The request payload is invalid.
     /// </response>
     /// <response code="403">
-    /// The user is not authenticated.
+    /// The user is not found.
     /// </response>
     /// <response code="409">
     /// The requested username is already taken.
@@ -526,25 +529,34 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A token that can be used to cancell the operation.
     /// </param>
     /// <returns>
-    /// <see cref="NoContentResult"/> when the email confirmation sent successfully. 
+    /// Returns <see cref="NoContentResult"/> when the email confirmation sent successfully. 
     /// </returns>
     /// <response code="204">
-    /// The confirmation email was sent successfully.
+    /// Occurs when:
+    /// - The email update request was accepted and the confirmation email was sent.
     /// </response>
     /// <response code="400">
-    /// The request payload is invalid.
-    /// </response>
-    /// <response code="401">
-    /// The user is not authenticated.
+    /// Occurs when:
+    /// - The request payload is invalid,
+    /// - The requested email is same as the current one,
+    /// - The current account password is missing,
+    /// - The requested email is in invalid format.
     /// </response>
     /// <response code="403">
-    /// The current user is not allowed to perform this action.
+    /// The user is not found.
+    /// </response>
+    /// <response code="409">
+    /// The requested email is already in use by another account.
+    /// </response>
+    /// <response code="401">
+    /// The provided password is incorrect.
     /// </response>
     [HttpPatch("account/email")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("05 Auth: Account Management")]
     public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailDto dto, CancellationToken cancellationToken)
@@ -567,14 +579,27 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A plain-text confirmation message when email update is completed successfully.
     /// </returns>
     /// <response code="200">
-    /// The email update was confirmed successfully.
+    /// Can occur when:
+    /// - The email update was confirmed successfully,
+    /// - The account was not found,
+    /// - The requested account is marked as deleted or inactive,
+    /// - The current account email is not confirmed,
+    /// - The requested email matches the current one.
     /// </response>
-    /// <response code="401">
-    /// The provided token is invalid or expired.
+    /// <response code="400">
+    /// Occurs when:
+    /// - The token is missing,
+    /// - The token is malformed,
+    /// - The token is invalid or expired.
+    /// </response>
+    /// <response code="409">
+    /// The requested email is already in use by another account.
     /// </response>
     [HttpGet("confirm-email-change")]
     [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [Tags("05 Auth: Account Management")]
     public async Task<IActionResult> ConfirmUpdateEmail([FromQuery]string token, CancellationToken cancellationToken)
     {
@@ -592,19 +617,27 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A token that can be used to cancell the operation.
     /// </param>
     /// <returns>
-    /// <see cref="NoContentResult"/> when the password is updated successfully. 
+    /// Returns <see cref="NoContentResult"/> when the password is updated successfully. 
     /// </returns>
     /// <response code="204">
     /// The password was updated successfully.
     /// </response>
     /// <response code="400">
-    /// The request payload is invalid.
+    /// Occurs when:
+    /// - The request payloas is invalid,
+    /// - The current password is missing,
+    /// - The new password is missing,
+    /// - The new password does not meet the security requirements,
+    /// - The new password is the same as the current one.
     /// </response>
     /// <response code="401">
-    /// The user is not authenticated.
+    /// Occurs when:
+    /// - The user is not authenticated,
+    /// - The provided current password is invalid,
+    /// - The requested account is marked as deleted or inactive.
     /// </response>
     /// <response code="403">
-    /// The current user is not allowed to perform this action./
+    /// The account is not found.
     /// </response>
     [HttpPatch("account/password")]
     [Authorize]
