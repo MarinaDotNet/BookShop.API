@@ -667,13 +667,20 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A token that can be used to cancell the operation.
     /// </param>
     /// <returns>
-    /// <see cref="NoContentResult"/> regardless of whether a matching account exists, in order to avoid disclosing account existence. 
+    /// Returns <see cref="NoContentResult"/> regardless of whether a matching account exists, in order to avoid disclosing account existence. 
     /// </returns>
     /// <response code="204">
-    /// The password reset request was accepted. If the account exists.
+    /// Can occur when:
+    /// - The password reset request was accepted and the confirmation email was sent,
+    /// - The account was not found,
+    /// - The account email is not confirmed,
+    /// - The account is marked as deleted or inactive.
     /// </response>
     /// <response code="400">
-    /// The request payload is invalid.
+    /// Occurs when:
+    /// - The payload is invalid,
+    /// - The email is missing,
+    /// - The email is in invalid format.
     /// </response>
     [HttpPost("forgot-password")]
     [AllowAnonymous]
@@ -696,13 +703,20 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A token that can be used to cancell the operaion.
     /// </param>
     /// <returns>
-    /// <see cref="ContentResult"/> indicationg that the password has been reset successfully. 
+    /// Returns <see cref="ContentResult"/> indicationg that the password has been reset successfully. 
     /// </returns>
     /// <response code="200">
-    /// The password was reset successfully.
+    /// Can occur when:
+    /// - The password was reset successfully,
+    /// - The account was not found,
+    /// - The account is marked as deleted or inactive,
+    /// - The account email is not confirmed.
     /// </response>
     /// <response code="400">
-    /// The request payload is invalid or the token is invalid.
+    /// Occurs when:
+    /// - The request payload is invalid,
+    /// - The new password is missing or does not meet the security requirements,
+    /// - The token is missing, malformed, invalid or expired.
     /// </response>
     [HttpPost("reset-password")]
     [AllowAnonymous]
@@ -722,13 +736,15 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A token that can be used to cancell the operation.
     /// </param>
     /// <returns>
-    /// <see cref="ContentResult"/> containing an HTML form that posts the token and the new password to the password reset endpoint. 
+    /// Returns <see cref="ContentResult"/> containing an HTML form that posts the token and the new password to the password reset endpoint. 
     /// </returns>
     /// <response code="200">
     /// The password page was returned successfully.
     /// </response>
     /// <response code="400">
-    /// The request payload is invalid or the token is invalid.
+    /// Occurs when:
+    /// - The token is missing, malformed, invalid or expired,
+    /// - The request payload is invalid.
     /// </response>
     [HttpGet("reset-password")]
     [AllowAnonymous]
@@ -763,13 +779,21 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A cancellation token that can be used to cancell the operation.
     /// </param>
     /// <returns>
-    /// <see cref="ContentResult"/> indicating that the password has been reset successfully.
+    /// Returns <see cref="ContentResult"/> indicating that the password has been reset successfully.
     /// </returns>
     /// <response code="200">
-    /// The password was reset successfully.
+    /// Can occur when:
+    /// - The password was reset successfully,
+    /// - The account was not found,
+    /// - The account is marked as deleted or inactive,
+    /// - The account email is not confirmed.
     /// </response>
     /// <response code="400">
-    /// The request payload is invalid or the token is invalid.
+    /// Occurs when:
+    /// - The request payload is invalid,
+    /// - The new password is missing or does not meet the security requirements,
+    /// - The token is missing, malformed, invalid or expired,
+    /// - The new password is the same as the current one.
     /// </response>
     [HttpPost("reset-password-json")]
     [AllowAnonymous]
