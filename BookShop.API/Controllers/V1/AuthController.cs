@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace BookShop.API.Controllers.V1;
 
 /// <summary>
-/// Provides authentication-related API endpoints (e.g. user registration, email confirmation and etc.).
+/// Provides authentication-related API endpoints such as user registration and email confirmation.
 /// </summary>
 /// <remarks>
 /// This controller delegates business logic to <see cref="AuthServices"/> and relies on centralized exception handling 
@@ -35,17 +35,17 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The registration payload containing the username, email, and password.
     /// </param>
     /// <param name="cancellationToken">
-    /// A cancelation token that can be used to cancel the request.
+    /// A cancellation token that can be used to cancel the request.
     /// </param>
     /// <returns>
-    /// Returns <see cref="CreatedResult"/> with the created users's identifier, if user is successfully registered.
+    /// Returns <see cref="CreatedResult"/> with the created user's identifier, if user is successfully registered.
     /// </returns>
     /// <response code="201">
     /// User successfully registered.
     /// </response>
     /// <response code="400">
-    /// The request is invalid. This can occur if: 
-    /// - The provided data is invalid or incomeplete,
+    /// The request is invalid. This can occur when: 
+    /// - The provided data is invalid or incomplete,
     /// - The email or username is already in use,
     /// - Business validation rules are violated.
     /// </response>
@@ -67,25 +67,25 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The registration payload containing the username, email, and password.
     /// </param>
     /// <param name="cancellationToken">
-    /// A cancelation token that can be used to cancel the request.
+    /// A cancellation token that can be used to cancel the request.
     /// </param>
     /// <returns>
-    /// Returns <see cref="CreatedResult"/> with the created users's identifier, if user is successfully registered.
+    /// Returns <see cref="CreatedResult"/> with the created user's identifier, if user is successfully registered.
     /// </returns>
     /// /// <response code="201">
     /// User successfully registered.
     /// </response>
     /// <response code="400">
-    /// The request is invalid. This can occur if: 
-    /// - The provided data is invalid or incomeplete,
+    /// The request is invalid. This can occur when: 
+    /// - The provided data is invalid or incomplete,
     /// - The email or username is already in use,
     /// - Business validation rules are violated.
     /// </response>
     /// <response code="401">
-    /// Occurs when the user is not authenticated.
+    /// This can occur when the user is not authenticated.
     /// </response>
     /// <response code="403">
-    /// Occurs when the authenticated user does not have the required "Admin" role to access this endpoint.
+    /// This can occur when the authenticated user does not have the required "Admin" role to access this endpoint.
     /// </response>
     [HttpPost("admin/register")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -108,7 +108,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The login payload containing the username and password.
     /// </param>
     /// <param name="cancellationToken">
-    /// A cancelation token that can be used to cancel the request.
+    /// A cancellation token that can be used to cancel the request.
     /// </param>
     /// <returns>
     /// Returns <see cref="OkObjectResult"/> with the authentication tokens if the login is successful.
@@ -120,7 +120,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The request is invalid. This can occur:
     /// - Required fields are missing,
     /// - The request payload is malformed,
-    /// - Input validationfails.
+    /// - Input validation fails.
     /// </response>
     /// <response code="401">
     /// Authentication failed. This can occur:
@@ -156,16 +156,16 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// Returns <see cref="OkObjectResult"/> with a new token pair if the refresh token is valid.
     /// </returns>
     /// <response code="200">
-    /// Token refresh successful. Returns a new access token and refresh toke.
+    /// Token refresh successful. Returns a new access token and refresh token.
     /// </response>
     /// <response code="400">
     /// The request is invalid. This can occur:
     /// - The refresh token is missing,
     /// - The request payload is malformed,
-    /// - Input validationfails.
+    /// - Input validation fails.
     /// </response>
     /// <response code="401">
-    /// The refresh token is invalid. This can occur if:
+    /// The refresh token is invalid. This can occur when:
     /// - The token is expired,
     /// - The token has been revoked,
     /// - The token is not recognized,
@@ -196,7 +196,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The email confirmation token provided in the confirmation link query string.
     /// </param>
     /// <param name="cancellationToken">
-    /// A cancelation token that can be used to cancel the request.
+    /// A cancellation token that can be used to cancel the request.
     /// </param>
     /// <returns>
     /// Returns <see cref="NoContentResult"/> when the email confirmation is completed successfully.
@@ -205,13 +205,13 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// Email confirmation successful.
     /// </response>
     /// <response code="400">
-    /// The request is invalid. This can occur if:
+    /// The request is invalid. This can occur when:
     /// - The token is missing,
     /// - The token is malformed,
     /// - The token is invalid or expired.
     /// </response>
     /// <response code="404">
-    /// The user account associated with the token was not found. This can occur if:
+    /// The user account associated with the token was not found. This can occur when:
     /// - The account was deleted after the token was issued,
     /// - The token is valid but the account was never found (e.g., due to a bug or data inconsistency).
     /// </response>
@@ -234,7 +234,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The resend email confirmation payload containing the email.
     /// </param>
     /// <param name="cancellationToken">
-    /// A cancelation token that can be used to cancel the request.
+    /// A cancellation token that can be used to cancel the request.
     /// </param>
     /// <returns>
     /// Returns <see cref="NoContentResult"/> when the resend operation is completed successfully.
@@ -243,7 +243,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// Resend email confirmation link successful. If the email exists and is not confirmed.
     /// </response>
     /// <response code="400">
-    /// The request is invalid. This can occur if:
+    /// The request is invalid. This can occur when:
     /// - The email is missing,
     /// - The email is malformed,
     /// - The email is already confirmed.
@@ -264,7 +264,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     #region Auth: Logout
 
     /// <summary>
-    /// Logs out the user and invalidates their refresh token.
+    /// Logs out the current session by revoking the provided refresh token.
     /// </summary>
     /// <param name="logoutDto">
     /// The logout payload containing the refresh token to be invalidated.
@@ -279,12 +279,12 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// Logout successful. The provided refresh token is invalidated.
     /// </response>
     /// <response code="400">
-    /// The request is invalid. This can occur if:
+    /// The request is invalid. This can occur when:
     /// - The refresh token is missing,
     /// - The refresh token is malformed.
     /// </response>
     /// <response code="401">
-    /// Occurs when the user is not authenticated.
+    /// This can occur when the user is not authenticated.
     /// </response>
     [HttpPost("logout")]
     [Authorize(Roles = "user, admin")]
@@ -299,7 +299,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     }
 
     /// <summary>
-    /// Revokes all active refresh tokens for the currently authenticated user, effectively logging the user out from the all devices.
+    /// Revokes all active refresh tokens for the currently authenticated user, effectively logging the user out from all devices.
     /// </summary>
     /// <param name="cancellationToken">
     /// A cancellation token that can be used to cancel the request.
@@ -338,7 +338,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     #region Auth: Account Lifecycle
 
     /// <summary>
-    /// Initiates deletion of the currently authenticated user's account by validation the provided password and sending an account
+    /// Initiates deletion of the currently authenticated user's account by validating the provided password and sending an account
     /// deletion confirmation link.
     /// </summary>
     /// <param name="dto">
@@ -351,10 +351,10 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// Returns <see cref="NoContentResult"/> when the deletion request is accepted and the confirmation email is sent. 
     /// </returns>
     /// <response code="204">
-    /// The account deletion request was accepted and the confiramtion email was sent.
+    /// The account deletion request was accepted and the confirmation email was sent.
     /// </response>
     /// <response code="401">
-    /// Can occur when:
+    /// This can occur when:
     /// - The user is not authenticated,
     /// - The user account is not found,
     /// - The user account already deleted or marked as inactive,
@@ -362,7 +362,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// - The provided password is incorrect.
     /// </response>
     /// <response code="400">
-    /// The request payload is invalid. This can occur if:
+    /// The request payload is invalid. This can occur when:
     /// - The password is missing,
     /// - The password is incorrect.
     /// </response>
@@ -392,16 +392,16 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A plain-text confirmation message when account deletion is completed successfully.
     /// </returns>
     /// <response code="200">
-    /// Can occur when:
+    /// This can occur when:
     /// - The account deletion was confirmed successfully,
     /// - The account was already deleted or marked as inactive.
     /// </response>
     /// <response code="400">
-    /// The request is invalid. This can occur if:
+    /// The request is invalid. This can occur when:
     /// - The token is missing,
     /// - The token is malformed,
     /// - The token is invalid or expired,
-    /// - The account assosiated with the token is not found.
+    /// - The account associated with the token is not found.
     /// </response>
     [HttpGet("confirm-account-deletion")]
     [AllowAnonymous]
@@ -428,12 +428,12 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// Returns <see cref="NoContentResult"/> when the recovery request is accepted and the confirmation email is sent. 
     /// </returns>
     /// <response code="204">
-    /// Can occur when:
-    /// - The account recovery request was accepted and the confiramtion email was sent,
+    /// This can occur when:
+    /// - The account recovery request was accepted and the confirmation email was sent,
     /// - The account was not found.
     /// </response>
     /// <response code="400">
-    /// Can occur when:
+    /// This can occur when:
     /// - The email is missing or invalid.
     /// </response>
     [HttpPost("recover-account")]
@@ -448,7 +448,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     }
 
     /// <summary>
-    /// Confirms account recovery using the token provided in the confirmation link and marks the user account as undeleted.
+    /// Confirms account recovery using the token provided in the confirmation link and restores the user account.
     /// </summary>
     /// <param name="token">
     /// The account recovery confirmation token from the query string.
@@ -460,7 +460,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A plain-text confirmation message when account recovery is completed successfully.
     /// </returns>
     /// <response code="200">
-    /// Occur when:
+    /// This can occur when:
     /// - Plain text that the account recovery was confirmed successfully,
     /// - The account was already active,
     /// - The account was not found.
@@ -469,7 +469,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The provided token is invalid or expired.
     /// </response>
     /// <response code="400">
-    /// Can occur when:
+    /// This can occur when:
     /// - The token is missing,
     /// - The token is malformed,
     /// - The token is invalid or expired.
@@ -483,7 +483,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     public async Task<IActionResult> ConfirmAccountRecovery([FromQuery] string token, CancellationToken cancellationToken)
     {
         await _auth.ConfirmAccountRecoveryAsync(token, cancellationToken);
-        return Content("Account recovery confirmed sucessfully.", "text/plain");
+        return Content("Account recovery confirmed successfully.", "text/plain");
     }
     
     #endregion Auth: Account Lifecycle
@@ -501,10 +501,10 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// </param>
     /// <returns>
     /// Returns <see cref="NoContentResult"/> when the username is updated successfully or when the requested username 
-    /// mathces the current one. 
+    /// matches the current one. 
     /// </returns>
     /// <response code="204">
-    /// Occurs when:
+    /// This can occur when:
     /// - The username was updated successfully,
     /// - The requested username is the same as the current one.
     /// </response>
@@ -538,17 +538,17 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The request containing current account password and new email address.
     /// </param>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operation.
+    /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// Returns <see cref="NoContentResult"/> when the email confirmation sent successfully. 
     /// </returns>
     /// <response code="204">
-    /// Occurs when:
+    /// This can occur when:
     /// - The email update request was accepted and the confirmation email was sent.
     /// </response>
     /// <response code="400">
-    /// Occurs when:
+    /// This can occur when:
     /// - The request payload is invalid,
     /// - The requested email is same as the current one,
     /// - The current account password is missing,
@@ -591,7 +591,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A plain-text confirmation message when email update is completed successfully.
     /// </returns>
     /// <response code="200">
-    /// Can occur when:
+    /// This can occur when:
     /// - The email update was confirmed successfully,
     /// - The account was not found,
     /// - The requested account is marked as deleted or inactive,
@@ -599,7 +599,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// - The requested email matches the current one.
     /// </response>
     /// <response code="400">
-    /// Occurs when:
+    /// This can occur when:
     /// - The token is missing,
     /// - The token is malformed,
     /// - The token is invalid or expired.
@@ -626,7 +626,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The request containing the current and new passwords.
     /// </param>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operation.
+    /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// Returns <see cref="NoContentResult"/> when the password is updated successfully. 
@@ -635,7 +635,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The password was updated successfully.
     /// </response>
     /// <response code="400">
-    /// Occurs when:
+    /// This can occur when:
     /// - The request payloas is invalid,
     /// - The current password is missing,
     /// - The new password is missing,
@@ -643,7 +643,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// - The new password is the same as the current one.
     /// </response>
     /// <response code="401">
-    /// Occurs when:
+    /// This can occur when:
     /// - The user is not authenticated,
     /// - The provided current password is invalid,
     /// - The requested account is marked as deleted or inactive.
@@ -676,20 +676,20 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The request containing the email address of the account.
     /// </param>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operation.
+    /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// Returns <see cref="NoContentResult"/> regardless of whether a matching account exists, in order to avoid disclosing account existence. 
     /// </returns>
     /// <response code="204">
-    /// Can occur when:
+    /// This can occur when:
     /// - The password reset request was accepted and the confirmation email was sent,
     /// - The account was not found,
     /// - The account email is not confirmed,
     /// - The account is marked as deleted or inactive.
     /// </response>
     /// <response code="400">
-    /// Occurs when:
+    /// This can occur when:
     /// - The payload is invalid,
     /// - The email is missing,
     /// - The email is in invalid format.
@@ -712,20 +712,20 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The request containing the password reset token and the new password.
     /// </param>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operaion.
+    /// A token that can be used to cancel the operaion.
     /// </param>
     /// <returns>
     /// Returns <see cref="ContentResult"/> indicationg that the password has been reset successfully. 
     /// </returns>
     /// <response code="200">
-    /// Can occur when:
+    /// This can occur when:
     /// - The password was reset successfully,
     /// - The account was not found,
     /// - The account is marked as deleted or inactive,
     /// - The account email is not confirmed.
     /// </response>
     /// <response code="400">
-    /// Occurs when:
+    /// This can occur when:
     /// - The request payload is invalid,
     /// - The new password is missing or does not meet the security requirements,
     /// - The token is missing, malformed, invalid or expired.
@@ -745,7 +745,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// Returns a simple HTML page with a password reset form for browser-based password reset flow.
     /// </summary>
     /// <param name="token">
-    /// A token that can be used to cancell the operation.
+    /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// Returns <see cref="ContentResult"/> containing an HTML form that posts the token and the new password to the password reset endpoint. 
@@ -754,7 +754,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The password page was returned successfully.
     /// </response>
     /// <response code="400">
-    /// Occurs when:
+    /// This can occur when:
     /// - The token is missing, malformed, invalid or expired,
     /// - The request payload is invalid.
     /// </response>
@@ -788,20 +788,20 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The request containing the password reset token and the new password.
     /// </param>
     /// <param name="cancellationToken">
-    /// A cancellation token that can be used to cancell the operation.
+    /// A cancellation token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// Returns <see cref="ContentResult"/> indicating that the password has been reset successfully.
     /// </returns>
     /// <response code="200">
-    /// Can occur when:
+    /// This can occur when:
     /// - The password was reset successfully,
     /// - The account was not found,
     /// - The account is marked as deleted or inactive,
     /// - The account email is not confirmed.
     /// </response>
     /// <response code="400">
-    /// Occurs when:
+    /// This can occur when:
     /// - The request payload is invalid,
     /// - The new password is missing or does not meet the security requirements,
     /// - The token is missing, malformed, invalid or expired,
@@ -826,7 +826,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// Retrieves the profile of the currently authenticated user.
     /// </summary>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operation.
+    /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// Returns <see cref="OkObjectResult"/> containing the current user's profile information. 
@@ -838,7 +838,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The request payload is invalid. This can occur if there is an error while processing the request.
     /// </response>
     /// <response code="401">
-    /// Occurs when:
+    /// This can occur when:
     /// - The user is not authenticated,
     /// - The account is not found,
     /// - The account is marked as deleted or inactive.
