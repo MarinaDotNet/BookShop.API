@@ -129,7 +129,6 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// - The user account is inactive or deleted.
     /// </response>
     [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
     [AllowAnonymous]
     [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
