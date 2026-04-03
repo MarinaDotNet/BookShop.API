@@ -700,7 +700,7 @@ public class AuthServices(
         
         await EnsureEmailIsAvailableAsync(normalizedEmail, cancellationToken);
 
-        await SendEmailChangeConfiramtionLink(userId, dto.NewEmail, cancellationToken);
+        await SendEmailChangeConfirmationLink(userId, dto.NewEmail, cancellationToken);
     }
 
     /// <summary>
@@ -1544,7 +1544,7 @@ public class AuthServices(
     /// <returns>
     /// A task that represents an asynchronous operation.
     /// </returns>
-    private async Task SendEmailChangeConfiramtionLink(int userId, string newEmail, CancellationToken cancellationToken)
+    private async Task SendEmailChangeConfirmationLink(int userId, string newEmail, CancellationToken cancellationToken)
     {
         Uri confirmationLink = CreateEmailChangeConfirmationLink(userId, newEmail);
         await _emailSender.SendEmailChangeConfirmationAsync(newEmail, confirmationLink, cancellationToken);
