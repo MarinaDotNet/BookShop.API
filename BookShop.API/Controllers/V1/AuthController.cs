@@ -81,9 +81,17 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// - The email or username is already in use,
     /// - Business validation rules are violated.
     /// </response>
+    /// <response code="401">
+    /// Occurs when the user is not authenticated.
+    /// </response>
+    /// <response code="403">
+    /// Occurs when the authenticated user does not have the required "Admin" role to access this endpoint.
+    /// </response>
     [HttpPost("admin/register")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [EnableCors("AdminPolicy")]
     [Authorize(Roles = "Admin")]
     [Tags("01 Auth: Registration & Login")]
