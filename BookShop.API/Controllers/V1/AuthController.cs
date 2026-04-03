@@ -817,22 +817,25 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// A token that can be used to cancell the operation.
     /// </param>
     /// <returns>
-    /// <see cref="OkObjectResult"/> containing the current user's profile information. 
+    /// Returns <see cref="OkObjectResult"/> containing the current user's profile information. 
     /// </returns>
     /// <response code="200">
     /// Returns the user profile.
     /// </response>
-    /// <response code="401">
-    /// The user is not authenticated.
+    /// <response code="400">
+    /// The request payload is invalid. This can occur if there is an error while processing the request.
     /// </response>
-    /// <response code="403">
-    /// The user is not allowed to access this resource.
+    /// <response code="401">
+    /// Occurs when:
+    /// - The user is not authenticated,
+    /// - The account is not found,
+    /// - The account is marked as deleted or inactive.
     /// </response>
     [HttpGet("account")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Tags("07 Auth: Current User")]
     public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
     {
