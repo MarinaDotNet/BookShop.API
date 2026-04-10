@@ -162,7 +162,7 @@ public class AuthServices(
     /// A task that represents the asynchronous operation. The task result contains the unique identifier of the newly
     /// registered user.
     /// </returns>
-    /// <exception cref="InvalidOperationException">
+    /// <exception cref="ConflictException">
     /// Thrown if a user with the provided username or email already exists, or if the default user role cannot be
     /// found.
     /// </exception>
