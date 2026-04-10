@@ -97,12 +97,12 @@ public static class ProblemDetailsBuilder
         status switch
         {
             StatusCodes.Status400BadRequest when exception is
-            InvalidTokenException => "Invalid token",
-            StatusCodes.Status400BadRequest => "Bad Request",
-            StatusCodes.Status401Unauthorized => "Unauthorized",
-            StatusCodes.Status403Forbidden => "Forbidden",
-            StatusCodes.Status404NotFound => "Not Found",
-            StatusCodes.Status409Conflict => "Conflict",
-            _ => "Internal Server Error"
+            InvalidTokenException => "The provided token is invalid.",
+            StatusCodes.Status400BadRequest => "The request is invalid.",
+            StatusCodes.Status401Unauthorized => "Authentication is required.",
+            StatusCodes.Status403Forbidden => "You do not have permission to perform this action.",
+            StatusCodes.Status404NotFound => "The requested resource was not found.",
+            StatusCodes.Status409Conflict => "The request could not be completed due to a conflict.",
+            _ => "An unexpected error occurred."
         };
 }
