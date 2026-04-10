@@ -479,9 +479,9 @@ public class AuthServices(
         ArgumentException.ThrowIfNullOrWhiteSpace(email, nameof(email));
         ValidateEmailPatern(email);
 
-        var normailzedEmail = NormalizeInput(email);
+        var normalizedEmail = NormalizeInput(email);
 
-        var user = await _userRepository.GetDeletedUserByNormalizedEmailAsync(normailzedEmail, cancellationToken);
+        var user = await _userRepository.GetDeletedUserByNormalizedEmailAsync(normalizedEmail, cancellationToken);
         if (user is null)
         {
             return;
@@ -701,7 +701,7 @@ public class AuthServices(
         
         await EnsureEmailIsAvailableAsync(normalizedEmail, cancellationToken);
 
-        await SendEmailChangeConfirmationLink(userId, dto.NewEmail, cancellationToken);
+        await SendEmailChangeConfirmationLinkAsync(userId, dto.NewEmail, cancellationToken);
     }
 
     /// <summary>
@@ -1545,7 +1545,7 @@ public class AuthServices(
     /// <returns>
     /// A task that represents an asynchronous operation.
     /// </returns>
-    private async Task SendEmailChangeConfirmationLink(int userId, string newEmail, CancellationToken cancellationToken)
+    private async Task SendEmailChangeConfirmationLinkAsync(int userId, string newEmail, CancellationToken cancellationToken)
     {
         Uri confirmationLink = CreateEmailChangeConfirmationLink(userId, newEmail);
         await _emailSender.SendEmailChangeConfirmationAsync(newEmail, confirmationLink, cancellationToken);
