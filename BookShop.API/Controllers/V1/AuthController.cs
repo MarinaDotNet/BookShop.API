@@ -207,10 +207,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The request is invalid. This can occur when:
     /// - The token is missing,
     /// - The token is malformed,
-    /// - The token is invalid or expired.
-    /// </response>
-    /// <response code="404">
-    /// The user account associated with the token was not found. This can occur when:
+    /// - The token is invalid or expired,
     /// - The account was deleted after the token was issued,
     /// - The token is valid but the account was never found (e.g., due to a bug or data inconsistency).
     /// </response>
@@ -218,7 +215,6 @@ public class AuthController(AuthServices auth) : BaseApiController
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Tags("02 Auth: Email Confirmation")]
     public async Task<IActionResult> ConfirmEmail([FromQuery] string token, CancellationToken cancellationToken)
     {

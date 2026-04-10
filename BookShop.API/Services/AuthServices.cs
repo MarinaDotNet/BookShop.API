@@ -75,7 +75,7 @@ public class AuthServices(
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the registration operation.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the unique identifier of the newly
     /// registered user.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if a user with the provided username or email already exists, or if the default user role cannot be
+    /// <exception cref="ConflictException">Thrown if a user with the provided username or email already exists, or if the default user role cannot be
     /// found.</exception>
     public async Task<int> RegisterUserAsync(UserRegisterDto userRegisterDto, CancellationToken cancellationToken)
     {
@@ -122,10 +122,9 @@ public class AuthServices(
     /// Thrown if <paramref name="token"/> is null or empty.
     /// </exception>
     /// <exception cref="InvalidTokenException">
-    /// Thrown if the token is invalid, expired, or does not match the expected purpose.
-    /// </exception>
-    /// <exception cref="KeyNotFoundException">
-    /// Thrown if the user referenced by the token payload cannot be found.
+    /// This can occur when::
+    /// - The token is invalid, expired, or does not match the expected purpose,
+    /// - The user referenced by the token payload cannot be found.
     /// </exception>
     public async Task ConfirmEmailAsync(string token, CancellationToken cancellationToken)
     {
@@ -137,7 +136,7 @@ public class AuthServices(
         }
 
         var user = await _userRepository.GetUserByIdAsync(payload!.UserId, cancellationToken)
-            ?? throw new KeyNotFoundException("User not found.");
+            ?? throw new InvalidTokenException("User not found.");
 
         if (user.IsEmailConfirmed)
         {
