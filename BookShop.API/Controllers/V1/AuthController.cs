@@ -645,16 +645,13 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// This can occur when:
     /// - The user is not authenticated,
     /// - The provided current password is invalid,
-    /// - The requested account is marked as deleted or inactive.
-    /// </response>
-    /// <response code="403">
-    /// The account is not found.
+    /// - The requested account is marked as deleted or inactive,
+    /// - The requested account is not found.
     /// </response>
     [HttpPatch("account/password")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("05 Auth: Account Management")]
     public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDto dto, CancellationToken cancellationToken)

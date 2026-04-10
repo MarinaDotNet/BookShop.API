@@ -611,14 +611,11 @@ public class AuthServices(
     /// <exception cref="ArgumentException">
     /// Thrown when the current or new password is empty.
     /// </exception>
-    /// <exception cref="ForbiddenException">
-    /// Thrown when the user cannot be accessed for this operation.
-    /// </exception>
     /// <exception cref="ValidationException">
     /// Thrown when the new password does not meet the required policy or mathes the current password.
     /// </exception>
     /// <exception cref="UnauthorizedAccessException">
-    /// Thrown when the user is flagged as deleted or inactive.
+    /// Thrown when the user is flagged as deleted or inactive or the requested user is not found or cannot be accessed.
     /// </exception> 
     public async Task UpdatePasswordAsync(int userId, UpdatePasswordDto dto, CancellationToken cancellationToken)
     {
@@ -629,7 +626,7 @@ public class AuthServices(
             throw new ArgumentException("The current and new passwords are required.");
         }
         var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
-            ?? throw new ForbiddenException("Access to the user account is denied.");
+            ?? throw new UnauthorizedAccessException("Access to the user account is denied.");
 
         if(user.IsDeleted || !user.IsActive)
         {
