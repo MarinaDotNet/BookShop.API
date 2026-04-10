@@ -1264,7 +1264,7 @@ public class AuthServices(
     /// </summary>
     /// <remarks>
     /// This method checks the user repository for existing users with the given normalized username and email. 
-    /// If a user is found with either identifier, an <see cref="InvalidOperationException"/> is thrown to indicate that the user 
+    /// If a user is found with either identifier, an <see cref="ConflictException"/> is thrown to indicate that the user 
     /// cannot be created due to existing records.
     /// </remarks>
     /// <param name="normalizedUsername">
@@ -1279,20 +1279,13 @@ public class AuthServices(
     /// <returns>
     /// The task representing the asynchronous operation.
     /// </returns>
-    /// <exception cref="InvalidOperationException">
+    /// <exception cref="ConflictException">
     /// Thrown if a user with the provided username or email already exists.
     /// </exception>
     private async Task EnsureUserDoesNotExists(string normalizedUsername, string normalizedEmail, CancellationToken cancellationToken)
     {
-        if (await _userRepository.GetUserByNormalizedUsernameAsync(normalizedUsername, cancellationToken) is not null)
-        {
-            throw new InvalidOperationException("A user with the provided username already exists.");
-        }
-        
-        if (await _userRepository.GetUserByNormalizedEmailAsync(normalizedEmail, cancellationToken) is not null)
-        {
-            throw new InvalidOperationException("A user with the provided email already exists.");
-        }
+       await EnsureEmailIsAvailableAsync(normalizedEmail, cancellationToken);
+       await EnsureUsernameIsAvailable(normalizedUsername, cancellationToken);
     }
 
     /// <summary>
@@ -1516,11 +1509,14 @@ public class AuthServices(
     /// <exception cref="ConflictException">
     /// Thrown when the specified username is already taken.
     /// </exception> 
+    /// <exception cref="ArgumentException">
+    /// Thrown when the specified <paramref name="normalizedUsername"/>is null, empty, or consists only of white spaces.
+    /// </exception> 
     private async Task EnsureUsernameIsAvailable(string normalizedUsername, CancellationToken cancellationToken)
     {
-        var existingUser = await _userRepository.GetUserByNormalizedUsernameAsync(normalizedUsername, cancellationToken);
+        ArgumentException.ThrowIfNullOrWhiteSpace(normalizedUsername, nameof(normalizedUsername));
 
-        if(existingUser is not null)
+        if(await _userRepository.GetUserByNormalizedUsernameAsync(normalizedUsername, cancellationToken) is not null)
         {
             throw new ConflictException("Username is already taken.");
         }
