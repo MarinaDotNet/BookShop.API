@@ -105,12 +105,12 @@ public class AuthServices(
     /// Confirms a user's email address using an email confirmation token.
     /// </summary>
     /// <remarks>
-    /// This method validated the provided token for the <see cref="AuthTokenPurpose.EmailConfirmation"/> purpose, extracts the user identifier from 
+    /// This method validates the provided token for the <see cref="AuthTokenPurpose.EmailConfirmation"/> purpose, extracts the user identifier from 
     /// the token payload, and marks the user account as email-confirmed.
     /// If the user is already confirmed, the method returns without changes.
     /// </remarks>
     /// <param name="token">
-    /// The email confirmation token recieved from the confirmation link. Cannot be null or empty.
+    /// The email confirmation token received from the confirmation link. Cannot be null or empty.
     /// </param>
     /// <param name="cancellationToken">
     /// A cancellation token that can be used to cancel the operation.
@@ -122,7 +122,7 @@ public class AuthServices(
     /// Thrown if <paramref name="token"/> is null or empty.
     /// </exception>
     /// <exception cref="InvalidTokenException">
-    /// This can occur when::
+    /// This can occur when:
     /// - The token is invalid, expired, or does not match the expected purpose,
     /// - The user referenced by the token payload cannot be found.
     /// </exception>
@@ -385,7 +385,7 @@ public class AuthServices(
     /// The user's current password used to verify the deletion request.
     /// </param>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operation.
+    /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
@@ -394,7 +394,7 @@ public class AuthServices(
     /// Thrown when <paramref name="password"/> is null, empty, or consists only of white spaces.
     /// </exception>
     /// <exception cref="UnauthorizedAccessException">
-    /// Thrown when the user does not exists, is inactive, is deleted, is not email-confirmed, or when is provided password is invalid.
+    /// Thrown when the user does not exist, is inactive, is deleted, is not email-confirmed, or when the provided password is invalid.
     /// </exception>
     public async Task RequestAccountDeletionAsync(int userId, string password, CancellationToken cancellationToken)
     {
@@ -420,7 +420,7 @@ public class AuthServices(
     /// The account deletion confirmation token received from the email link.
     /// </param>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operation.
+    /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
@@ -466,7 +466,7 @@ public class AuthServices(
     /// The account email address that is requested to recover.
     /// </param>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operation.
+    /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
@@ -495,13 +495,13 @@ public class AuthServices(
     /// and marks the account as active and not deleted.
     /// </summary>
     /// <param name="token">
-    /// The account recovery confirmation token recieved from the email link.
+    /// The account recovery confirmation token received from the email link.
     /// </param>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operation.
+    /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
-    /// A taks that represents the asynchronous operation.
+    /// A task that represents the asynchronous operation.
     /// </returns>
     /// <exception cref="InvalidTokenException">
     /// Thrown when the provided token is invalid, expired, or doesn't match the expected purpose.
@@ -546,7 +546,7 @@ public class AuthServices(
     /// The request containing the new user name.
     /// </param>
     /// <param name="cancellationToken">
-    /// A token that can be used to cancell the operation.
+    /// A token that can be used to cancel the operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
@@ -589,7 +589,7 @@ public class AuthServices(
     }
 
     /// <summary>
-    /// Updates the password of the specified user after validationg the current password and applying the password policy.
+    /// Updates the password of the specified user after validating the current password and applying the password policy.
     /// </summary>
     /// <param name="userId">
     /// The identifier of the current user.
