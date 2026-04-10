@@ -510,7 +510,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// <response code="400">
     /// The request payload is invalid.
     /// </response>
-    /// <response code="403">
+    /// <response code="401">
     /// The user is not found.
     /// </response>
     /// <response code="409">
@@ -520,7 +520,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [Tags("05 Auth: Account Management")]
     public async Task<IActionResult> UpdateUsername([FromBody] UpdateUsernameDto dto, CancellationToken cancellationToken)

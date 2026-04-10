@@ -167,7 +167,6 @@ public class AuthServices(
     /// Thrown if a user with the provided username or email already exists, or if the default user role cannot be
     /// found.
     /// </exception>
-
     public async Task<int> RegisterAdminAsync(UserRegisterDto userRegisterDto, CancellationToken cancellationToken)
     {
         ValidateRegistrationInput(userRegisterDto);
@@ -562,7 +561,7 @@ public class AuthServices(
     /// <exception cref="ArgumentException">
     /// Thrown when the new username is null, empty, or consists only of white spaces.
     /// </exception>
-    /// <exception cref="ForbiddenException">
+    /// <exception cref="UnauthorizedAccessException">
     /// Thrown when the requested username is already taken by another user.
     /// </exception>
     public async Task UpdateUsernameAsync(int userId, UpdateUsernameDto dto, CancellationToken cancellationToken)
@@ -574,7 +573,7 @@ public class AuthServices(
             throw new ArgumentException("The new account username is required.");
         }
         var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
-        ?? throw new ForbiddenException("The user is not found.");
+        ?? throw new UnauthorizedAccessException("The user is not found.");
         var normalizedUsername = NormalizeInput(dto.NewUserName);
         if(user!.NormalizedUsername == normalizedUsername)
         {
