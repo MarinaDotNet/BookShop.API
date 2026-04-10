@@ -409,7 +409,7 @@ public class AuthServices(
 
         VerifyPasswordOrThrow(user, password);
 
-        await SendAccountDeletionConfirmaitonLinkAsync(user, cancellationToken);
+        await SendAccountDeletionConfirmationLinkAsync(user, cancellationToken);
     }
 
     /// <summary>
@@ -1443,7 +1443,7 @@ public class AuthServices(
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// </returns>
-    private async Task SendAccountDeletionConfirmaitonLinkAsync(User user, CancellationToken cancellationToken)
+    private async Task SendAccountDeletionConfirmationLinkAsync(User user, CancellationToken cancellationToken)
     {
         var confirmationLink = CreateDeleteAccountConfirmationLink(user.Id);
         await _emailSender.SendAccountDeletionConfirmationAsync(user.Email, confirmationLink, cancellationToken);
