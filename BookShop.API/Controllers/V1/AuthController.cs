@@ -553,20 +553,18 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// - The current account password is missing,
     /// - The requested email is in invalid format.
     /// </response>
-    /// <response code="403">
-    /// The user is not found.
-    /// </response>
     /// <response code="409">
     /// The requested email is already in use by another account.
     /// </response>
     /// <response code="401">
-    /// The provided password is incorrect.
+    /// This can occur when:
+    /// - The provided password is incorrect,
+    /// - The requested account is not found or cannot be accessed.
     /// </response>
     [HttpPatch("account/email")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("05 Auth: Account Management")]

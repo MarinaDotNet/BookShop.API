@@ -670,7 +670,7 @@ public class AuthServices(
     /// <exception cref="ArgumentException">
     /// Thrown when the current password or new email address are null, empty or consits only of white spaces.
     /// </exception>
-    /// <exception cref="ForbiddenException">
+    /// <exception cref="UnauthorizedAccessException">
     /// Thrown when the user cannot be accessed for this operation.
     /// </exception>
     /// <exception cref="ValidationException">
@@ -686,7 +686,7 @@ public class AuthServices(
         }
         ValidateEmailPatern(dto.NewEmail);
         var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
-        ?? throw new ForbiddenException("Access to the user account is denied.");
+        ?? throw new UnauthorizedAccessException("Access to the user account is denied.");
         VerifyPasswordOrThrow(user, dto.CurrentPassword);
 
         var normalizedEmail = NormalizeInput(dto.NewEmail);
