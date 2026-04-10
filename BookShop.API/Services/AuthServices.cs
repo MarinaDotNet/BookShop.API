@@ -357,7 +357,7 @@ public class AuthServices(
     /// Thrown if the specified identifier is negative or zero.
     /// </exception>
     /// <exception cref="UnauthorizedAccessException">
-    /// Thrown when the user is null, or flagged as deleted or inactive.
+    /// Thrown when the user is null, not found, or flagged as deleted or inactive.
     /// </exception>
     public async Task LogoutAllAsync(int userId, CancellationToken cancellationToken)
     {
@@ -561,8 +561,11 @@ public class AuthServices(
     /// Thrown when the new username is null, empty, or consists only of white spaces.
     /// </exception>
     /// <exception cref="UnauthorizedAccessException">
-    /// Thrown when the requested username is already taken by another user.
+    /// Thrown when the user is not found in the database or cannot be accessed for this operation.
     /// </exception>
+    /// <exception cref="ConflictException">
+    /// Thrown when the requested new username is already taken by another user.
+    /// </exception> 
     public async Task UpdateUsernameAsync(int userId, UpdateUsernameDto dto, CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId, nameof(userId));
@@ -674,6 +677,9 @@ public class AuthServices(
     /// <exception cref="ValidationException">
     /// Thrown when the current email address and requested new email address are the same.
     /// </exception>
+    /// <exception cref="ConflictException">
+    /// Thrown when the requested new email address is already taken by another user.
+    /// </exception>
     public async Task RequestEmailChangeAsync(int userId, UpdateEmailDto dto, CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId, nameof(userId));
@@ -716,6 +722,10 @@ public class AuthServices(
     /// </exception>
     /// <exception cref="ArgumentNullException">
     /// Thrown when the <paramref name="token"/> is null, empty, or consists of white spaces.
+    /// </exception>
+    /// <exception cref="ConflictException">
+    /// Thrown when the email change cannot be confirmed due to a conflict, such as the new email address being already in use
+    /// by another account.
     /// </exception>
     public async Task ConfirmEmailChangeAsync(string token, CancellationToken cancellationToken)
     {
