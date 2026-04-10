@@ -444,7 +444,7 @@ public class AuthServices(
 
         var user = await _userRepository.GetUserByIdAsync(payload!.UserId, cancellationToken);
 
-        if (user is null || user.IsDeleted && !user.IsActive)
+        if (user is null || user.IsDeleted || !user.IsActive)
         {
             return;
         }
