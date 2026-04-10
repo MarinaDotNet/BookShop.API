@@ -55,7 +55,7 @@ public class BrevoAuthEmailSender : IAuthEmailSender
             <p>Please confirm your account deletion by clicking the link below:</p>
             <p><a href="{deletionLink}">Confirm Account Deletion</a></p>
             <p>If you did not request this, please ignore this email.</p>
-            <p>If the link doesn't work, copy and paste the following URL into your browser:</p>
+            <p>If the link does not work, copy and paste the following URL into your browser:</p>
             <p>{deletionLink}</p>
             <p>Thank you,<br/>The BookShop Team</p>
             """;
@@ -96,7 +96,7 @@ public class BrevoAuthEmailSender : IAuthEmailSender
             <p>Please confirm your email change by clicking the link below:</p>
             <p><a href="{confirmationLink}">Confirm Email Change</a></p>
             <p>If you did not request this, please ignore this email.</p>
-            <p>If the link doesn't work, copy and paste the following URL into your browser:</p>
+            <p>If the link does not work, copy and paste the following URL into your browser:</p>
             <p>{confirmationLink}</p>
             <p>Thank you,<br/>The BookShop Team</p>
             """;
@@ -130,7 +130,7 @@ public class BrevoAuthEmailSender : IAuthEmailSender
             <p>Please confirm your email by clicking the following link:</p>
             <p><a href="{confirmationLink}">Confirm Email</a></p>
             <p>If you did not request this, please ignore this email.</p>
-            <p>If the link doesn't work, copy and paste the following URL into your browser:</p>
+            <p>If the link does not work, copy and paste the following URL into your browser:</p>
             <p>{confirmationLink}</p>
             <p>Thank you,<br/>The BookShop Team</p>
             """;
@@ -165,7 +165,7 @@ public class BrevoAuthEmailSender : IAuthEmailSender
             <p>You can reset your password by clicking the link below:</p>
             <p><a href="{resetLink}">Reset Password</a></p>
             <p>If you did not request this, please ignore this email.</p>
-            <p>If the link doesn't work, copy and paste the following URL into your browser:</p>
+            <p>If the link does not work, copy and paste the following URL into your browser:</p>
             <p>{resetLink}</p>
             <p>Thank you,<br/>The BookShop Team</p>
             """;
@@ -206,7 +206,7 @@ public class BrevoAuthEmailSender : IAuthEmailSender
             <p>Please confirm your sensitive change by clicking the link below:</p>
             <p><a href="{confirmationLink}">Confirm Sensitive Change</a></p>
             <p>If you did not request this, please ignore this email.</p>
-            <p>If the link doesn't work, copy and paste the following URL into your browser:</p>
+            <p>If the link does not work, copy and paste the following URL into your browser:</p>
             <p>{confirmationLink}</p>
             <p>Thank you,<br/>The BookShop Team</p>
             """;
@@ -247,7 +247,7 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         <p>Please confirm account recovery by clicking the link below:</p>
         <p><a href="{confirmationLink}">Confirm Account Recovery</a></p>
         <p>If you did not request this, please ignore the email.</p>
-        <p>If the link doesn't work, copy and paste the following URL into your browser:</p>
+        <p>If the link does not work, copy and paste the following URL into your browser:</p>
         <p>{confirmationLink}</p>
         <p>Thank you,<br/>The BookShop Team</p>
         """;

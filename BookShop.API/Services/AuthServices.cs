@@ -136,7 +136,7 @@ public class AuthServices(
         }
 
         var user = await _userRepository.GetUserByIdAsync(payload!.UserId, cancellationToken)
-            ?? throw new InvalidTokenException("User not found.");
+            ?? throw new InvalidTokenException("The user account is not available.");
 
         if (user.IsEmailConfirmed)
         {
@@ -313,7 +313,7 @@ public class AuthServices(
     /// A <see cref="LoginResultDto"/> containing a new access and refresh tokens.
     /// </returns>
     /// <exception cref="UnauthorizedAccessException">
-    /// Thrown if the user is not found in data base.
+    /// Thrown if the user account is not available.
     /// </exception>
     public async Task<LoginResultDto> RefreshTokenAsync(
         string refreshToken, 
@@ -328,7 +328,7 @@ public class AuthServices(
         await ValidateExistingRefreshToken(existingToken, cancellationToken);
 
         var user = await _userRepository.GetUserByIdAsync(existingToken.UserId, cancellationToken) 
-        ?? throw new UnauthorizedAccessException("User not found.");
+        ?? throw new UnauthorizedAccessException("The user account is not available.");
 
         var roles = await GetRolesOrThrow(user.Id, cancellationToken);
 
@@ -391,7 +391,7 @@ public class AuthServices(
     /// A task that represents the asynchronous operation.
     /// </returns>
     /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="password"/> is null, empty, or consists only of white spaces.
+    /// Thrown when <paramref name="password"/> is null, empty, or consists only of whitespace characters.
     /// </exception>
     /// <exception cref="UnauthorizedAccessException">
     /// Thrown when the user does not exist, is inactive, is deleted, is not email-confirmed, or when the provided password is invalid.
@@ -472,7 +472,7 @@ public class AuthServices(
     /// A task that represents the asynchronous operation.
     /// </returns>
     /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="email"/> is null, empty, or consists of white spaces.
+    /// Thrown when <paramref name="email"/> is null, empty, or consists of whitespace characters.
     /// </exception>
     public async Task RequestAccountRecoveryAsync(string email, CancellationToken cancellationToken)
     {
@@ -504,10 +504,10 @@ public class AuthServices(
     /// A task that represents the asynchronous operation.
     /// </returns>
     /// <exception cref="InvalidTokenException">
-    /// Thrown when the provided token is invalid, expired, or doesn't match the expected purpose.
+    /// Thrown when the provided token is invalid, expired, or does not match the expected purpose.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when the <paramref name="token"/> is null, empty, or consists of white spaces.
+    /// Thrown when the <paramref name="token"/> is null, empty, or consists of whitespace characters.
     /// </exception>
     public async Task ConfirmAccountRecoveryAsync(string token, CancellationToken cancellationToken)
     {
@@ -558,10 +558,10 @@ public class AuthServices(
     /// Thrown when the <see cref="UpdateUsernameDto"/> is null.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when the new username is null, empty, or consists only of white spaces.
+    /// Thrown when the new username is null, empty, or consists only of whitespace characters.
     /// </exception>
     /// <exception cref="UnauthorizedAccessException">
-    /// Thrown when the user is not found in the database or cannot be accessed for this operation.
+    /// Thrown when the user account is not available or cannot be accessed for this operation.
     /// </exception>
     /// <exception cref="ConflictException">
     /// Thrown when the requested new username is already taken by another user.
@@ -575,7 +575,7 @@ public class AuthServices(
             throw new ArgumentException("The new account username is required.");
         }
         var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
-        ?? throw new UnauthorizedAccessException("The user is not found.");
+        ?? throw new UnauthorizedAccessException("The user account is not available.");
         var normalizedUsername = NormalizeInput(dto.NewUserName);
         if(user!.NormalizedUsername == normalizedUsername)
         {
@@ -669,7 +669,7 @@ public class AuthServices(
     /// Thrown when <paramref name="dto"/> is null.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when the current password or new email address are null, empty or consits only of white spaces.
+    /// Thrown when the current password or new email address are null, empty or consits only of whitespace characters.
     /// </exception>
     /// <exception cref="UnauthorizedAccessException">
     /// Thrown when the user cannot be accessed for this operation.
@@ -718,10 +718,10 @@ public class AuthServices(
     /// A taks that represents the asynchronous operation.
     /// </returns>
     /// <exception cref="InvalidTokenException">
-    /// Thrown when the provided token is invalid, expired, or doesn't match the expected purpose.
+    /// Thrown when the provided token is invalid, expired, or does not match the expected purpose.
     /// </exception>
     /// <exception cref="ArgumentNullException">
-    /// Thrown when the <paramref name="token"/> is null, empty, or consists of white spaces.
+    /// Thrown when the <paramref name="token"/> is null, empty, or consists of whitespace characters.
     /// </exception>
     /// <exception cref="ConflictException">
     /// Thrown when the email change cannot be confirmed due to a conflict, such as the new email address being already in use
@@ -949,7 +949,7 @@ public class AuthServices(
     /// Thrown if the <paramref name="user"/> is null.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown if the <paramref name="roleName"/> is null or consists of white spaces
+    /// Thrown if the <paramref name="roleName"/> is null or consists of whitespace characters
     /// </exception>
     private async Task AssignRoleAsync(User user, string roleName, CancellationToken cancellationToken)
     {
@@ -1032,7 +1032,7 @@ public class AuthServices(
     
     /// <summary>
     /// Retrieves an active user by their email address. This method checks if a user with the specified email exists and is active (not deleted and marked as active and email confirmed).
-    /// If the user is not found or is inactive or not email confirmed, an <see cref="UnauthorizedAccessException"/> is thrown to indicate invalid login credentials.
+    /// If the user account is not available or is inactive or not email confirmed, an <see cref="UnauthorizedAccessException"/> is thrown to indicate invalid login credentials.
     /// </summary>
     /// <param name="email">
     /// The email address of the user to retrieve. This value is normalized to ensure a case-insensitive search. Cannot be null or empty.
@@ -1041,7 +1041,7 @@ public class AuthServices(
     /// A cancellation token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains the active user with the specified email, or an exception is thrown if the user is not found or inactive.
+    /// A task that represents the asynchronous operation. The task result contains the active user with the specified email, or an exception is thrown if the user account is not available or inactive.
     /// </returns>
     /// <exception cref="UnauthorizedAccessException">
     /// Thrown if no active user with the specified email is found, indicating invalid login credentials.
@@ -1331,7 +1331,7 @@ public class AuthServices(
     /// The hashed representation of the refresh token.
     /// </returns>
     /// <exception cref="ArgumentException">
-    /// Thrown if the <paramref name="refreshToken"/> is null or consists of white spaces.
+    /// Thrown if the <paramref name="refreshToken"/> is null or consists of whitespace characters.
     /// </exception>
     private string HashRefreshToken(string refreshToken)
     {
@@ -1383,7 +1383,7 @@ public class AuthServices(
     /// Thrown if the provided <paramref name="token"/> is null.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown if the provided <paramref name="replacedByTokenHash"/> is null or consists of the white spaces.
+    /// Thrown if the provided <paramref name="replacedByTokenHash"/> is null or consists of the whitespace characters.
     /// </exception> 
     private static void RevokeToken(RefreshToken token, string replacedByTokenHash)
     {
@@ -1518,7 +1518,7 @@ public class AuthServices(
     /// Thrown when the specified username is already taken.
     /// </exception> 
     /// <exception cref="ArgumentException">
-    /// Thrown when the specified <paramref name="normalizedUsername"/>is null, empty, or consists only of white spaces.
+    /// Thrown when the specified <paramref name="normalizedUsername"/>is null, empty, or consists only of whitespace characters.
     /// </exception> 
     private async Task EnsureUsernameIsAvailable(string normalizedUsername, CancellationToken cancellationToken)
     {
@@ -1585,7 +1585,7 @@ public class AuthServices(
     /// Thrown when the <paramref name="normalizedEmail"/> is not available.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when the <paramref name="normalizedEmail"/> is null, empty, or consists only of white spaces 
+    /// Thrown when the <paramref name="normalizedEmail"/> is null, empty, or consists only of whitespace characters 
     /// </exception>
     private async Task EnsureEmailIsAvailableAsync(string normalizedEmail, CancellationToken cancellationToken)
     {

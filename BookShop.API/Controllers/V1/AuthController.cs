@@ -507,7 +507,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     /// The request payload is invalid.
     /// </response>
     /// <response code="401">
-    /// The user is not found.
+    /// The user account is not available.
     /// </response>
     /// <response code="409">
     /// The requested username is already taken.
