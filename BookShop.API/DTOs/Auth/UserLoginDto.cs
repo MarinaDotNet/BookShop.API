@@ -1,4 +1,4 @@
-namespace BookShop.API.Services;
+namespace BookShop.API.DTOs.Auth;
 
 /// <summary>
 /// Represents the data required for a user to log in to their account.
