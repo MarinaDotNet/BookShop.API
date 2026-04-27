@@ -2,7 +2,7 @@
 using MongoDB.Driver;
 using System.Linq.Expressions;
 
-namespace BookShop.API.Infrastructure;
+namespace BookShop.API.Infrastructure.Persistence;
 
 /// <summary>
 /// Provides extension methods for building MongoDB <see cref="UpdateDefinition{T}"/> lists for partial updates.
