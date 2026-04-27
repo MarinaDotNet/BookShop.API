@@ -56,7 +56,7 @@ public class BrevoAuthEmailSender : IAuthEmailSender
 
         string subject = "Confirm your account deletion";
         var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
-        string textContent = @"Confirm your account deletion: {deletionLink}
+        string textContent = @$"Confirm your account deletion: {deletionLink}
 
         If you did not perform this action, please ignore this email.
 
