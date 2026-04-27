@@ -1,5 +1,7 @@
 ﻿using BookShop.API.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic;
 using System.Net.Http.Json;
 
 namespace BookShop.API.Infrastructure;
@@ -12,6 +14,9 @@ public class BrevoAuthEmailSender : IAuthEmailSender
 {
     private readonly HttpClient _httpClient;
     private readonly BrevoOptions _options;
+
+    private const string TextSignature = "\n\n- BookShop Team";
+    private const string HtmlSignature = "<br/><p>- BookShop Team</p>";
 
     public BrevoAuthEmailSender(HttpClient httpClient, IOptions<BrevoOptions> options)
     {
@@ -50,17 +55,16 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         ArgumentNullException.ThrowIfNull(deletionLink, nameof(deletionLink));
 
         string subject = "Confirm your account deletion";
-        string textContent = $"Confirm your account deletion: {deletionLink}";
-        string htmlContent = $"""
-            <p>Please confirm your account deletion by clicking the link below:</p>
-            <p><a href="{deletionLink}">Confirm Account Deletion</a></p>
-            <p>If you did not request this, please ignore this email.</p>
-            <p>If the link does not work, copy and paste the following URL into your browser:</p>
-            <p>{deletionLink}</p>
-            <p>Thank you,<br/>The BookShop Team</p>
-            """;
+        var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+        string textContent = @"Confirm your account deletion: {deletionLink}
 
-        await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
+        If you did not perform this action, please ignore this email.
+
+        If the link does not work, copy and paste the following URL into your browser: {deletionLink}
+
+        Time: {dateTime} UTC";
+
+        await SendFormatedMessageAsync(toEmail, subject, textContent, cancellationToken);
 
     }
 
@@ -91,17 +95,16 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         ArgumentNullException.ThrowIfNull(confirmationLink, nameof(confirmationLink));
 
         string subject = "Please confirm your email change";
-        string textContent = $"Confirm your email change: {confirmationLink}";
-        string htmlContent = $"""
-            <p>Please confirm your email change by clicking the link below:</p>
-            <p><a href="{confirmationLink}">Confirm Email Change</a></p>
-            <p>If you did not request this, please ignore this email.</p>
-            <p>If the link does not work, copy and paste the following URL into your browser:</p>
-            <p>{confirmationLink}</p>
-            <p>Thank you,<br/>The BookShop Team</p>
-            """;
+        var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+        string textContent = @$"Confirm your email change: {confirmationLink}
+        
+        If you did not perform this action, please ignore this email.
 
-        await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
+        If the link does not work, copy and paste the following URL into your browser: {confirmationLink}
+
+        Time: {dateTime} UTC";
+
+        await SendFormatedMessageAsync(toEmail, subject, textContent, cancellationToken);
     }
 
     /// <summary>
@@ -125,17 +128,16 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         ArgumentNullException.ThrowIfNull(confirmationLink, nameof(confirmationLink));
 
         string subject = "Please confirm your email address";
-        string textContent = $"Confirm your email by clicking the following link: {confirmationLink}";
-        string htmlContent = $"""
-            <p>Please confirm your email by clicking the following link:</p>
-            <p><a href="{confirmationLink}">Confirm Email</a></p>
-            <p>If you did not request this, please ignore this email.</p>
-            <p>If the link does not work, copy and paste the following URL into your browser:</p>
-            <p>{confirmationLink}</p>
-            <p>Thank you,<br/>The BookShop Team</p>
-            """;
+        var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+        string textContent = @$"Confirm your email address: {confirmationLink}
+        
+        If you did not perform this action, please ignore this email.
 
-        await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
+        If the link does not work, copy and paste the following URL into your browser: {confirmationLink}
+
+        Time: {dateTime} UTC";
+
+        await SendFormatedMessageAsync(toEmail, subject,textContent, cancellationToken);
     }
 
     /// <summary>
@@ -160,17 +162,16 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         ArgumentNullException.ThrowIfNull(resetLink, nameof(resetLink));
 
         string subject = "Reset your password";
-        string textContent = $"Reset your password:: {resetLink}";
-        string htmlContent = $"""
-            <p>You can reset your password by clicking the link below:</p>
-            <p><a href="{resetLink}">Reset Password</a></p>
-            <p>If you did not request this, please ignore this email.</p>
-            <p>If the link does not work, copy and paste the following URL into your browser:</p>
-            <p>{resetLink}</p>
-            <p>Thank you,<br/>The BookShop Team</p>
-            """;
+        var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+        string textContent = @$"Reset your password: {resetLink}
+        
+        If you did not perform this action, please ignore this email.
 
-        await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
+        If the link does not work, copy and paste the following URL into your browser: {resetLink}
+
+        Time: {dateTime} UTC";
+        
+        await SendFormatedMessageAsync(toEmail, subject, textContent, cancellationToken);
     }
 
     /// <summary>
@@ -201,17 +202,16 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         ArgumentNullException.ThrowIfNull(confirmationLink, nameof(confirmationLink));
 
         string subject = "Confirm your sensitive change";
-        string textContent = $"Confirm your sensitive change: {confirmationLink}";
-        string htmlContent = $"""
-            <p>Please confirm your sensitive change by clicking the link below:</p>
-            <p><a href="{confirmationLink}">Confirm Sensitive Change</a></p>
-            <p>If you did not request this, please ignore this email.</p>
-            <p>If the link does not work, copy and paste the following URL into your browser:</p>
-            <p>{confirmationLink}</p>
-            <p>Thank you,<br/>The BookShop Team</p>
-            """;
+        var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+        string textContent = @$"Confirm your sensitive change: {confirmationLink}
+        
+        If you did not perform this action, please ignore this email.
 
-        await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
+        If the link does not work, copy and paste the following URL into your browser: {confirmationLink}
+
+        Time: {dateTime} UTC";
+        
+        await SendFormatedMessageAsync(toEmail, subject, textContent, cancellationToken);
     }
 
     /// <summary>
@@ -242,17 +242,16 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         ArgumentNullException.ThrowIfNull(confirmationLink, nameof(confirmationLink));
 
         string subject = "Confirm account recovery";
-        string textContent = $"Confirm account recovery: {confirmationLink}";
-        string htmlContent = $"""
-        <p>Please confirm account recovery by clicking the link below:</p>
-        <p><a href="{confirmationLink}">Confirm Account Recovery</a></p>
-        <p>If you did not request this, please ignore the email.</p>
-        <p>If the link does not work, copy and paste the following URL into your browser:</p>
-        <p>{confirmationLink}</p>
-        <p>Thank you,<br/>The BookShop Team</p>
-        """;
+        var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+        string textContent = @$"Confirm your account recovery: {confirmationLink}
+        
+        If you did not perform this action, please ignore this email.
 
-        await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
+        If the link does not work, copy and paste the following URL into your browser: {confirmationLink}
+
+        Time: {dateTime} UTC";
+        
+        await SendFormatedMessageAsync(toEmail, subject, textContent, cancellationToken);
     }
 
     /// <summary>
@@ -275,20 +274,14 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         ArgumentNullException.ThrowIfNullOrWhiteSpace(toEmail, nameof(toEmail));
 
         string subject = "Your password has been changed";
-        string textContent = @"Your password has been successfully changed.
+        var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+        string textContent = @$"Your password has been successfully changed.
 
         If you did not perform this action, please reset your password immediately or contact support.
 
-        Thank you,
-        BookShop Team";
+        Time: {dateTime} UTC";
 
-        string htmlContent = $@"
-        <p>Your password has been successfully changed.</p>
-        <p>If you did not perform this action, please reset your password immediately or contact support.</p>
-        <br/>
-        <p>Thank you,<br/>BookShop Team</p>";
-
-        await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
+        await SendFormatedMessageAsync(toEmail, subject, textContent, cancellationToken);
     }
 
     /// <summary>
@@ -319,29 +312,15 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         ArgumentNullException.ThrowIfNullOrWhiteSpace(newEmail, nameof(newEmail));
 
         string subject = "Your email address has been changed";
-
         var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
-
         string textContent = @$"Your email address has been successfully changed.
         
         If you did not perform this action, please reset your password immediately or contact support.
 
-        Time: {dateTime} UTC
+        Time: {dateTime} UTC";
 
-        - BookShop Team";
-
-        string htmlContent = $@"
-        <p>Your email address has been successfully changed.</p>
-        
-        <p>If you did not perform this action, please <b>reset your password immediately</b> or conatct support.</p>
-        
-        <p>Time: {dateTime} UTC</p>
-        
-        <br/>
-        <p>- BookShop</p>";
-
-        await SendAsync(oldEmail, subject, textContent, htmlContent, cancellationToken);
-        await SendAsync(newEmail, subject, textContent, htmlContent, cancellationToken);
+        await SendFormatedMessageAsync(oldEmail, subject, textContent, cancellationToken);
+        await SendFormatedMessageAsync(newEmail, subject, textContent, cancellationToken);
     }
 
     /// <summary>
@@ -364,28 +343,14 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         ArgumentNullException.ThrowIfNullOrWhiteSpace(email, nameof(email));
 
         string subject = "Your account has been deleted";
-
         var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
-
         string textContent = @$"Your account has been successfully deleted.
         
         If you did not perform this action, please contact support immediately.
 
-        Time: {dateTime} UTC
+        Time: {dateTime} UTC";
 
-        - BookShop Team";
-
-        string htmlContent = $@"
-        <p>Your account has been successfully deleted.</p>
-        
-        <p>If you did not perform this action, please <b>contact support immediately</b>.</p>
-        
-        <p>Time: {dateTime} UTC</p>
-        
-        <br/>
-        <p>- BookShop</p>";
-
-        await SendAsync(email, subject, textContent, htmlContent, cancellationToken);
+        await SendFormatedMessageAsync(email, subject, textContent, cancellationToken);
     }
 
     /// <summary>
@@ -408,28 +373,14 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         ArgumentNullException.ThrowIfNullOrWhiteSpace(email, nameof(email));
 
         string subject = "Your account has been restored";
-
         var dateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
-
         string textContent = @$"Your account has been successfully restored.
         
-        If you did not perform this action, please reset you password immediately.
+        If you did not perform this action, please contact support immediately.
 
-        Time: {dateTime} UTC
+        Time: {dateTime} UTC";
 
-        - BookShop Team";
-
-        string htmlContent = $@"
-        <p>Your account has been successfully restored.</p>
-        
-        <p>If you did not perform this action, please <b>reset you password immediately</b>.</p>
-        
-        <p>Time: {dateTime} UTC</p>
-        
-        <br/>
-        <p>- BookShop</p>";
-
-        await SendAsync(email, subject, textContent, htmlContent, cancellationToken);
+        await SendFormatedMessageAsync(email, subject, textContent, cancellationToken);
     }
     
     /// <summary>
@@ -489,5 +440,16 @@ public class BrevoAuthEmailSender : IAuthEmailSender
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new InvalidOperationException($"Brevo send failed ({(int)response.StatusCode} {response.ReasonPhrase}). Body: {body}");
         }
+    }
+
+    private async Task SendFormatedMessageAsync(string toEmail, string subject, string textContent, CancellationToken cancellationToken)
+    {
+        List<string> lines = [.. textContent.Split(["\r\n", "\n"], StringSplitOptions.None)];
+
+        string htmlContent = string.Join("<p>", lines.Select(line => line.Trim()).Where(line => !string.IsNullOrEmpty(line)), "</p>");
+        htmlContent += HtmlSignature;
+        textContent += TextSignature;
+
+        await SendAsync(toEmail, subject, textContent, htmlContent, cancellationToken);
     }
 }
