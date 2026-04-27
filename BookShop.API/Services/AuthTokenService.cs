@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
 using System.Text.Json;
-using static BookShop.API.Models.AuthTokens;
+using static BookShop.API.Models.Auth.AuthTokens;
 
 namespace BookShop.API.Services;
 

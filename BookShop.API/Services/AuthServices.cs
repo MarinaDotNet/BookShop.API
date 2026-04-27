@@ -9,7 +9,7 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
-using static BookShop.API.Models.AuthTokens;
+using static BookShop.API.Models.Auth.AuthTokens;
 
 namespace BookShop.API.Services;
 

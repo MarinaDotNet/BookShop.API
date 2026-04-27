@@ -1,4 +1,4 @@
-﻿using static BookShop.API.Models.AuthTokens;
+﻿using static BookShop.API.Models.Auth.AuthTokens;
 
 namespace BookShop.API.Services;
 

@@ -1,4 +1,4 @@
-﻿namespace BookShop.API.Models;
+﻿namespace BookShop.API.Models.Auth;
 
 /// <summary>
 /// Container for authentication action-token types used in confirmation links (email confiramation, password reset, etc.).
