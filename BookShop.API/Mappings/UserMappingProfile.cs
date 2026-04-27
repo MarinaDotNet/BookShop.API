@@ -7,12 +7,12 @@ namespace BookShop.API.Mappings;
 /// <summary>
 /// Defines AutoMapper configuration for mappings between user entities and authentication-related user DTOs.
 /// </summary>
-public class UserMapingProfile : Profile
+public class UserMappingProfile : Profile
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="UserMapingProfile"/> class and configures mappings for user models.
+    /// Initializes a new instance of the <see cref="UserMappingProfile"/> class and configures mappings for user models.
     /// </summary>
-    public UserMapingProfile()
+    public UserMappingProfile()
     {
         CreateMap<User, UserDto>()
             .ForCtorParam("Id", opt => opt.MapFrom(src => src.Id))

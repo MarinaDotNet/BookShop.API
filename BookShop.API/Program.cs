@@ -143,7 +143,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // Auto Mapper Configurations
-builder.Services.AddAutoMapper(_ => {}, typeof(BookMapingProfile), typeof(UserMapingProfile));
+builder.Services.AddAutoMapper(_ => {}, typeof(BookMappingProfile), typeof(UserMappingProfile));
 
 // Add ProblemDetails middleware
 builder.Services.AddProblemDetails(options =>

@@ -10,9 +10,9 @@ namespace BookShop.API.Mappings;
 /// <remarks>This profile is intended to be used with AutoMapper to facilitate object-to-object mapping in
 /// scenarios where Book entities need to be converted to BookDto data transfer objects. Register this profile with the
 /// AutoMapper configuration to enable the mapping.</remarks>
-public class BookMapingProfile : Profile
+public class BookMappingProfile : Profile
 {
-    public BookMapingProfile()
+    public BookMappingProfile()
     {
         CreateMap<Book, BookDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id!.ToString()));
