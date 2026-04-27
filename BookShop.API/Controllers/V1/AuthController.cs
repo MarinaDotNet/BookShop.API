@@ -728,7 +728,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordDto dto, CancellationToken cancellationToken)
     {
         await _auth.ResetPasswordAsync(dto, cancellationToken);
-        return Content("The password has been resete successfully.");
+        return Content("The password has been reset successfully.");
     }
 
     /// <summary>
