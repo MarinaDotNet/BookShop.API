@@ -24,9 +24,9 @@ namespace BookShop.API.Controllers.V1;
 [Authorize(Roles = "admin")]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class BooksController(BookService service) : ControllerBase
+public class BooksController(IBookService service) : ControllerBase
 {
-    private readonly BookService _service = service;
+    private readonly IBookService _service = service;
 
     /// <summary>
     /// Retrieves a collection of books with optional filtering by availability.
@@ -128,7 +128,7 @@ public class BooksController(BookService service) : ControllerBase
     /// Returns HTTP 201 (Created) with a link to the newly created resource.
     /// </returns>
     /// <remarks>
-    /// Calls <see cref="BookService.CreateBookAsync"/> to perform the creation.
+    /// Calls <see cref="IBookService.CreateBookAsync"/> to perform the creation.
     /// </remarks>
     [HttpPost("add")]
     [MapToApiVersion("1.0")]

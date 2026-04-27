@@ -20,7 +20,7 @@ namespace BookShop.API.Services;
 /// repository.</remarks>
 /// <param name="bookRepository">The repository used to access book data. Cannot be null.</param>
 /// <param name="mapper">The mapper used to map entities to DTOs. Cannot be null.</param>
-public class BookService(IBookRepository bookRepository, IMapper mapper)
+public class BookService(IBookRepository bookRepository, IMapper mapper) : IBookService
 {
     private readonly IBookRepository _bookRepository = bookRepository ?? throw new ArgumentNullException(nameof(bookRepository));
     private readonly IMapper _mapper = mapper;

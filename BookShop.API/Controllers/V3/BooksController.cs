@@ -21,9 +21,9 @@ namespace BookShop.API.Controllers.V3;
 [AllowAnonymous]
 [ApiVersion("3.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class BooksController(BookService service) : ControllerBase
+public class BooksController(IBookService service) : ControllerBase
 {
-    private readonly BookService _service = service;
+    private readonly IBookService _service = service;
 
     /// <summary>
     /// Retrieves a collection of the top 10 cheapest available books. This endpoint is mapped to API version 3.0 and returns 

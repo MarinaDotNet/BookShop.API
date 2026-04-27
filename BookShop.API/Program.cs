@@ -54,7 +54,7 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 
 // Dependency Injection
 builder.Services.AddSingleton<IBookRepository, BookRepository>();
-builder.Services.AddScoped<BookService>();
+builder.Services.AddScoped<IBookService, BookService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<AuthServices>();

@@ -20,9 +20,9 @@ namespace BookShop.API.Controllers.V2;
 [Authorize(Roles = "user, admin")]
 [ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class BooksController(BookService service) : ControllerBase
+public class BooksController(IBookService service) : ControllerBase
 {
-    private readonly BookService _service = service;
+    private readonly IBookService _service = service;
 
     /// <summary>
     /// Retrieves a collection of all available books. This endpoint is mapped to API version 2.0 and returns only books that 
