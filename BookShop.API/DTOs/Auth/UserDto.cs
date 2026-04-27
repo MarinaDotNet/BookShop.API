@@ -1,5 +1,4 @@
 using BookShop.API.Models.Auth;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace BookShop.API.DTOs.Auth;
 
