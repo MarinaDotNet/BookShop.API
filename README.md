@@ -217,7 +217,7 @@ BookShop.API
 Starting with `BooksController`:
 - Add and verify `ProducesResponseType` attributes on all endpints
 - Improve XML docs to match the Swagger documentation style used in `AuthController`
-- Reviw all routes: `GET /all`, `GET /{id}`, `GET /search-exact`, `GET /search-partial-match`, `POST /add`, `PUT /{id}`,  `PATCH /update-partly/{id}`, `DELETE /{id}`
+- Review all routes: `GET /all`, `GET /{id}`, `GET /search-exact`, `GET /search-partial-match`, `POST /add`, `PUT /{id}`,  `PATCH /update-partly/{id}`, `DELETE /{id}`
 - Decide which endpoints should be admin-only and which should be available to all logged-in users
 
 **2. Polish `BookService`**
