@@ -73,3 +73,43 @@ The auth system is one of the main focuses of this project. It includes:
 - **Soft delete** - users are never removed from the database
 
 ---
+
+## Project Structure
+
+```
+BookShop.API
+|
+├── Controllers
+|  ├── V1
+|  |  ├── AuthController.cs          ← Admin + public auth endpoints
+|  |  └── BooksController.cs         ← Full CRUD (admin only)
+|  ├── V2
+|  |  └── BooksController.cs         ← Read all available books (logged in users)
+|  ├── V3
+|  |  └── BooksController.cs         ← Top 10 cheapest books (guests)
+|  └── BaseApiController.cs          ← Shared base with GetCurrentUserId()
+|
+├── DTOs
+|  ├── Auth
+|  |  ├── UserRegisterDto.cs
+|  |  ├── UserLogin Dto.cs
+|  |  ├── UserDto.cs
+|  |  ├── LoginResultDto.cs
+|  |  ├── LogoutDto.cs
+|  |  ├── AccountDeleteDto.cs
+|  |  ├── AccountRequestDto.cs
+|  |  ├── EmailDto.cs
+|  |  ├── ForgotPasswordDto.cs
+|  |  ├── ResendEmailConfirmationDto.cs
+|  |  ├── ResetPasswordDto.cs
+|  |  ├── UpdateEmailDto.cs
+|  |  ├── UpdatePasswordDto.cs
+|  |  └── UpdateUserNameDto.cs
+|  └── Catalog
+|  |  ├── BookDto.cs
+|  |  ├── BookSearchRequestDto.cs
+|  |  └── BookUpdateDto.cs
+|
+
+
+```
