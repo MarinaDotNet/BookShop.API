@@ -110,6 +110,49 @@ BookShop.API
 |  |  ├── BookSearchRequestDto.cs
 |  |  └── BookUpdateDto.cs
 |
-
+├── Exceptions
+|  ├── ConflictException.cs
+|  ├── ForbiddenException.cs
+|  ├── InvalidTokenException.cs
+|  ├── NotFoundExcekption.cs
+|  └── ValidationException.cs
+|
+├── Infrastructure
+|  ├──Persistence
+|  |  ├── AuthDbContext.cs           ← EF Core context for PostgreSQL
+|  |  ├── MongoDbContext.cs          ← MongoDB context for books
+|  |  ├── MongoDbSettings.cs
+|  |  └── UpdateDefinitionExtensions.cs
+|  ├── AppUrlOptions.cs
+|  ├── BrevoAuthEmailSender.cs
+|  ├── BrevoOptions.cs
+|  ├── ConfigurationSwaggerOptions.cs
+|  └── JwtOptions.cs
+|
+├── Mappings
+|  ├── BookMappingProfile.cs
+|  └── UserMappingProfile.cs
+|
+├── Middleware
+|  ├── ExceptionHandlingMiddleware.cs
+|  └── ProblemDetailsBuilder.cs
+|
+├── Migrations
+|
+├── Models
+|  ├── Auth
+|  |  ├── AuthTokens.cs              ← Token purposes + payload model
+|  |  ├── RefreshToken.cs
+|  |  ├── Role.cs
+|  |  ├── User.cs
+|  |  └── UserRole.cs
+|  ├── Catalog
+|  |  └── Book.cs
+|
+├── Repositories
+|  ├── BookRepository.cs
+|  ├── IBookRepository.cs
+|  ├── IUserRepository.cs
+|  └── UserRepository.cs
 
 ```
