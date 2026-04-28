@@ -1,134 +1,75 @@
 # BookShop.API
-## ASP.NET Core REST API — Portfolio Project
-**BookShop.API** is a production-oriented RESTful Web API built with **ASP.NET Core**, designed to demonstrate clean backend architecture, secure authentication, and maintainable code.
-This project emphasises **engineering practices** and real-world API development rather than full feature completeness.
 
-> Project Status\
-> 🚧 Active Development:\
-> continuously improving and extending backend functionality.
+## ASP.NET Core REST API — Portfolio Project
+
+**BookShop.API** is a RESTful Web API built with **ASP.NET Core**. The goal of this project is to show how I work with backend development - clean architecture, real authentication flows, and practical patterns.
+
+> **Project Status**
+> 🚧 Still in active development - adding new features and improving existing ones.
 
 ## Live Demo (Swagger)
 
 🔗[BookShop.API Live](https://bookshop-api-xyxs.onrender.com/swagger/index.html)
 
-## Why This Project Exists
+---
 
-This project demonstrates competencies relevant to a **Junior .NET Backend Developer** role:
-* Designing RESTful APIs with clear contracts
-* Applying layered architecture and separation of concerns
-* Implementing secure authentication and role-based authorization
-* Working with DTOs and AutoMapper for clean mapping
-* Writing maintainable and scalable backend code
-* Preparing APIs for real-world deployment and cloud hosting
+## What This Project Shows
 
-## Technical Stack
-* ASP.NET Core Web API
-* Entity Framework Core
-* MongoDB / Redis (NoSQL persistence)
-* JWT Bearer Authentication
-* AutoMapper
-* Swagger / OpenAPI
-* Render.com (Cloud deployment)
+I buiilt this to practive and demostrate skills that matter for a Junior .NET Backend Developer:
 
-## Architectural Principles
-The solution follows a layered **architecture**:
-### Controllers
-Handle HTTP requests and responses only:
-* BooksController.cs — Manages CRUD operations for books (GET, POST, PUT, DELETE)
-### Services
-Encapsulate business logic:
-* BookService.cs — Implements business rules for book operations
-### Repositories
-Data access layer, abstracted via interfaces:
-* IBookRepository.cs — Repository interface
-* BookRepository.cs — Concrete implementation for MongoDB persistence
-### Models & DTOs
-Define domain entities and API contracts:
-* Book.cs — Domain model for books
-* BookDto.cs — API contract for books
-* BookUpdateDto.cs / BookSearchRequestDto.cs — DTOs for update and search operations
-### Mappings
-Decouples domain models from DTOs:
-* BookMapingProfile.cs — AutoMapper configuration for books
-### Middleware
-Custom pipeline components:
-* ExceptionHandlingMiddleware.cs — Handles exceptions and produces standardized API responses
-### Infrastructure
-External dependencies and configuration:
-* MongoDbContext.cs — MongoDB database context
-* MongoDbSettings.cs — MongoDB configuration
-* UpdateDefinitionExtensions.cs — Helper extensions for MongoDB update operations
-### Exceptions
-Custom exception types for precise error handling:
-* ConflictException.cs
-* ForbiddenException.cs
-* NotFoundException.cs
-* ValidationException.cs
+- Building REST APIs with clear structure and versioning
+- Layered architecture with proper separation of concerns
+- Full JWT authentication with refresh token rotation
+- Email confirmation and account management flows
+- Working with both MongoDB and PostgreSQL in the project
+- Custom exception handling with RFC 7807 ProblemDetails
+- Deploying to the cloud with Docker
 
-## API Overview
-### Books Management
-* Create, read, update, delete operations
-* Route and payload validation
-* Admin-only write operations
-### Security
-* JWT-based authentication
-* Role-based authorization
-* Sensitive operations restricted to administrators
-All endpoints are fully documented via **Swagger/OpenAPI**.
+---
 
-## Project Structure (Code Reflection)
-```
-BookShop.API
-|
-├── Controllers
-|   └── BooksController.cs
-|
-├── Services
-|   └── BookService.cs
-|
-├── Repositories
-|   ├── IBookRepository.cs
-|   └── BookRepository.cs
-|
-├── Models
-|   ├── Book.cs
-|   ├── BookDto.cs
-|   ├── BookUpdateDto.cs
-|   └── BookSearchRequestDto.cs
-|
-├── Mappings
-|   └── BookMapingProfile.cs
-|
-├── Middleware
-|   └── ExceptionHandlingMiddleware.cs
-|
-├── Infrastructure
-|   └── Persistence
-|       ├── MongoDbContext.cs
-|       └── MongoDbSettings.cs
-|   └── UpdateDefinitionExtensions.cs
-|
-├── Exceptions
-|   ├── ConflictException.cs
-|   ├── ForbiddenException.cs
-|   ├── NotFoundException.cs
-|   └── ValidationException.cs
-|
-├── Program.cs
-└── appsettings.json
-```
+## Tech Stack
 
-## What This Project Demonstrates
-✔ Clean API design\
-✔ Practical use of ASP.NET Core & MongoDB\
-✔ JWT authentication and role-based authorisation\
-✔ Layered architecture & dependency injection\
-✔ Exception handling and maintainable codebase\
+- ASP .NET Core Web API (.NET 10)
+- Entity Framework Core + PostgreSQL (users and auth)
+- MongoDB (books catalog)
+- JWT Bearer Authentication + Refresh Tokens
+- ASP .NET Core Data Protection (auth action tokens)
+- Brevo (transactional email)
+- AutoMapper
+- Swagger / OpenAPI (with XML documentation)
+- Docker
+- Render.com (deployment)
 
-## Planned Improvements
-* Centralised global exception handling enhancements
-* Input validation improvements
-* Pagination and filtering for book queries
-* Unit and integration tests
-* API versioning
-* Logging and monitoring improvements
+---
+
+## API Versioning
+
+Instead of versioning by feature, I versioned by **who can access what**:
+
+| Version | Who can use it | Controllers |
+|---------|----------------|-------------|
+| **V1** | Admins only | `AuthConroller`, `BooksController` |
+| **V2** | Logged in users | `BooksController` |
+| **V3** | Guests / not logged in | `BooksController` |
+
+This keeps authorization logic clear at the routing level and makes access boundaries explicit.
+
+---
+
+## Authentication & Security
+
+The auth system is one of the main focuses of this project. It includes:
+
+- **Registration** with email confirmation (resend with 3-minute cooldown)
+- **Login** with JWT access token + refresh token pair
+- **Refresh token rotation** - old token is revoked and replaced on every refresh
+- **Reuse detection** - if a revoked token is used again, all sessions for that user are invalidated
+- **Logout** (single session) and **logout from all devices**
+- **SecurityTokenInvalidBeforeUtc** - when password changes or user logs out from all devices, all existing JWT tokens become invalid immediately, even before they expire
+- **Password reset** via email link (with HTML form for browser flow and JSON endpoint for API clients)
+- **Email change** with confirmation to the new address
+- **Account deletion** with email confirmation
+- **Account recovery** for soft-deleted accounts
+- **Soft delete** - users are never removed from the database
+
+---
