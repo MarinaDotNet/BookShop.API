@@ -154,5 +154,39 @@ BookShop.API
 |  ├── IBookRepository.cs
 |  ├── IUserRepository.cs
 |  └── UserRepository.cs
-
+|
+├── Services
+|  ├── AuthLinkGenerator.cs
+|  ├── IAuthLinkGenerator.cs
+|  ├── AuthServices.cs
+|  ├── AuthTokenService.cs
+|  ├── IAuthTokenService.cs
+|  ├── BookService.cs
+|  ├── IBookService.cs
+|  ├── IAuthEmailSender.cs
+|  ├── JwtTokenService.cs
+|  ├── IJwtTokenService.cs
+|  ├── RefreshTokenGenerator.cs
+|  ├── IRefreshTokenGenerator.cs
+|  ├── RefreshTokenHasher.cs
+|  └── IRefreshTokenHasher.cs
+|
+├── Program.cs
+├── appsettings.json
+├── appsettings.Development.json
+└── Dockerfile
 ```
+
+---
+
+## How It's Organized
+
+**Controllers** handle HTTP only - no business logic, no direct data access.
+
+**Services** contain all business logic. Every service has an interface. `AuthServices` is the main one - it handles everyting from registration to account recovery.
+
+**Repositories** handle data access only. Books live in MongoDB, users and tokens live in PostgreSQL. Both sides have interface.
+
+**DTOs** are the API contracts - separate from domain models, organized by Auth and Catalog.
+
+
