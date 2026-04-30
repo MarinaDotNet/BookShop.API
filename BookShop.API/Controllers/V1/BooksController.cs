@@ -39,8 +39,27 @@ public class BooksController(IBookService service) : ControllerBase
     /// An <see cref="IActionResult"/> containing the list of books that match the specified criteria.
     /// Returned with HTTP 200 status code.
     /// </returns>
+    /// <response code="200">
+    /// A collection of books matching the specified availability filter is returned successfully.
+    /// If no books match the filter, an empty collection is returned with HTTP 200 status code.
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized. 
+    /// This can occur when:
+    /// - The user is not authenticated (no valid token provided),
+    /// - The token has expired,
+    /// - The token is invalid or malformed.
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden.
+    /// This can occur when:
+    /// - The user is authenticated but does not have the required "admin" role to access.
+    /// </response>
     [HttpGet("all")]
     [MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll(bool? isAvailable)
     {
         return Ok( await _service.GetAllBooksAsync(isAvailable));
@@ -55,8 +74,34 @@ public class BooksController(IBookService service) : ControllerBase
     /// <returns>
     /// An <see cref="IActionResult"/> containing the book with the specified identifier.
     /// </returns>
+    /// <response code="200">
+    /// The book with the specified identifier is found and returned successfully.
+    /// </response>
+    /// <response code="400">
+    /// The provided identifier is invalid (e.g., null, empty, or not a valid ObjectId).
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized.
+    /// This can occur when:
+    /// - The user is not authenticated (no valid token provided)
+    /// - The token has expired
+    /// - The token is invalid or malformed
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden.
+    /// This can occur when:
+    /// - The user is authenticated but does not have the required "admin" role to access this endpoint.
+    /// </response>
+    /// <response code="404">
+    /// A book with the specified identifier is not found.
+    /// </response>
     [HttpGet("{id}")]
     [MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(BookDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(string id)
     {
         return Ok( await _service.GetBookByIdAsync(id));
@@ -71,8 +116,30 @@ public class BooksController(IBookService service) : ControllerBase
     /// <returns>
     /// An <see cref="IActionResult"/> containing the list of books that exactly match the search criteria.
     /// </returns>
+    /// <response code="200">
+    /// The search was successful, and a collection of books that exactly match the specified criteria is returned.
+    /// If no books match the criteria, an empty collection is returned with HTTP 200 status code.
+    /// </response>
+    /// <response code="400">
+    /// The search request is invalid. This can occur when:
+    /// - The search term is null, empty, or contains only whitespace.
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized. This can occur when:
+    /// - The user is not authenticated (no valid token provided)
+    /// - The token has expired
+    /// - The token is invalid or malformed
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden. This can occur when:
+    /// - The user is authenticated but does not have the required "admin" role to access this endpoint.
+    /// </response>
     [HttpGet("search-exact")]
     [MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request)
     {
         return Ok( await _service.GetBooksByExactMatchAsync(request));
@@ -88,8 +155,30 @@ public class BooksController(IBookService service) : ControllerBase
     /// An <see cref="IActionResult"/> containing a read-only collection of <see cref="BookDto"/>
     /// objects that partially match the search criteria. Returns HTTP 200 status code.
     /// </returns>
+    /// <response code="200">
+    /// The search was successful, and a collection of books that partly match the specified criteria is returned.
+    /// If no books partly match the criteria, an empty collection is returned with HTTP 200 status code.
+    /// </response>
+    /// <response code="400">
+    /// The search request is invalid. This can occur when:
+    /// - The search term is null, empty, or contains only whitespace.
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized. This can occur when:
+    /// - The user is not authenticated (no valid token provided)
+    /// - The token has expired
+    /// - The token is invalid or malformed
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden. This can occur when:
+    /// - The user is authenticated but does not have the required "admin" role to access this endpoint.
+    /// </response>
     [HttpGet("search-partial-match")]
     [MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetByPartialMatch([FromQuery] BookSearchRequestDto request)
     {
         return Ok( await _service.GetBooksByPartialMatchAsync(request));
@@ -104,11 +193,32 @@ public class BooksController(IBookService service) : ControllerBase
     /// <returns>
     /// An <see cref="IActionResult"/> indicating existence.
     /// </returns>
-    /// <response code="200">A book with the specified identifier exists.</response>
-    /// <response code="404">A book with the specified identifier does not exist.</response>
-    /// <response code="400">The provided identifier is invalid.</response>
+    /// <response code="200">
+    /// The existence check was successful. Returns HTTP 200 (OK) if the book exists; otherwise, returns HTTP 404 (Not Found).
+    /// </response>
+    /// <response code="400">
+    /// The provided identifier is invalid (e.g., null, empty, or not a valid ObjectId).
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized. This can occur when:
+    /// - The user is not authenticated (no valid token provided)
+    /// - The token has expired
+    /// - The token is invalid or malformed
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden. This can occur when:
+    /// - The user is authenticated but does not have the required "admin" role to access this endpoint.
+    /// </response>
+    /// <response code="404">
+    /// A book with the specified identifier is not found.
+    /// </response>
     [HttpGet("is-exists/{id}")]
     [MapToApiVersion("1.0")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Exists(string id)
     {
         var exists = await _service.IsBookExistsAsync(id);
@@ -130,8 +240,30 @@ public class BooksController(IBookService service) : ControllerBase
     /// <remarks>
     /// Calls <see cref="IBookService.CreateBookAsync"/> to perform the creation.
     /// </remarks>
+    /// <response code="200">
+    /// The book was successfully created. Returns the created <see cref="BookDto"/> object in the response body. 
+    /// </response>
+    /// <response code="400">
+    /// The request is invalid. This can occur when:
+    /// - The request body is null or missing,
+    /// - The request body contains invalid data (e.g., missing required fields, invalid field values).
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized. This can occur when:
+    /// - The user is not authenticated (no valid token provided)
+    /// - The token has expired
+    /// - The token is invalid or malformed
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden. This can occur when:
+    /// - The user is authenticated but does not have the required "admin" role to access this endpoint.
+    /// </response>
     [HttpPost("add")]
     [MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(BookDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateBook([FromBody] BookDto bookDto)
     {
         var createdBook = await _service.CreateBookAsync(bookDto);
@@ -148,11 +280,32 @@ public class BooksController(IBookService service) : ControllerBase
     /// An <see cref="IActionResult"/> with HTTP 204 (No Content) if the deletion
     /// succeeds.
     /// </returns>
-    /// <response code="204">The book was successfully deleted.</response>
-    /// <response code="400">The provided identifier is invalid.</response>
-    /// <response code="404">A book with the specified identifier was not found.</response>
+    /// <response code="204">
+    /// The book with the specified identifier was successfully deleted. No content is returned in the response body.
+    /// </response>
+    /// <response code="400">
+    /// The provided identifier is invalid (e.g., null, empty, or not a valid ObjectId).
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized. This can occur when:
+    /// - The user is not authenticated (no valid token provided)
+    /// - The token has expired
+    /// - The token is invalid or malformed
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden. This can occur when:
+    /// - The user is authenticated but does not have the required "admin" role to access this endpoint.
+    /// </response>
+    /// <response code="404">
+    /// A book with the specified identifier is not found.
+    /// </response>
     [HttpDelete("{id}")]
     [MapToApiVersion("1.0")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeleteById(string id)
     {
        await _service.DeleteBookByIdAsync(id);
@@ -169,8 +322,35 @@ public class BooksController(IBookService service) : ControllerBase
     /// An <see cref="IActionResult"/> containing the updated <see cref="BookDto"/> if successful,
     /// or <c>400 Bad Request</c> if the route ID does not match the body ID.
     /// </returns>
+    /// <response code="200">
+    /// The book was successfully updated. Returns the updated <see cref="BookDto"/> object in the response body. 
+    /// </response>
+    /// <response code="400">
+    /// The request is invalid. This can occur when:
+    /// - The route ID does not match the body ID.
+    /// - The request body is null or missing.
+    /// - The request body contains invalid data (e.g., missing required fields, invalid field).
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized. This can occur when:
+    /// - The user is not authenticated (no valid token provided)
+    /// - The token has expired
+    /// - The token is invalid or malformed
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden. This can occur when:
+    /// - The user is authenticated but does not have the required "admin" role to access this endpoint.
+    /// </response>
+    /// <response code="404">
+    /// A book with the specified identifier is not found.
+    /// </response>
     [HttpPut("{id}")]
     [MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(BookDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateBook(string id, [FromBody]BookDto bookDto)
     {
         if (!id.Equals(bookDto.Id, StringComparison.OrdinalIgnoreCase))
@@ -192,8 +372,35 @@ public class BooksController(IBookService service) : ControllerBase
     /// An <see cref="IActionResult"/> containing the updated <see cref="BookDto"/> if successful,
     /// or <c>400 Bad Request</c> if the route ID does not match the body ID.
     /// </returns>
+    /// <response code="200">
+    /// The book was successfully updated. Returns the updated <see cref="BookDto"/> object in the response body. 
+    /// </response>
+    /// <response code="400">
+    /// The request is invalid. This can occur when:
+    /// - The route ID does not match the body ID.
+    /// - The request body is null or missing.
+    /// - The request body contains invalid data (e.g., missing required fields, invalid field).
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized. This can occur when:
+    /// - The user is not authenticated (no valid token provided)
+    /// - The token has expired
+    /// - The token is invalid or malformed
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden. This can occur when:
+    /// - The user is authenticated but does not have the required "admin" role to access this endpoint.
+    /// </response>
+    /// <response code="404">
+    /// A book with the specified identifier is not found.
+    /// </response>
     [HttpPatch("update-partly/{id}")]
     [MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(BookDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdatePartlyBook(string id, [FromBody]BookUpdateDto bookDto)
     {
         if(!id.Equals(bookDto.Id, StringComparison.OrdinalIgnoreCase))

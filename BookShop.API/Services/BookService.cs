@@ -64,7 +64,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
         var book = await _bookRepository.GetBookByIdAsync(id);
 
         return book is null 
-            ? throw new NotFoundException($"Book with ID '{id}' not found.") 
+            ? throw new NotFoundException($"Book with the provided ID '{id}' was not found.") 
             : _mapper.Map<BookDto>(book);
     }
 
