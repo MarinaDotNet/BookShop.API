@@ -1,10 +1,11 @@
 using BookShop.API.DTOs.Catalog;
 using BookShop.API.Models.Catalog;
+using BookShop.API.Exceptions;
 
 namespace BookShop.API.Services;
 
 /// <summary>
-/// Provides operation for managing books in the catalog, including retrieval, creation, updating, and deletion of book records.
+/// Provides operations for managing books in the catalog, including retrieval, creation, updating, and deletion of book records.
 /// </summary>
 public interface IBookService
 {
@@ -26,15 +27,22 @@ public interface IBookService
 
     /// <summary>
     /// Asynchronously retrieves a book by its unique identifier. This method returns a <see cref="BookDto"/> object representing the book with the 
-    /// specified ID. If no book is found with the given ID, the method returns null.
+    /// specified ID.
     /// The ID parameter is expected to be a non-empty string that uniquely identifies a book in the catalog. 
     /// </summary>
     /// <param name="id">
-    /// The unique identifier of the book to retrieve. Must be a non empty string.
+    /// The unique identifier of the book to retrieve. Must be a non-empty string.
     /// </param>
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains the <see cref="BookDto"/> object representing the book with the specified ID, or null if no book is found.
+    /// A task that represents the asynchronous operation. The task result contains the <see cref="BookDto"/> object 
+    /// representing the book with the specified ID.
     /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the provided identifier is null, empty, or not a valid ObjectId.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown when a book with the specified identifier is not found.
+    /// </exception>  
     Task<BookDto> GetBookByIdAsync(string id);
 
     /// <summary>
@@ -49,6 +57,9 @@ public interface IBookService
     /// The task result contains a read-only collection of <see cref="BookDto"/>
     /// objects that match the specified search criteria.
     /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when the search term is null, empty, or contains only whitespace.
+    /// </exception> 
     Task<IReadOnlyCollection<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request);
 
     /// <summary>
@@ -62,6 +73,9 @@ public interface IBookService
     /// A task that represents the asynchronous operation. The task result contains a read-only 
     /// collection of <see cref="BookDto"/> objects that match the specified search criteria.
     /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when the search term is null, empty, or contains only whitespace.
+    /// </exception> 
     Task<IReadOnlyCollection<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request);
 
     /// <summary>
@@ -75,6 +89,9 @@ public interface IBookService
     /// A <see cref="Task{Boolean}"/> representing the asynchronous operation.
     /// The task result is <c>true</c> if the book exists; otherwise, <c>false</c>.
     /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when the provided identifier is null, empty, or not a valid ObjectId
+    /// </exception>
     Task<bool> IsBookExistsAsync(string id);
 
     /// <summary>
@@ -88,10 +105,12 @@ public interface IBookService
     /// If null then no availability filter is applied.
     /// </param>
     /// <returns>
-    /// A <see cref="BookDto"/> representing the asynchronous operation.
-    /// The task result contains a read-only collection of <see cref="BookDto"/> objects representing the top cheapest books 
+    /// A task that represents a read-only collection of <see cref="BookDto"/> objects representing the top cheapest books 
     /// that match the specified criteria.
     /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when <paramref name="count" />is not a positive integer.
+    /// </exception> 
     Task<IReadOnlyCollection<BookDto>> GetTopCheapestBooksAsync(int count, bool? isAvailable);
 
     #endregion Getters
@@ -121,6 +140,12 @@ public interface IBookService
     /// A <see cref="Task{BookDto}"/> representing the asynchronous operation.
     /// The task result contains the deleted <see cref="BookDto"/>.
     /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when the provided identifier is null, empty, or not a valid ObjectId
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown when a book with the specified identifier does not exist in the data source.
+    /// </exception> 
     Task<BookDto> DeleteBookByIdAsync(string id);
 
     /// <summary>
@@ -131,9 +156,17 @@ public interface IBookService
     /// A <see cref="BookDto"/> containing the updated data. Cannot be <c>null</c> and must include a valid book ID.
     /// </param>
     /// <returns>
-    /// A <see cref="Task"/> representing the asynchronous operation.
-    /// The task result contains the updated <see cref="BookDto"/> object.
+    /// A task that represents the asynchronous operation. The task result contains the updated <see cref="BookDto"/> object. 
     /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when <paramref name="bookDto"/> is <c>null</c> or contains invalid data.
+    /// </exception>
+    ///  <exception cref="NotFoundException">
+    /// Thrown when a book with the specified ID does not exist in the data source.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the update operation fails due to an unexpected error.
+    /// </exception>
     Task<BookDto> UpdateBookAsync(BookDto bookDto);
 
     /// <summary>
@@ -144,8 +177,7 @@ public interface IBookService
     /// A <see cref="BookUpdateDto"/> containing the fields to update. Cannot be <c>null</c> and must include a valid book ID.
     /// </param>
     /// <returns>
-    /// A <see cref="Task"/> representing the asynchronous operation.
-    /// The task result contains the updated <see cref="BookDto"/> object.
+    /// A task that represents the asynchronous operation. The task result contains the updated <see cref="BookDto"/> object. 
     /// </returns>
     Task<BookDto> UpdateBookPartlyAsync(BookUpdateDto bookDto);
 

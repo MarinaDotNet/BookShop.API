@@ -4,11 +4,8 @@ using BookShop.API.Exceptions;
 using BookShop.API.Infrastructure.Persistence;
 using BookShop.API.Models.Catalog;
 using BookShop.API.Repositories;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using System.Threading.Tasks;
 
 namespace BookShop.API.Services;
 
@@ -37,19 +34,16 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// If true or false, only books matching the specified availability are returned.
     /// </param>
     /// <returns>
-    /// A read-only collection of <see cref="BookDto"/> objects
-    /// that match the specified criteria.
+    /// A read-only collection of <see cref="BookDto"/> objects that match the specified criteria.
+    /// If no books are found, an empty collection is returned.
     /// </returns>
-    /// <exception cref="Exceptions.NotFoundException">
-    /// Thrown when no books are found for the given filter.
-    /// </exception>
     public async Task <IReadOnlyCollection<BookDto>> GetAllBooksAsync(bool? isAvailable)
     {
         var books = await _bookRepository.GetAllBooksAsync(isAvailable);
 
-        if (!books.Any())
+        if (books.Count == 0)
         {
-            throw new Exceptions.NotFoundException("No books found.");
+            return [];
         }
 
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
@@ -59,10 +53,16 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <summary>
     /// Asynchronously retrieves a book by its unique identifier.
     /// </summary>
-    /// <param name="id">The unique identifier of the book to retrieve. Cannot be null or empty.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="BookDto"/> representing
-    /// the requested book.</returns>
-    /// <exception cref="Exceptions.NotFoundException">Thrown if a book with the specified <paramref name="id"/> does not exist.</exception>
+    /// <param name="id">
+    /// The unique identifier of the book to retrieve. Cannot be null or empty.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a <see cref="BookDto"/> representing
+    /// the requested book.
+    /// </returns>
+    /// <exception cref="NotFoundException">
+    /// Thrown if a book with the specified <paramref name="id"/> does not exist.
+    /// </exception>
     public async Task<BookDto> GetBookByIdAsync(string id)
     {
         ValidateObjectId(id);
@@ -70,7 +70,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
         var book = await _bookRepository.GetBookByIdAsync(id);
 
         return book is null 
-            ? throw new Exceptions.NotFoundException($"Book with ID '{id}' not found.") 
+            ? throw new NotFoundException($"Book with ID '{id}' not found.") 
             : _mapper.Map<BookDto>(book);
     }
 
@@ -81,14 +81,13 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="request">
     /// The search request containing the search term and optional availability filter.
     /// </param>
+    /// <returns>
     /// A task that represents the asynchronous operation.
-    /// The task result contains a read-only collection of <see cref="BookDto"/>
-    /// objects that match the specified search criteria.
+    /// The task result contains a read-only collection of <see cref="BookDto"/> objects that match the specified search criteria.
+    /// If no books are found matching the criteria, an empty collection is returned.
+    /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown if the <paramref name="request"/> is null or empty.
-    /// </exception>
-    /// <exception cref="Exceptions.NotFoundException">
-    /// Thrown if no books are found matching the search criteria.
     /// </exception>
     public async Task<IReadOnlyCollection<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request)
     {
@@ -101,7 +100,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
 
         if (books.Count == 0)
         {
-            throw new Exceptions.NotFoundException("No books found matching the search criteria.");
+            return [];
         }
 
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
@@ -115,14 +114,12 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// The search request containing the search term and an optional availability filter.
     /// </param>
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a read-only 
-    /// collection of <see cref="BookDto"/> objects that match the specified search criteria.
+    /// A task that represents the asynchronous operation. The task result contains a read-only collection of <see cref="BookDto"/> 
+    /// objects that match the specified search criteria.
+    /// If no books are found matching the criteria, an empty collection is returned.
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown if <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
-    /// </exception>
-    /// <exception cref="Exceptions.NotFoundException">
-    /// Thrown if no books are found matching the search criteria.
     /// </exception>
     public async Task<IReadOnlyCollection<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request)
     {
@@ -135,7 +132,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
 
         if (books.Count == 0)
         {
-            throw new Exceptions.NotFoundException("No books found matching the search criteria.");
+            return [];
         }
 
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
@@ -178,12 +175,10 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// A <see cref="BookDto"/> representing the asynchronous operation.
     /// The task result contains a read-only collection of <see cref="BookDto"/> objects representing the top cheapest books 
     /// that match the specified criteria.
+    /// If no books are found matching the criteria, an empty collection is returned.
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when <paramref name="count"/> is not a positive integer.
-    /// </exception>
-    /// <exception cref="Exceptions.NotFoundException">
-    /// Thrown when no books are found matching the specified criteria.
     /// </exception>
     public async Task<IReadOnlyCollection<BookDto>> GetTopCheapestBooksAsync(int count, bool? isAvailable)
     {
@@ -193,6 +188,11 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
         }
 
         var books = await _bookRepository.GetTopCheapestBooksAsync(count, isAvailable);
+
+        if(books.Count == 0)
+        {
+            return [];
+        }
 
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
@@ -237,7 +237,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="ValidationException">
     /// Thrown when the provided identifier is null, empty, or not a valid ObjectId.
     /// </exception>
-    /// <exception cref="Exceptions.NotFoundException">
+    /// <exception cref="NotFoundException">
     /// Thrown when a book with the specified identifier does not exist.
     /// </exception>
     public async Task<BookDto> DeleteBookByIdAsync(string id)
@@ -246,7 +246,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
 
         if(!await IsBookExistsAsync(id))
         {
-            throw new Exceptions.NotFoundException($"Book with ID '{id}' not found.");
+            throw new NotFoundException($"Book with ID '{id}' not found.");
         }
 
         return _mapper.Map<BookDto>(await _bookRepository.DeleteBookByIdAsync(id));
@@ -263,7 +263,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// A <see cref="Task"/> representing the asynchronous operation.
     /// The task result contains the updated <see cref="BookDto"/> object.
     /// </returns>
-    /// <exception cref="Exceptions.NotFoundException">
+    /// <exception cref="NotFoundException">
     /// Thrown when a book with the specified ID does not exist.
     /// </exception>
     /// <exception cref="InvalidOperationException">
@@ -276,7 +276,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
 
         if (!await IsBookExistsAsync(bookDto.Id))
         {
-            throw new Exceptions.NotFoundException($"Book with ID '{bookDto.Id}' not found.");
+            throw new NotFoundException($"Book with ID '{bookDto.Id}' not found.");
         }
 
         var updatedBook = await _bookRepository.UpdateBookAsync(_mapper.Map<Book>(bookDto)) ??
@@ -299,7 +299,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="ValidationException">
     /// Thrown when <paramref name="bookDto"/> is <c>null</c> or contains no valid fields to update.
     /// </exception>
-    /// <exception cref="Exceptions.NotFoundException">
+    /// <exception cref="NotFoundException">
     /// Thrown when a book with the specified ID does not exist in the data source.
     /// </exception>
     /// <remarks>
@@ -337,7 +337,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
 
         return updatedBook is not null 
             ? _mapper.Map<BookDto>(updatedBook) 
-            : throw new Exceptions.NotFoundException($"Book with ID '{bookDto.Id}' not found.");
+            : throw new NotFoundException($"Book with ID '{bookDto.Id}' not found.");
             
     }
 
