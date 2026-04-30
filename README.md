@@ -15,7 +15,7 @@
 
 ## What This Project Shows
 
-I buiilt this to practive and demostrate skills that matter for a Junior .NET Backend Developer:
+I buiilt this to practice and demostrate skills that matter for a Junior .NET Backend Developer:
 
 - Building REST APIs with clear structure and versioning
 - Layered architecture with proper separation of concerns
@@ -48,7 +48,7 @@ Instead of versioning by feature, I versioned by **who can access what**:
 
 | Version | Who can use it | Controllers |
 |---------|----------------|-------------|
-| **V1** | Admins only | `AuthConroller`, `BooksController` |
+| **V1** | Admins only | `AuthController`, `BooksController` |
 | **V2** | Logged in users | `BooksController` |
 | **V3** | Guests / not logged in | `BooksController` |
 
@@ -199,9 +199,9 @@ BookShop.API
 
 ## Database Design Highlights
 
-**PostgreSQL (vis EF Core):**
-- Soft delete with `IsDeleted` flag and query filter so delted users are invisible by default
-- Partial unique indexes on `NormalizedEmail` and `NormalizedUsername` filtered by `IsDeleted = false` - so a deleted user's email canbe reused after account recovery
+**PostgreSQL (via EF Core):**
+- Soft delete with `IsDeleted` flag and query filter so deleted users are invisible by default
+- Partial unique indexes on `NormalizedEmail` and `NormalizedUsername` filtered by `IsDeleted = false` - so a deleted user's email can be reused after account recovery
 - `SecurityTokenInvalidBeforeUtc` timestamp for instant JWT invalidation without a token blacklist
 
 **MongoDB:**
@@ -235,7 +235,7 @@ A few things that need attention:
 - Review the difference between exact match and partial match search behavior
 - General code cleanup
 
-**4. Extend `BooksController V2**
+**4. Extend `BooksController V2`**
 
 Add more endpoints for logged-in users - search by term, get by ID, and other read operations beyond just `GET \all`.
 
