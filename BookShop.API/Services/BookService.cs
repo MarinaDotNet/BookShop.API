@@ -40,12 +40,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     public async Task <IReadOnlyCollection<BookDto>> GetAllBooksAsync(bool? isAvailable)
     {
         var books = await _bookRepository.GetAllBooksAsync(isAvailable);
-
-        if (books.Count == 0)
-        {
-            return [];
-        }
-
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
 
@@ -98,11 +92,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
 
         var books = await _bookRepository.GetBooksByExactMatchAsync(request.SearchTerm, request.IsAvailable);
 
-        if (books.Count == 0)
-        {
-            return [];
-        }
-
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
 
@@ -129,11 +118,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
         }
 
         var books = await _bookRepository.GetBooksByPartialMatchAsync(request.SearchTerm, request.IsAvailable);
-
-        if (books.Count == 0)
-        {
-            return [];
-        }
 
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
@@ -188,12 +172,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
         }
 
         var books = await _bookRepository.GetTopCheapestBooksAsync(count, isAvailable);
-
-        if(books.Count == 0)
-        {
-            return [];
-        }
-
+        
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
     #endregion Getters
