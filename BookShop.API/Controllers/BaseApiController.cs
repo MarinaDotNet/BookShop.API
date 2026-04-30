@@ -4,7 +4,7 @@ using System.Security.Claims;
 namespace BookShop.API.Controllers;
 
 /// <summary>
-/// Provides a common base class for API controllers. Contains shared conrtoller functionality used across different API versions.
+/// Provides a common base class for API controllers. Contains shared controller functionality used across different API versions.
 /// </summary>
 [ApiController]
 public abstract class BaseApiController() : ControllerBase
