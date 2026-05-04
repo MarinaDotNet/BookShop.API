@@ -26,17 +26,24 @@ public class BooksController(IBookService service) : ControllerBase
     private readonly IBookService _service = service;
 
     /// <summary>
-    /// Retrieves a collection of the top 10 cheapest available books. This endpoint is mapped to API version 3.0 and returns 
-    /// only books that are currently available. The books are sorted by price in ascending order, and only the 10 cheapest books 
-    /// are returned.
-    /// are currently available.
+    /// Retrieves  the top 10 cheapest available books. This endpoint is mapped to API version 3.0.
+    /// Books are sorted by price in ascending order.
+    /// Only available books are included in the result.
     /// </summary>
     /// <returns>
-    /// An <see cref="IActionResult"/> containing the list of the top 10 cheapest available books.
-    /// Returned with HTTP 200 status code.
+    /// A collection of the top 10 cheapest available books. Returns HTTP 200 OK.
     /// </returns>
+    /// <response code="200">
+    /// A collection of the books is returned successfully. If no books match the criteria, 
+    /// and empty collection is returned with HTTP 200 OK.
+    /// </response>
+    /// <response code="400">
+    /// The request is invalid.
+    /// </response>
     [HttpGet("cheapest")]
     [MapToApiVersion("3.0")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetTopCheapestBooks()
     {
         return Ok( await _service.GetTopCheapestBooksAsync(10, true));
