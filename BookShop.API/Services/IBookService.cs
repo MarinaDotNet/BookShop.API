@@ -107,7 +107,7 @@ public interface IBookService
     /// <exception cref="ValidationException">
     /// Thrown when the search term is null, empty, or contains only whitespace.
     /// </exception> 
-    Task<IReadOnlyCollection<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request)
+    Task<IReadOnlyCollection<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request);
 
     /// <summary>
     /// Asynchronously checks if a book with the specified identifier exists
