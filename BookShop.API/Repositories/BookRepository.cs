@@ -188,6 +188,33 @@ public class BookRepository(MongoDbContext context) : IBookRepository
 
         return await _booksCollection.Find(filter).SortBy(b => b.Price).Limit(count).ToListAsync();
     }
+
+    /// <summary>
+    /// Asynchronously retrieves the top N expensive books from the data source, with an optional filter for availability.
+    /// The books are sorted in descending order by price, and only the specified number of books are returned.
+    /// If the availability filter is provided, only books that match the specified availability status will be included in the
+    /// results. If no books match the criteria, an empty collection is returned.
+    /// </summary>
+    /// <param name="count">
+    /// The maximum number of expensive books to retrieve. Must be a positive integer.
+    /// </param>
+    /// <param name="isAvailable">
+    /// An optional parameter to filter books by their availability status.
+    /// If provided, only books match the specified availability status will be returned.
+    /// If null, no availability filter is applied.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a collection of the top N expensive books
+    /// that match the specified criteria. The collection is empty if no matching booka are found.
+    /// </returns>
+    public async Task<IReadOnlyCollection<Book>> GetTopExpensiveBooksAsync(int count, bool? isAvailable)
+    {
+        var filter = isAvailable.HasValue
+            ? Builders<Book>.Filter.Eq(b => b.IsAvailable, isAvailable.Value)
+            : Builders<Book>.Filter.Empty;
+
+        return await _booksCollection.Find(filter).SortByDescending(b => b.Price).Limit(count).ToListAsync();
+    }
     #region Setters
 
     /// <summary>

@@ -66,6 +66,23 @@ public interface IBookRepository
     Task<IReadOnlyCollection<Book>> GetBooksByPartialMatchAsync(string searchTerm, bool? isAvailable);
 
     /// <summary>
+    /// Asynchronously retrieves the top expensive books from the data source, with optional filter for availability.
+    /// The number of books returned is determined by the <paramref name="count"/> parameter.
+    /// </summary>
+    /// <param name="count">
+    /// The number of expensive books to retrieve. Must be a positive integer.
+    /// </param>
+    /// <param name="isAvailable">
+    /// An optional parameter to filter books by their availability status.
+    /// If provided, only books match the specified availability status will be returned.
+    /// If null, no avialability filter is applied.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a collection of the top N expensive books.
+    /// </returns>
+    Task<IReadOnlyCollection<Book>> GetTopExpensiveBooksAsync(int count, bool? isAvailable);
+
+    /// <summary>
     /// Asynchronously checks if a book with the specified ID exists in the collection.
     /// </summary>
     /// <param name="id">
