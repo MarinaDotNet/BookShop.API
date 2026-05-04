@@ -112,7 +112,9 @@ public class BooksController(IBookService service) : ControllerBase
     }
     
     /// <summary>
-    ///
+    /// Retrieves books that exactly match the specified search criteria. This endpoint is mapped to API version 2.0 
+    /// and retuns only books that are currently available. If no books match the search criteria, an empty collection is returned
+    /// with HTTP 200 OK.
     /// </summary>
     /// <param name="request">
     /// The search criteria encapsulated in a <see cref="BookSearchRequestDto"/> object.
@@ -136,7 +138,7 @@ public class BooksController(IBookService service) : ControllerBase
     /// </response>
     /// <response code="403">
     /// The request is forbidden. This can occur when:
-    /// - The user is authenticated but does not have the required "admin" role to access this endpoint.
+    /// - The user is authenticated but does not have the required role to access this endpoint.
     /// </response>
     [HttpGet("search-exact")]
     [MapToApiVersion("2.0")]
@@ -148,6 +150,45 @@ public class BooksController(IBookService service) : ControllerBase
     {
         return Ok(await _service.GetAvailableBooksByExactMatchAsync(request));
         
+    }
+
+    /// <summary>
+    /// Retrieves books that partially match the specified search criteria. This endpoint is mapped to API version 2.0 and returns
+    /// only books that are currently available. If no books match the search criteria, an empty collection is returned with HTTP 200 OK.
+    /// </summary>
+    /// <param name="request">
+    /// The search criteria encapsulated in a <see cref="BookSearchRequestDto"/> object.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> containing the list of books that partly match the search criteria.
+    /// </returns>
+    /// <response code="200">
+    /// The search was successful, and a collection of books that partly match the specified criteria is returned.
+    /// If no books match the criteria, an empty collection is returned with HTTP 200 status code.
+    /// </response>
+    /// <response code="400">
+    /// The search request is invalid. This can occur when:
+    /// - The search term is null, empty, or contains only whitespace.
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized. This can occur when:
+    /// - The user is not authenticated (no valid token provided)
+    /// - The token has expired
+    /// - The token is invalid or malformed
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden. This can occur when:
+    /// - The user is authenticated but does not have the required role to access this endpoint.
+    /// </response>
+    [HttpGet("search-partial-match")]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetByPartialMatch([FromQuery] BookSearchRequestDto request)
+    {
+        return Ok(await _service.GetAvailableBooksByPartialMatchAsync(request));
     }
 
 }
