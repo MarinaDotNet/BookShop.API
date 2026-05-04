@@ -95,6 +95,21 @@ public interface IBookService
     Task<IReadOnlyCollection<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request);
 
     /// <summary>
+    /// Asynchronously retrieves available books that partially match the specified search term.
+    /// </summary>
+    /// <param name="request">
+    /// The search request containing the search term.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a read-only 
+    /// collection of <see cref="BookDto"/> objects that partly match the specified search criteria.
+    /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when the search term is null, empty, or contains only whitespace.
+    /// </exception> 
+    Task<IReadOnlyCollection<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request)
+
+    /// <summary>
     /// Asynchronously checks if a book with the specified identifier exists
     /// in the data source.
     /// </summary>
