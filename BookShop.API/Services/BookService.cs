@@ -102,7 +102,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     public async Task<IReadOnlyCollection<BookDto>> GetAvailableBooksByExactMatchAsync(BookSearchRequestDto request) =>
         await GetBooksByExactMatchAsync(request, true);
-        
+
     /// <summary>
     /// Asynchronously retrieves books that partially match the specified search term
     /// with an optional availability filter.
@@ -118,17 +118,25 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="ValidationException">
     /// Thrown if <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>
-    public async Task<IReadOnlyCollection<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request)
-    {
-        if (string.IsNullOrWhiteSpace(request.SearchTerm))
-        {
-            throw new ValidationException("Search term cannot be null or empty.");
-        }
+    public async Task<IReadOnlyCollection<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request) =>
+        await GetBooksByPartialMatchAsync(request, request.IsAvailable);
 
-        var books = await _bookRepository.GetBooksByPartialMatchAsync(request.SearchTerm, request.IsAvailable);
-
-        return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
-    }
+    /// <summary>
+    /// Asynchronously retrieves available books that partially match the specified search term.
+    /// </summary>
+    /// <param name="request">
+    /// The search request containing the search term.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// The task result contains a read-only collection of <see cref="BookDto"/> objects that match the specified search criteria.
+    /// If no books are found matching the criteria, an empty collection is returned.
+    /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown if <see cref="BookSearchRequestDto.SearchTerm"/> is null or emtpy. 
+    /// </exception>
+    public async Task<IReadOnlyCollection<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request) =>
+        await GetBooksByPartialMatchAsync(request, true);
 
     /// <summary>
     /// Asynchronously checks if a book with the specified identifier exists
@@ -430,6 +438,35 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
         }
 
         var books = await _bookRepository.GetBooksByExactMatchAsync(request.SearchTerm, isAvailable);
+
+        return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
+    }
+
+    /// <summary>
+    /// Asynchronously retrieves books that partially match the specified search term with an optional availability filter.
+    /// </summary>
+    /// <param name="request">
+    /// The search request containing the search term and optional availability filter.
+    /// </param>
+    /// <param name="isAvailable">
+    /// An optional parameter to filter books by their availability status.
+    /// If null then no availability filter is applied.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// The task result contains a read-only collection of <see cref="BookDto"/>. 
+    /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown if <paramref name="request"/> is null or contains an invalid search term.
+    /// </exception>
+    private async Task<IReadOnlyCollection<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, bool? isAvailable)
+    {
+        if (string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            throw new ValidationException("Search term cannot be null or empty.");
+        }
+
+        var books = await _bookRepository.GetBooksByPartialMatchAsync(request.SearchTerm, isAvailable);
 
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
