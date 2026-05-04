@@ -144,6 +144,25 @@ public interface IBookService
     /// </exception> 
     Task<IReadOnlyCollection<BookDto>> GetTopCheapestBooksAsync(int count, bool? isAvailable);
 
+    /// <summary>
+    /// Asynchronously retrieves the top expensive books from the data source, with an optional filter for availability.
+    /// </summary>
+    /// <param name="count">
+    /// The maximum number of expensive books to retrieve. Must be a positive integer.
+    /// </param>
+    /// <param name="isAvailable">
+    /// An optional parameter to filter books by their availability status.
+    /// If null then no availability filter is applied.
+    /// </param>
+    /// <returns>
+    /// A task that represents a read-only collection of <see cref="BookDto"/> objects representing the top expensive books
+    /// that match the specified criteria.
+    /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when <paramref name="count" /> is not a positive integer.
+    /// </exception>  
+    Task<IReadOnlyCollection<BookDto>> GetTopExpensiveBooksAsync(int count, bool? isAvailable);
+
     #endregion Getters
 
     #region Setters

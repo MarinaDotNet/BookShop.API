@@ -191,6 +191,34 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
         
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
+
+    /// <summary>
+    /// Asynchronously retrives the top expensive books from the data source, with an optional filter for availability.
+    /// </summary>
+    /// <param name="count">
+    /// The maximum number of expensive books to retrieve. Must be a positive integer.
+    /// </param>
+    /// <param name="isAvailable">
+    /// An optional parameter to filter books by their availability status. If null then no availability filter is applied.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a read-only colleciton of <see cref="BookDto"/>
+    /// objects representing the top expensive books that match the specified criteria. If no books are found matching the criteria,
+    /// an empty collection is returned. 
+    /// </returns>
+    /// <exception cref="ValidationException">
+    /// Thrown when <paramref name="count" /> is not a positive integer.
+    /// </exception>
+    public async Task<IReadOnlyCollection<BookDto>> GetTopExpensiveBooksAsync(int count, bool? isAvailable)
+    {
+        if(count <= 0)
+        {
+            throw new ValidationException("Count must be a positive integer.");
+        }
+
+        var books = await _bookRepository.GetTopExpensiveBooksAsync(count, isAvailable);
+        return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
+    }
     #endregion Getters
 
     #region Setters
