@@ -11,4 +11,7 @@ namespace BookShop.API.DTOs.Shared;
 /// The number of items to include in each page. Defaults to 10 if not specified. Must be a positive integer,
 /// typically with an upper limit to prevent excessive data retrieval in a single request.
 /// </param>
-public sealed record PaginationQueryDto(int PageNumber = 1, int PageSize = 10);
+public sealed record PaginationQueryDto(int PageNumber = 1, int PageSize = 10)
+{
+    public const int MaxPageSize = 100;
+}
