@@ -31,4 +31,4 @@ namespace BookShop.API.DTOs.Shared;
 /// The total number of pages in the paginated results. This is an integer that indicates the total number of pages available in the
 /// dataset being paginated.
 /// </param>
-public sealed record PageReslultDto<T>(IReadOnlyCollection<T> Items, int PageNumber, int PageSize, long TotalCount, int TotalPages);
+public sealed record PageResultDto<T>(IReadOnlyCollection<T> Items, int PageNumber, int PageSize, long TotalCount, int TotalPages);
