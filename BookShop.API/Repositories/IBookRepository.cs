@@ -1,5 +1,7 @@
 ﻿using BookShop.API.Models.Catalog;
 using MongoDB.Driver;
+using BookShop.API.DTOs.Shared;
+
 
 namespace BookShop.API.Repositories;
 
@@ -16,12 +18,15 @@ public interface IBookRepository
     /// If provided, only books match the specified availability status will be returned. 
     /// If null, no avialability filter is applied.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a collection of books 
+    /// A task that represents the asynchronous operation. The task result contains a paginated collection of books 
     /// that match the availability filter, or all books if filter not applied. 
     /// The collection is empty if no books are found.
     /// </returns>
-    Task<IReadOnlyCollection<Book>> GetAllBooksAsync(bool? isAvailable);
+    Task<PageResultDto<Book>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination);
 
     /// <summary>
     /// Asynchronously retrieves a book with the specified identifier.

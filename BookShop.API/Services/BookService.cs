@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using BookShop.API.DTOs.Catalog;
+using BookShop.API.DTOs.Shared;
 using BookShop.API.Exceptions;
+using BookShop.API.Helpers;
 using BookShop.API.Infrastructure.Persistence;
 using BookShop.API.Models.Catalog;
 using BookShop.API.Repositories;
@@ -33,14 +35,33 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// If null, all books are retrieved.
     /// If true or false, only books matching the specified availability are returned.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
     /// <returns>
-    /// A read-only collection of <see cref="BookDto"/> objects that match the specified criteria.
-    /// If no books are found, an empty collection is returned.
+    /// A paginated result containing book DTOs and pagination metadata.
     /// </returns>
-    public async Task <IReadOnlyCollection<BookDto>> GetAllBooksAsync(bool? isAvailable)
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the pagination object is null.
+    /// </exception> 
+    /// <exception cref="ValidationException">
+    /// Thrown when:
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// </exception>
+    public async Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination)
     {
-        var books = await _bookRepository.GetAllBooksAsync(isAvailable);
-        return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
+        PaginationHelper.Valdidate(pagination);
+
+        PageResultDto<Book> query = await _bookRepository.GetAllBooksAsync(isAvailable, pagination);
+
+        return new PageResultDto<BookDto>(
+            _mapper.Map<IReadOnlyCollection<BookDto>>(query.Items),
+            query.PageNumber,
+            query.PageSize,
+            query.TotalCount,
+            query.TotalPages);
     }
 
 

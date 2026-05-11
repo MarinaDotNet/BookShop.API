@@ -6,6 +6,8 @@ using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using BookShop.API.DTOs.Shared;
+using BookShop.API.Helpers;
 
 namespace BookShop.API.Repositories;
 
@@ -37,19 +39,45 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// If provided, only books match the specified availability status will be returned. 
     /// If null, no avialability filter is applied.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a collection 
+    /// A task that represents the asynchronous operation. The task result contains a paginated collection 
     /// of books that match the availability filter, or all books if filter not applied. 
     /// The collection is empty if no books are found.
     /// </returns>
-    public async Task<IReadOnlyCollection<Book>> GetAllBooksAsync(bool? isAvailable)
+    public async Task<PageResultDto<Book>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination)
     {
         var filter = isAvailable.HasValue
             ? Builders<Book>.Filter.Eq(b => b.IsAvailable, isAvailable.Value)
             : Builders<Book>.Filter.Empty;
 
-        var books = await _booksCollection.Find(filter).ToListAsync();
-        return books;
+        long totalCount = await _booksCollection.CountDocumentsAsync(filter);
+
+        if(totalCount == 0)
+        {
+            return new PageResultDto<Book>(
+                [],
+                pagination.PageNumber,
+                pagination.PageSize,
+                0,
+                0);
+        }
+        
+        var books = await _booksCollection
+            .Find(filter)
+            .Skip(PaginationHelper.CalculateSkip(pagination.PageNumber, pagination.PageSize))
+            .Limit(pagination.PageSize)
+            .ToListAsync();
+
+        return new PageResultDto<Book>(
+            books,
+            pagination.PageNumber,
+            pagination.PageSize,
+            totalCount,
+            PaginationHelper.CalculateTotalPages(totalCount, pagination.PageSize)
+        );
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Asp.Versioning;
 using BookShop.API.DTOs.Catalog;
+using BookShop.API.DTOs.Shared;
 using BookShop.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
@@ -28,11 +29,14 @@ public class BooksController(IBookService service) : ControllerBase
     /// <summary>
     /// Retrieves all available books. This endpoint is mapped to API version 2.0 and returns only books that are currently available. 
     /// </summary>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
     /// <returns>
-    /// A collection of available books. Returns HTTP 200 OK.
+    /// A paginated collection of books that match the specified criteria. Returns HTTP 200 OK.
     /// </returns>
     /// <response code="200">
-    /// A collection of available books is returned successfully.
+    /// A paginated collection of available books is returned successfully.
     /// If no books match the filter, an empty collection is returned with HTTP 200 status code.
     /// </response>
     /// <response code="401">
@@ -53,9 +57,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]    
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] PaginationQueryDto pagination)
     {
-        return Ok( await _service.GetAllBooksAsync(true));
+        return Ok( await _service.GetAllBooksAsync(true, pagination));
     }
 
     /// <summary>

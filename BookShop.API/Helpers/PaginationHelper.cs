@@ -1,0 +1,90 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
+using BookShop.API.DTOs.Shared;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace BookShop.API.Helpers;
+
+/// <summary>
+/// Provides helper methods for pagination calculations.
+/// This static class contains methods to calculate the total number of pages based on the total count of items and the page size,
+/// as well as to calculate the numbe of items to skip for a given page number and page size.
+/// </summary>
+public static class PaginationHelper
+{
+    /// <summary>
+    /// Calculates the total number of pages based on the total count of items and the page size.
+    /// </summary>
+    /// <param name="totalCount">
+    /// The total number of items across all pages in the paginated results.
+    /// </param>
+    /// <param name="pageSize">
+    /// The number of items included in each page of the paginated results. Must be a positive integer.
+    /// </param>
+    /// <returns>
+    /// The total number of pages in the paginated results. This is an integer that indicates the total number of pages available
+    /// in the dataset being paginated. If the page size is zero or negative, or if the total count is zero or negative, this 
+    /// method returns zero, indicating that there are no pages available for pagination.
+    /// </returns>
+    public static int CalculateTotalPages(long totalCount, int pageSize)
+    {
+        if(pageSize <= 0)
+        {
+            return 1;
+        }
+        return (int)Math.Ceiling((double) totalCount / pageSize);
+    }
+
+    /// <summary>
+    /// Calculates the number of items to skip for a given page number and page size based on the total count of items.
+    /// </summary>
+    /// <param name="pageNumber">
+    /// The page number for which to calculate the skip value. Must be a positive integer.
+    /// </param>
+    /// <param name="pageSize">
+    /// The number of items included in each page of the paginated results. Must be a positive integer.
+    /// </param>
+    /// <returns>
+    /// The number of items to skip for the specified page number and page size. This is an integer that indicates the starting position
+    /// of the page in the paginated results. If the page number is less than or equal to zero, or if the page size is less than or
+    /// equal to zero, this method returns zero, indicating that no items should be skipped and the pagination should start from the
+    /// beginning of the dataset.
+    /// </returns>
+    public static int CalculateSkip(int pageNumber, int pageSize)
+    {
+        return pageSize <= 0 || pageNumber <= 0
+            ? 0 
+            : (pageNumber - 1) * pageSize;
+    }
+
+    /// <summary>
+    /// Validates pagination query parameters.
+    /// </summary>
+    /// <param name="pagination">
+    /// The pagination query parameters to validate.
+    /// Contains the page number and page size values used for paginated requests.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the pagination object is null.
+    /// </exception> 
+    /// <exception cref="ValidationException">
+    /// Thrown when:
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// </exception>
+    public static void Valdidate(PaginationQueryDto pagination)
+    {
+        ArgumentNullException.ThrowIfNull(pagination);
+
+        if(pagination.PageNumber < 1)
+        {
+            throw new ValidationException("Page must be greater than or equal to 1.");
+        }
+
+        if(pagination.PageSize < 1 || pagination.PageSize > PaginationQueryDto.MaxPageSize)
+        {
+            throw new ValidationException($"Page size must be between 1 and {PaginationQueryDto.MaxPageSize}.");
+        }
+    }
+}

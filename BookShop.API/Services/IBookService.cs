@@ -1,6 +1,7 @@
 using BookShop.API.DTOs.Catalog;
 using BookShop.API.Models.Catalog;
 using BookShop.API.Exceptions;
+using BookShop.API.DTOs.Shared;
 
 namespace BookShop.API.Services;
 
@@ -20,10 +21,23 @@ public interface IBookService
     /// An optional filter parameter that, if specified, will return only books that are currently available (true) or 
     /// unavailable (false). If null, the method returns all books regardless of their availability status.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a read-only collection of <see cref="BookDto"/> 
+    /// A task that represents the asynchronous operation. The task result contains a paginated read-only collection of 
+    /// <see cref="BookDto"/>.
     /// </returns>
-    Task<IReadOnlyCollection<BookDto>> GetAllBooksAsync(bool? isAvailable);
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the pagination object is null.
+    /// </exception> 
+    /// <exception cref="ValidationException">
+    /// Thrown when:
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// </exception>
+    Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination);
 
     /// <summary>
     /// Asynchronously retrieves a book by its unique identifier. This method returns a <see cref="BookDto"/> object representing the book with the 
