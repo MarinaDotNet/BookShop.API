@@ -157,7 +157,7 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request, PaginationQueryDto pagination)
+    public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request, [FromQuery] PaginationQueryDto pagination)
     {
         return Ok(await _service.GetAvailableBooksByExactMatchAsync(request, pagination));
         
