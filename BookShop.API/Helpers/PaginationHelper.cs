@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using AutoMapper.Configuration.Conventions;
 using BookShop.API.DTOs.Shared;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -87,4 +88,33 @@ public static class PaginationHelper
             throw new ValidationException($"Page size must be between 1 and {PaginationQueryDto.MaxPageSize}.");
         }
     }
+
+    /// <summary>
+    /// Maps a paginated result object from one item type to another while preserving the pagination metadata.
+    /// </summary>
+    /// <typeparam name="TSource">
+    /// The type of items contained in the source paginated result.
+    /// </typeparam>
+    /// <typeparam name="TDestination">
+    /// The type of items contained in the destination paginated result.
+    /// </typeparam>
+    /// <param name="source">
+    /// The source pagingated result containing the original items and pagination metadata.
+    /// </param>
+    /// <param name="items">
+    /// The mapped collection of destination items.
+    /// </param>
+    /// <returns>
+    /// A <see cref="PageResultDto{T}"/> containing the mapped items and the original pagination metadata. 
+    /// </returns>
+    public static PageResultDto<TDestination> MapPageResult<TSource, TDestination>(PageResultDto<TSource> source, IReadOnlyCollection<TDestination> items)
+    {
+        return new PageResultDto<TDestination>(
+            items,
+            source.PageNumber,
+            source.PageSize,
+            source.TotalCount,
+            source.TotalPages);
+    }
+
 }
