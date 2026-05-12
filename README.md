@@ -105,10 +105,13 @@ BookShop.API
 |  |  ├── UpdateEmailDto.cs
 |  |  ├── UpdatePasswordDto.cs
 |  |  └── UpdateUserNameDto.cs
-|  └── Catalog
+|  ├── Catalog
 |  |  ├── BookDto.cs
 |  |  ├── BookSearchRequestDto.cs
 |  |  └── BookUpdateDto.cs
+|  └── Shared
+|  |  ├── PageResultDto.cs
+|  |  └── PaginationQueryDto.cs
 |
 ├── Exceptions
 |  ├── ConflictException.cs
@@ -116,6 +119,9 @@ BookShop.API
 |  ├── InvalidTokenException.cs
 |  ├── NotFoundExcekption.cs
 |  └── ValidationException.cs
+|
+├── Helpers
+|  └── PaginationHelper.cs
 |
 ├── Infrastructure
 |  ├──Persistence
@@ -209,40 +215,28 @@ BookShop.API
 - Partial update support via `UpdateDefinition` builder
 
 ---
+## Pagination
+
+Pagination is supported for catalog and search endpoints.
+
+### Query Parameters
+| Parameter  | Description | Default |
+|---|---|---|
+| pageNumber | The page number to retrieve | 1 |
+| pageSize | Nuber of items returned per page | 10 |
+
+### Maximum Page Size
+
+The API limits the maximum page size to `100`.
+
+---
 
 ## What I'm Working On Next
 
-**1. Bring Books up to the same level as Auth**
-
-Starting with `BooksController`:
-- Add and verify `ProducesResponseType` attributes on all endpints
-- Improve XML docs to match the Swagger documentation style used in `AuthController`
-- Review all routes: `GET /all`, `GET /{id}`, `GET /search-exact`, `GET /search-partial-match`, `POST /add`, `PUT /{id}`,  `PATCH /update-partly/{id}`, `DELETE /{id}`
-- Decide which endpoints should be admin-only and which should be available to all logged-in users
-
-**2. Polish `BookService`**
-
-A few things that need attention:
-- `GetAllBooksAsync` currently throws `NotFoundException` when no books are found - returning `200 []` is probably more correct for a list endpoint
-- Imporve `BookDto` validation logic
-- Review `UpdateBookAsync` and `UpdateBookPartlyAsync` for edge cases
-- Make exception usage cosistent across the service (`NotFoundException`, `ValidationException`, `InvalidOperationException`)
-- Fix XML docs that are outdated or don't match the current method signatures
-
-**3. Clean up `BookRepository`**
-
-- Fix XML doc type (`avialability`, `intendent`, etc.)
-- Review the difference between exact match and partial match search behavior
-- General code cleanup
-
-**4. Extend `BooksController V2`**
-
-Add more endpoints for logged-in users - search by term, get by ID, and other read operations beyond just `GET \all`.
-
-**5. Cart feature**
+**1. Cart feature**
 `CartController` and all supporting components - `ICartService`, `CartService`, `ICartRepository`, DTOs, and the Cart model. Cart data will likely live in Redis or MongoDB.
 
-**6. Order feature**
+**2. Order feature**
 
 `OrderController` and all supporting components - `IOrderService`, `OrderService`, `IOrderRepository`, `OrderRepository`, DTOs, and the Order model with PostgreSQL persistence.
 
