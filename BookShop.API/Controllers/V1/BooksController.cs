@@ -61,11 +61,19 @@ public class BooksController(IBookService service) : ControllerBase
     /// This can occur when:
     /// - The user is authenticated but does not have the required "admin" role to access.
     /// </response>
+    /// <response code="400">
+    /// This can occur when:
+    /// - <see cref="PaginationQueryDto"/> object is null.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// </response>
     [HttpGet("all")]
     [MapToApiVersion("1.0")]
     [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Tags("Books: Read")]
     public async Task<IActionResult> GetAll(bool? isAvailable, [FromQuery] PaginationQueryDto pagination)
     {
@@ -121,16 +129,23 @@ public class BooksController(IBookService service) : ControllerBase
     /// <param name="request">
     /// The search criteria encapsulated in a <see cref="BookSearchRequestDto"/> object.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
     /// <returns>
-    /// An <see cref="IActionResult"/> containing the list of books that exactly match the search criteria.
+    /// A paginated collection of books that exactly match the search criteria.
     /// </returns>
     /// <response code="200">
-    /// The search was successful, and a collection of books that exactly match the specified criteria is returned.
+    /// The search was successful, and a paginated collection of books that exactly match the specified criteria is returned.
     /// If no books match the criteria, an empty collection is returned with HTTP 200 status code.
     /// </response>
     /// <response code="400">
     /// The search request is invalid. This can occur when:
     /// - The search term is null, empty, or contains only whitespace.
+    /// - <see cref="PaginationQueryDto"/> object is null.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </response>
     /// <response code="401">
     /// The request is unauthorized. This can occur when:
@@ -149,9 +164,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Tags("Books: Read")]
-    public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request)
+    public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request, PaginationQueryDto pagination)
     {
-        return Ok( await _service.GetBooksByExactMatchAsync(request));
+        return Ok( await _service.GetBooksByExactMatchAsync(request, pagination));
     }
 
     /// <summary>

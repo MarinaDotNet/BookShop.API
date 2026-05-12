@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using BookShop.API.DTOs.Shared;
 using BookShop.API.Helpers;
+using BookShop.API.DTOs.Catalog;
 
 namespace BookShop.API.Repositories;
 
@@ -57,12 +58,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
 
         if(totalCount == 0)
         {
-            return new PageResultDto<Book>(
-                [],
-                pagination.PageNumber,
-                pagination.PageSize,
-                0,
-                0);
+            return CreateBookPageResult([], pagination, totalCount);
         }
         
         var books = await _booksCollection
@@ -71,13 +67,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             .Limit(pagination.PageSize)
             .ToListAsync();
 
-        return new PageResultDto<Book>(
-            books,
-            pagination.PageNumber,
-            pagination.PageSize,
-            totalCount,
-            PaginationHelper.CalculateTotalPages(totalCount, pagination.PageSize)
-        );
+        return CreateBookPageResult(books, pagination, totalCount);
     }
 
     /// <summary>
@@ -104,10 +94,13 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// An optional parameter to filter books by their availability status.
     /// If null then no availability filter is applied.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param> 
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a collection of books.
+    /// A task that represents the asynchronous operation. The task result contains a paginated collection of books.
     /// </returns>
-    public async Task<IReadOnlyCollection<Book>> GetBooksByExactMatchAsync(string searchTerm, bool? isAvailable)
+    public async Task<PageResultDto<Book>> GetBooksByExactMatchAsync(string searchTerm, bool? isAvailable, PaginationQueryDto pagination)
     {
         var regex = BuildCaseInsensitiveRegex(searchTerm);
 
@@ -128,7 +121,20 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             filters = Builders<Book>.Filter.And(filters, availabilityFilter);
         }
 
-        return await _booksCollection.Find(filters).ToListAsync();
+        long totalCount = await _booksCollection.CountDocumentsAsync(filters);
+
+        if(totalCount == 0)
+        {
+            return CreateBookPageResult([], pagination, totalCount);
+        }
+
+        var books = await _booksCollection
+            .Find(filters)
+            .Skip(PaginationHelper.CalculateSkip(pagination.PageNumber, pagination.PageSize))
+            .Limit(pagination.PageSize)
+            .ToListAsync();
+
+        return CreateBookPageResult(books, pagination, totalCount);
     }
 
     /// <summary>
@@ -364,6 +370,33 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     {
         var normalized = NormalizeString(input);
         return new BsonRegularExpression(normalized, "i");
+    }
+
+    /// <summary>
+    /// Creates a paginated result object containing the specified collection of books and pagination metadata.
+    /// </summary>
+    /// <param name="collection">
+    /// The collection of books included in the current page.
+    /// </param>
+    /// <param name="pagination">
+    /// The pagination parameters containing the current page number and page size.
+    /// </param>
+    /// <param name="totalCount">
+    /// The total number of books matching the query before pagination is applied.
+    /// </param>
+    /// <returns>
+    /// A <see cref="PageResultDto{T}"/> containing the paginated collection of books and realted pagination metadata. 
+    /// </returns>
+    private static PageResultDto<Book> CreateBookPageResult(IReadOnlyCollection<Book> collection, 
+    PaginationQueryDto pagination, long totalCount)
+    {
+        return new PageResultDto<Book>(
+            collection,
+            pagination.PageNumber,
+            pagination.PageSize,
+            totalCount,
+            PaginationHelper.CalculateTotalPages(totalCount, pagination.PageSize)
+        );
     }
     #endregion Helpers
 }
