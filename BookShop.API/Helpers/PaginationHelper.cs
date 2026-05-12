@@ -28,9 +28,9 @@ public static class PaginationHelper
     /// </returns>
     public static int CalculateTotalPages(long totalCount, int pageSize)
     {
-        if(pageSize <= 0)
+        if(pageSize <= 0 || totalCount <= 0)
         {
-            return 1;
+            return 0;
         }
         return (int)Math.Ceiling((double) totalCount / pageSize);
     }
