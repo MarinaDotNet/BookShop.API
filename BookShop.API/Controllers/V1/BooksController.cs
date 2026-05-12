@@ -70,7 +70,7 @@ public class BooksController(IBookService service) : ControllerBase
     /// </response>
     [HttpGet("all")]
     [MapToApiVersion("1.0")]
-    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PageResultDto<BookDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -159,7 +159,7 @@ public class BooksController(IBookService service) : ControllerBase
     /// </response>
     [HttpGet("search-exact")]
     [MapToApiVersion("1.0")]
-    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PageResultDto<BookDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -206,7 +206,7 @@ public class BooksController(IBookService service) : ControllerBase
     /// </response>
     [HttpGet("search-partial-match")]
     [MapToApiVersion("1.0")]
-    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PageResultDto<BookDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

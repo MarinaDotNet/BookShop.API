@@ -52,11 +52,19 @@ public class BooksController(IBookService service) : ControllerBase
     /// This can occur when:
     /// - The user is authenticated but does not have the required role to access this endpoint.
     /// </response>
+    /// <response code="400">
+    /// This can occur when:
+    /// - <see cref="PaginationQueryDto"/> object is null.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// </response>
     [HttpGet("all")]
     [MapToApiVersion("2.0")]
-    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PageResultDto<BookDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]    
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetAll([FromQuery] PaginationQueryDto pagination)
     {
         return Ok( await _service.GetAllBooksAsync(true, pagination));
@@ -153,7 +161,7 @@ public class BooksController(IBookService service) : ControllerBase
     /// </response>
     [HttpGet("search-exact")]
     [MapToApiVersion("2.0")]
-    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PageResultDto<BookDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -200,7 +208,7 @@ public class BooksController(IBookService service) : ControllerBase
     /// </response>
     [HttpGet("search-partial-match")]
     [MapToApiVersion("2.0")]
-    [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PageResultDto<BookDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
