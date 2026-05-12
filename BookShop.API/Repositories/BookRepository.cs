@@ -149,11 +149,14 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// An optional parameter to filter books by their availability status.
     /// If <c>null</c>, no availability filter is applied.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param> 
     /// <returns>
     /// A task that represents the asynchronous operation.
-    /// The task result contains a read-only collection of matching books.
+    /// The task result contains a paginated read-only collection of matching books.
     /// </returns>
-    public async Task<IReadOnlyCollection<Book>> GetBooksByPartialMatchAsync(string searchTerm, bool? isAvailable)
+    public async Task<PageResultDto<Book>> GetBooksByPartialMatchAsync(string searchTerm, bool? isAvailable, PaginationQueryDto pagination)
     {
         var regex = BuildCaseInsensitiveRegex(searchTerm);
 
@@ -174,7 +177,20 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             filter = Builders<Book>.Filter.And(filter, availabilityFilter);
         }
 
-        return await _booksCollection.Find(filter).ToListAsync();
+        long totalCount = await _booksCollection.CountDocumentsAsync(filter);
+
+        if(totalCount == 0)
+        {
+            return CreateBookPageResult([], pagination, totalCount);
+        }
+
+        var books = await _booksCollection
+            .Find(filter)
+            .Skip(PaginationHelper.CalculateSkip(pagination.PageNumber, pagination.PageSize))
+            .Limit(pagination.PageSize)
+            .ToListAsync();
+
+        return CreateBookPageResult(books, pagination, totalCount);
     }
 
     /// <summary>

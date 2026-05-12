@@ -175,17 +175,24 @@ public class BooksController(IBookService service) : ControllerBase
     /// <param name="request">
     /// The search criteria encapsulated in a <see cref="BookSearchRequestDto"/> object.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
     /// <returns>
-    /// An <see cref="IActionResult"/> containing a read-only collection of <see cref="BookDto"/>
+    /// A paginated collection of <see cref="BookDto"/>
     /// objects that partially match the search criteria. Returns HTTP 200 status code.
     /// </returns>
     /// <response code="200">
-    /// The search was successful, and a collection of books that partly match the specified criteria is returned.
+    /// The search was successful, and a paginated collection of books that partly match the specified criteria is returned.
     /// If no books partly match the criteria, an empty collection is returned with HTTP 200 status code.
     /// </response>
     /// <response code="400">
     /// The search request is invalid. This can occur when:
     /// - The search term is null, empty, or contains only whitespace.
+    /// - <see cref="PaginationQueryDto"/> object is null.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </response>
     /// <response code="401">
     /// The request is unauthorized. This can occur when:
@@ -204,9 +211,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Tags("Books: Read")]
-    public async Task<IActionResult> GetByPartialMatch([FromQuery] BookSearchRequestDto request)
+    public async Task<IActionResult> GetByPartialMatch([FromQuery] BookSearchRequestDto request, [FromQuery] PaginationQueryDto pagination)
     {
-        return Ok( await _service.GetBooksByPartialMatchAsync(request));
+        return Ok( await _service.GetBooksByPartialMatchAsync(request, pagination));
     }
 
     /// <summary>

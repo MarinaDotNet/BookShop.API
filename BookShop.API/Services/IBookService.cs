@@ -121,14 +121,24 @@ public interface IBookService
     /// <param name="request">
     /// The search request containing the search term and an optional availability filter.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param> 
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a read-only 
+    /// A task that represents the asynchronous operation. The task result contains a paginated read-only 
     /// collection of <see cref="BookDto"/> objects that match the specified search criteria.
     /// </returns>
     /// <exception cref="ValidationException">
-    /// Thrown when the search term is null, empty, or contains only whitespace.
-    /// </exception> 
-    Task<IReadOnlyCollection<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request);
+    /// Thrown when:
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the pagination object is null.
+    /// </exception>
+    Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination);
 
     /// <summary>
     /// Asynchronously retrieves available books that partially match the specified search term.
@@ -136,14 +146,24 @@ public interface IBookService
     /// <param name="request">
     /// The search request containing the search term.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param> 
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a read-only 
+    /// A task that represents the asynchronous operation. The task result contains a paginated read-only 
     /// collection of <see cref="BookDto"/> objects that partly match the specified search criteria.
     /// </returns>
     /// <exception cref="ValidationException">
-    /// Thrown when the search term is null, empty, or contains only whitespace.
-    /// </exception> 
-    Task<IReadOnlyCollection<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request);
+    /// Thrown when:
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the pagination object is null.
+    /// </exception>
+    Task<PageResultDto<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination);
 
     /// <summary>
     /// Asynchronously checks if a book with the specified identifier exists

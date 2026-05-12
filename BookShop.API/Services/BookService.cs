@@ -153,16 +153,26 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="request">
     /// The search request containing the search term and an optional availability filter.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param> 
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a read-only collection of <see cref="BookDto"/> 
+    /// A task that represents the asynchronous operation. The task result contains a paginated read-only collection of <see cref="BookDto"/> 
     /// objects that match the specified search criteria.
     /// If no books are found matching the criteria, an empty collection is returned.
     /// </returns>
     /// <exception cref="ValidationException">
-    /// Thrown if <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
+    /// Thrown when:
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>
-    public async Task<IReadOnlyCollection<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request) =>
-        await GetBooksByPartialMatchAsync(request, request.IsAvailable);
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the pagination object is null.
+    /// </exception>
+    public async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination) =>
+        await GetBooksByPartialMatchAsync(request, request.IsAvailable, pagination);
 
     /// <summary>
     /// Asynchronously retrieves available books that partially match the specified search term.
@@ -170,16 +180,26 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="request">
     /// The search request containing the search term.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param> 
     /// <returns>
     /// A task that represents the asynchronous operation.
-    /// The task result contains a read-only collection of <see cref="BookDto"/> objects that match the specified search criteria.
+    /// The task result contains a paginated read-only collection of <see cref="BookDto"/> objects that match the specified search criteria.
     /// If no books are found matching the criteria, an empty collection is returned.
     /// </returns>
     /// <exception cref="ValidationException">
-    /// Thrown if <see cref="BookSearchRequestDto.SearchTerm"/> is null or emtpy. 
+    /// Thrown when:
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>
-    public async Task<IReadOnlyCollection<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request) =>
-        await GetBooksByPartialMatchAsync(request, true);
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the pagination object is null.
+    /// </exception>
+    public async Task<PageResultDto<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination) =>
+        await GetBooksByPartialMatchAsync(request, true, pagination);
 
     /// <summary>
     /// Asynchronously checks if a book with the specified identifier exists
@@ -537,23 +557,37 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// An optional parameter to filter books by their availability status.
     /// If null then no availability filter is applied.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param> 
     /// <returns>
     /// A task that represents the asynchronous operation.
-    /// The task result contains a read-only collection of <see cref="BookDto"/>. 
+    /// The task result contains a paginated read-only collection of <see cref="BookDto"/>. 
     /// </returns>
     /// <exception cref="ValidationException">
-    /// Thrown if <paramref name="request"/> is null or contains an invalid search term.
+    /// Thrown when:
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>
-    private async Task<IReadOnlyCollection<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, bool? isAvailable)
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the pagination object is null.
+    /// </exception>
+    private async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination)
     {
+        PaginationHelper.Valdidate(pagination);
+
         if (string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             throw new ValidationException("Search term cannot be null or empty.");
         }
 
-        var books = await _bookRepository.GetBooksByPartialMatchAsync(request.SearchTerm, isAvailable);
+        var query = await _bookRepository.GetBooksByPartialMatchAsync(request.SearchTerm, isAvailable, pagination);
 
-        return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
+        var items = _mapper.Map<IReadOnlyCollection<BookDto>>(query.Items);
+
+        return PaginationHelper.MapPageResult<Book, BookDto>(query, items);
     }
     #endregion Helpers
 }

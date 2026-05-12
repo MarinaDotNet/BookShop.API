@@ -57,7 +57,7 @@ public interface IBookRepository
     Task<PageResultDto<Book>> GetBooksByExactMatchAsync(string searchTerm, bool? isAvailable, PaginationQueryDto pagination);
 
     /// <summary>
-    /// Asychronously retrieves <see cref="Book"/> documents from MongoDB that contains the specified
+    /// Asychronously retrieves paginated <see cref="Book"/> documents from MongoDB that contains the specified
     /// <paramref name="searchTerm"/> in one of the searchable fields
     /// (Title, Authors, Publisher, Genres, Annotation) with optional filter for availability.
     /// </summary>
@@ -68,10 +68,13 @@ public interface IBookRepository
     /// An optional parameter to filter books by their availability status.
     /// If null then no availability filter is applied.
     /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param> 
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a collection of books.
+    /// A task that represents the asynchronous operation. The task result contains a paginated collection of books.
     /// </returns>
-    Task<IReadOnlyCollection<Book>> GetBooksByPartialMatchAsync(string searchTerm, bool? isAvailable);
+    Task<PageResultDto<Book>> GetBooksByPartialMatchAsync(string searchTerm, bool? isAvailable, PaginationQueryDto pagination);
 
     /// <summary>
     /// Asynchronously retrieves the top expensive books from the data source, with optional filter for availability.
