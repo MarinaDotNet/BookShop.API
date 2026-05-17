@@ -245,6 +245,31 @@ public interface IBookService
     /// </exception>  
     Task<PageResultDto<BookDto>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination);
 
+    /// <summary>
+    /// Asynchronously retrieves available books that match the specified search criteria and sorting options.
+    /// </summary>
+    /// <param name="query">
+    /// The query object containing search criteria, and sorting options.
+    /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// A task th
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a paginated read-only collection of available
+    /// <see cref="BookDto"/> objects that match the specified search criteria and sorting options. 
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the <paramref name="query"/> or <paramref name="pagination"/> is null.
+    /// </exception>
+    /// <exception cref="ValidationException">
+    /// Thrown when:
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
+    /// </exception>  
+    Task<PageResultDto<BookDto>> GetSortedAndFilteredAvailableBooksAsync(BookQueryDto query, PaginationQueryDto pagination);
     #endregion Getters
 
     #region Setters
