@@ -74,7 +74,7 @@ public static class PaginationHelper
     /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </exception>
-    public static void Valdidate(PaginationQueryDto pagination)
+    public static void Validate(PaginationQueryDto pagination)
     {
         ArgumentNullException.ThrowIfNull(pagination);
 
