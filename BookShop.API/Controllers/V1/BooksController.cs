@@ -258,6 +258,55 @@ public class BooksController(IBookService service) : ControllerBase
         return exists ? Ok() : NotFound();
     }
 
+    /// <summary>
+    /// Retrieves a paginated collection of books that match the specified filtering and sorting criteria defined in the 
+    /// <see cref="BookQueryDto"/>. 
+    /// </summary>
+    /// <param name="query">
+    /// The <see cref="BookQueryDto"/> containing the filtering and sorting criteria, including sort field, sort direction,
+    /// price range, and availability status. Cannot be null. 
+    /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a paginated collection of books that match the
+    /// specified criteria. The collection is empty if no matching books are found. Returns HTTP 200 status code.
+    /// </returns>
+    /// <response code="200">
+    /// The request was successful, and a paginated collection of books that match the specified criteria is returned. 
+    /// If no books match the criteria, an empty collection is returned with HTTP 200 status code.
+    /// </response>
+    /// <response code="400">
+    /// The request is invalid. This can occur when:
+    /// - The <see cref="BookQueryDto"/> object is null.
+    /// - The <see cref="PaginationQueryDto"/> object is null.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// </response>
+    /// <response code="401">
+    /// The request is unauthorized. This can occur when:
+    /// - The user is not authenticated (no valid token provided)
+    /// - The token has expired
+    /// - The token is invalid or malformed
+    /// </response>
+    /// <response code="403">
+    /// The request is forbidden. This can occur when:
+    /// - The user is authenticated but does not have the required "admin" role to access this endpoint.
+    /// </response>
+    [HttpGet("sorted-filtered-books")]
+    [MapToApiVersion("1.0")]
+    [ProducesResponseType(typeof(PageResultDto<BookDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [Tags("Books: Read")]
+    public async Task<IActionResult> GetSortedAndFilteredBooks([FromQuery] BookQueryDto query, [FromQuery] PaginationQueryDto pagination)
+    {
+        return Ok(await _service.GetSortedAndFilteredBooksAsync(query, pagination));
+    }
+
     #endregion Books: Read
 
     #region Books: Write

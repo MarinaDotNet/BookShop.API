@@ -1,6 +1,7 @@
 ﻿using BookShop.API.Models.Catalog;
 using MongoDB.Driver;
 using BookShop.API.DTOs.Shared;
+using BookShop.API.DTOs.Catalog;
 
 
 namespace BookShop.API.Repositories;
@@ -171,4 +172,21 @@ public interface IBookRepository
     /// The task result contains the updated <see cref="Book"/> if found; otherwise, <c>null</c>.
     /// </returns>
     Task<Book?> UpdateBookPartlyAsync(List<UpdateDefinition<Book>> updates, string id);
+
+    /// <summary>
+    /// Asynchronously retrieves a paginated collection of <see cref="Book"/>  documents from the data source that match the specififed
+    /// filtering and sorting criteria defined in the <see cref="BookQueryDto"/> parameter. 
+    /// </summary>
+    /// <param name="query">
+    /// The query parameters used to filter and sort. Contains optional sorting field
+    /// and sorting direction, optional price range filters, and optional availability filter.
+    /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a paginated collection of books that match the
+    /// specified criteria defined in the <see cref="BookQueryDto"/> parameter. The collection is empty if no matching books are found. 
+    /// </returns>
+    Task<PageResultDto<Book>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination);
 }

@@ -1,8 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
-using AutoMapper.Configuration.Conventions;
 using BookShop.API.DTOs.Shared;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace BookShop.API.Helpers;
 

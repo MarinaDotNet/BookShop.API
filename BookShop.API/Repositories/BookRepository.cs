@@ -2,13 +2,10 @@
 using BookShop.API.Models.Catalog;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using System;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using BookShop.API.DTOs.Shared;
 using BookShop.API.Helpers;
 using BookShop.API.DTOs.Catalog;
+using System.Linq.Expressions;
 
 namespace BookShop.API.Repositories;
 
@@ -265,6 +262,43 @@ public class BookRepository(MongoDbContext context) : IBookRepository
 
         return await _booksCollection.Find(filter).SortByDescending(b => b.Price).Limit(count).ToListAsync();
     }
+
+    /// <summary>
+    /// Asynchronously retrieves a paginated collection of <see cref="Book"/> entities from the data source that match the specified
+    /// filtering and sorting criteria defined in the <see cref="BookQueryDto"/>.   
+    /// </summary>
+    /// <param name="query">
+    /// The <see cref="BookQueryDto"/> containing the filtering and sorting criteria, sort field,
+    /// sort direction, price range, and availability status. Cannot be null. 
+    /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a paginated collection of <see cref="Book"/> entities
+    /// that match the specified criteria. The collection is empty if no matching books are found. 
+    /// </returns>
+    public async Task<PageResultDto<Book>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination)
+    {
+        var filterDefinition = BuildFilterDefinition(query);
+
+        long totalCount = await _booksCollection.CountDocumentsAsync(filterDefinition);
+
+        if(totalCount == 0)
+        {
+            return CreateBookPageResult([], pagination, totalCount);
+        }
+        var sortDefinition = BuildSortDefinition(query.SortBy, query.Descending);
+
+        var books =  await _booksCollection
+            .Find(filterDefinition)
+            .Sort(sortDefinition)
+            .Skip(PaginationHelper.CalculateSkip(pagination.PageNumber, pagination.PageSize))
+            .Limit(pagination.PageSize)
+            .ToListAsync();
+
+        return CreateBookPageResult(books, pagination, totalCount);
+    }
     #region Setters
 
     /// <summary>
@@ -413,6 +447,64 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             totalCount,
             PaginationHelper.CalculateTotalPages(totalCount, pagination.PageSize)
         );
+    }
+
+    /// <summary>
+    /// Builds a MongoDB <see cref="FilterDefinition{Book}"/> based on the specified filtering criteria in the <see cref="BookQueryDto"/>. 
+    /// </summary>
+    /// <param name="query">
+    /// The <see cref="BookQueryDto"/> containing the filtering criteria, including price range and availability status.
+    /// </param>
+    /// <returns>
+    /// A <see cref="FilterDefinition{Book}"/> that can be used in MongoDB queries to filter <see cref="Book"/> documents based on
+    /// the specified criteria. The filter will include conditions for price range and availability if they are provided in the query;
+    /// itherwise, those conditions will be omitted from the filter, resulting in no filtering on those fields.
+    /// </returns>
+    private static FilterDefinition<Book> BuildFilterDefinition(BookQueryDto query)
+    {
+        var availabilityFilter = query.IsAvailable.HasValue
+            ? Builders<Book>.Filter.Eq(b => b.IsAvailable, query.IsAvailable.Value)
+            : Builders<Book>.Filter.Empty;
+
+        var maxPriceFilter = query.MaxPrice.HasValue
+            ? Builders<Book>.Filter.Where(b => b.Price <= query.MaxPrice.Value)
+            : Builders<Book>.Filter.Empty;
+
+        var minPriceFilter = query.MinPrice.HasValue
+            ? Builders<Book>.Filter.Where(b => b.Price >= query.MinPrice.Value)
+            : Builders<Book>.Filter.Empty;
+
+        return Builders<Book>.Filter.And(availabilityFilter, maxPriceFilter, minPriceFilter);
+    }
+
+    /// <summary>
+    /// Builds a MongoDB <see cref="SortDefinition{TDocument}"/> based on the specified sort field and sort direction.   
+    /// </summary>
+    /// <param name="sortBy">
+    /// The name of the field to sort by. Supported values are "Title", "Publisher", and "Price". 
+    /// If null or invalid value is provided then sorting will be applied by default on the "Price" field.
+    /// </param>
+    /// <param name="descending">
+    /// The sort direction. If <c>true</c>, the sorting will be in descending order; otherwise, it will be in ascending order.
+    /// </param>
+    /// <returns>
+    /// A <see cref="SortDefinition{Book}"/> that can be used in MongoDB queries to sort <see cref="Book"/> documents based on the 
+    /// specified field and direction.  
+    /// </returns>
+    private static SortDefinition<Book> BuildSortDefinition(string? sortBy, bool descending)
+    {
+        var fieldName = sortBy?.Trim();
+
+        Expression<Func<Book, object>> sortExpression = fieldName switch
+        {
+            var s when string.Equals(s, nameof(Book.Title), StringComparison.OrdinalIgnoreCase) => b => b.Title!,
+            var s when string.Equals(s, nameof(Book.Publisher), StringComparison.OrdinalIgnoreCase) => b => b.Publisher!,
+            _ => b => b.Price
+        };
+
+        return descending 
+            ? Builders<Book>.Sort.Descending(sortExpression)
+            : Builders<Book>.Sort.Ascending(sortExpression);
     }
     #endregion Helpers
 }

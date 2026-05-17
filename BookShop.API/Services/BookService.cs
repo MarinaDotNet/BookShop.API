@@ -52,7 +52,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     public async Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination)
     {
-        PaginationHelper.Valdidate(pagination);
+        PaginationHelper.Validate(pagination);
 
         PageResultDto<Book> query = await _bookRepository.GetAllBooksAsync(isAvailable, pagination);
 
@@ -533,7 +533,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     private async Task<PageResultDto<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination)
     {
-        PaginationHelper.Valdidate(pagination);
+        PaginationHelper.Validate(pagination);
         
         if (request is null || string.IsNullOrWhiteSpace(request.SearchTerm))
         {
@@ -576,7 +576,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     private async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination)
     {
-        PaginationHelper.Valdidate(pagination);
+        PaginationHelper.Validate(pagination);
 
         if (string.IsNullOrWhiteSpace(request.SearchTerm))
         {
@@ -588,6 +588,43 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
         var items = _mapper.Map<IReadOnlyCollection<BookDto>>(query.Items);
 
         return PaginationHelper.MapPageResult<Book, BookDto>(query, items);
+    }
+
+    /// <summary>
+    /// Asynchronously retrieves books that match the specified search criteria and sorting options.
+    /// </summary>
+    /// <param name="query">
+    /// The query object containing search criteria, and sorting options.
+    /// </param>
+    /// <param name="pagination">
+    /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// A task th
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a paginated read-only collection of
+    /// <see cref="BookDto"/> objects that match the specified search criteria and sorting options. 
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when the <paramref name="query"/> or <paramref name="pagination"/> is null.
+    /// </exception>
+    /// <exception cref="ValidationException">
+    /// Thrown when:
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
+    /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
+    /// </exception>   
+    public async Task<PageResultDto<BookDto>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        PaginationHelper.Validate(pagination);
+
+        var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query, pagination);
+
+        var items = _mapper.Map<IReadOnlyCollection<BookDto>>(result.Items);
+
+        return PaginationHelper.MapPageResult<Book, BookDto>(result, items);
     }
     #endregion Helpers
 }
