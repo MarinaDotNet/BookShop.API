@@ -610,8 +610,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>   
     public async Task<PageResultDto<BookDto>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination)
     {
-        ArgumentNullException.ThrowIfNull(query);
-
         var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query, pagination);
 
         var items = _mapper.Map<IReadOnlyCollection<BookDto>>(result.Items);
@@ -645,8 +643,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>   
     public async Task<PageResultDto<BookDto>> GetSortedAndFilteredAvailableBooksAsync(BookQueryDto query, PaginationQueryDto pagination)
     {
-        ArgumentNullException.ThrowIfNull(query);
-
         var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query with { IsAvailable = true }, pagination);
 
         var items = _mapper.Map<IReadOnlyCollection<BookDto>>(result.Items);
