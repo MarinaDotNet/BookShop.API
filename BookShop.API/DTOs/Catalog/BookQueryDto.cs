@@ -11,7 +11,7 @@ namespace BookShop.API.DTOs.Catalog;
 /// </summary>
 /// <param name="SortBy">
 /// The field by which to sort the books. This is a string that indicates the property of the book entity to sort by, such as "Title",
-/// "Author", "Price", etc. If this parameter is null or empty, the sorting will default to a predefined field, typically "Title".
+/// "Publisher", "Price", etc. If this parameter is null or empty, the sorting will default to a predefined field, typically "Price".
 /// </param>
 /// <param name="Descending">
 /// A boolean value indicating the sort direction. If true, the books will be sorted in descending order based on the specified SortBy field;

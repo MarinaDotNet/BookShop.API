@@ -56,37 +56,6 @@ public static class PaginationHelper
     }
 
     /// <summary>
-    /// Validates pagination query parameters.
-    /// </summary>
-    /// <param name="pagination">
-    /// The pagination query parameters to validate.
-    /// Contains the page number and page size values used for paginated requests.
-    /// </param>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when the pagination object is null.
-    /// </exception> 
-    /// <exception cref="ValidationException">
-    /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
-    /// </exception>
-    public static void Validate(PaginationQueryDto pagination)
-    {
-        ArgumentNullException.ThrowIfNull(pagination);
-
-        if(pagination.PageNumber < 1)
-        {
-            throw new ValidationException("Page must be greater than or equal to 1.");
-        }
-
-        if(pagination.PageSize < 1 || pagination.PageSize > PaginationQueryDto.MaxPageSize)
-        {
-            throw new ValidationException($"Page size must be between 1 and {PaginationQueryDto.MaxPageSize}.");
-        }
-    }
-
-    /// <summary>
     /// Maps a paginated result object from one item type to another while preserving the pagination metadata.
     /// </summary>
     /// <typeparam name="TSource">

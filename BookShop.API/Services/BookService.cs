@@ -52,8 +52,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     public async Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination)
     {
-        PaginationHelper.Validate(pagination);
-
         PageResultDto<Book> query = await _bookRepository.GetAllBooksAsync(isAvailable, pagination);
 
         return new PageResultDto<BookDto>(
@@ -533,8 +531,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     private async Task<PageResultDto<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination)
     {
-        PaginationHelper.Validate(pagination);
-        
         if (request is null || string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             throw new ValidationException("Search term cannot be null or empty.");
@@ -576,8 +572,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     private async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination)
     {
-        PaginationHelper.Validate(pagination);
-
         if (string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             throw new ValidationException("Search term cannot be null or empty.");
@@ -616,10 +610,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>   
     public async Task<PageResultDto<BookDto>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination)
     {
-        ArgumentNullException.ThrowIfNull(query);
-
-        PaginationHelper.Validate(pagination);
-
         var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query, pagination);
 
         var items = _mapper.Map<IReadOnlyCollection<BookDto>>(result.Items);
@@ -653,10 +643,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>   
     public async Task<PageResultDto<BookDto>> GetSortedAndFilteredAvailableBooksAsync(BookQueryDto query, PaginationQueryDto pagination)
     {
-        ArgumentNullException.ThrowIfNull(query);
-
-        PaginationHelper.Validate(pagination);
-
         var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query with { IsAvailable = true }, pagination);
 
         var items = _mapper.Map<IReadOnlyCollection<BookDto>>(result.Items);

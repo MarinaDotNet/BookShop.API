@@ -18,6 +18,8 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -141,6 +143,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 });
 builder.Services.AddAuthorization();
+
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddFluentValidationAutoValidation();
 
 // Auto Mapper Configurations
 builder.Services.AddAutoMapper(_ => {}, typeof(BookMappingProfile), typeof(UserMappingProfile));
