@@ -331,12 +331,12 @@ public interface IBookService
     /// Only fields provided and considered valid in <paramref name="bookDto"/> are applied; other fields remain unchanged.
     /// </summary>
     /// <param name="bookDto">
-    /// A <see cref="BookUpdateDto"/> containing the fields to update. Cannot be <c>null</c> and must include a valid book ID.
+    /// A <see cref="BookUpdatePartlyDto"/> containing the fields to update. Cannot be <c>null</c> and must include a valid book ID.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the updated <see cref="BookDto"/> object. 
     /// </returns>
-    Task<BookDto> UpdateBookPartlyAsync(BookUpdateDto bookDto);
+    Task<BookDto> UpdateBookPartlyAsync(BookUpdatePartlyDto bookDto);
 
     #endregion Setters
 }

@@ -451,10 +451,10 @@ public class BooksController(IBookService service) : ControllerBase
 
     /// <summary>
     /// Partially updates an existing book using HTTP PATCH semantics.
-    /// Only fields provided in <see cref="BookUpdateDto"/> are updated.
+    /// Only fields provided in <see cref="BookUpdatePartlyDto"/> are updated.
     /// </summary>
-    /// <param name="id">The unique identifier of the book to update. Must match <see cref="BookUpdateDto.Id"/>.</param>
-    /// <param name="bookDto">The <see cref="BookUpdateDto"/> containing fields to update.</param>
+    /// <param name="id">The unique identifier of the book to update. Must match <see cref="BookUpdatePartlyDto.Id"/>.</param>
+    /// <param name="bookDto">The <see cref="BookUpdatePartlyDto"/> containing fields to update.</param>
     /// <returns>
     /// An <see cref="IActionResult"/> containing the updated <see cref="BookDto"/> if successful,
     /// or <c>400 Bad Request</c> if the route ID does not match the body ID.
@@ -489,7 +489,7 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("Books: Write")]
-    public async Task<IActionResult> UpdatePartlyBook(string id, [FromBody]BookUpdateDto bookDto)
+    public async Task<IActionResult> UpdatePartlyBook(string id, [FromBody]BookUpdatePartlyDto bookDto)
     {
         if(!id.Equals(bookDto.Id, StringComparison.OrdinalIgnoreCase))
         {

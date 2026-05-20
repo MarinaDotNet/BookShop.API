@@ -374,7 +374,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// Only fields provided and considered valid in <paramref name="bookDto"/> are applied; other fields remain unchanged.
     /// </summary>
     /// <param name="bookDto">
-    /// A <see cref="BookUpdateDto"/> containing the fields to update. Cannot be <c>null</c> and must include a valid book ID.
+    /// A <see cref="BookUpdatePartlyDto"/> containing the fields to update. Cannot be <c>null</c> and must include a valid book ID.
     /// </param>
     /// <returns>
     /// A <see cref="Task"/> representing the asynchronous operation.
@@ -390,7 +390,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// Each field is only updated if it passes the corresponding validation defined in the service.
     /// For example, string fields must not be null or whitespace, numeric fields must be positive, and collections must not be empty.
     /// </remarks>
-    public async Task<BookDto> UpdateBookPartlyAsync(BookUpdateDto bookDto)
+    public async Task<BookDto> UpdateBookPartlyAsync(BookUpdatePartlyDto bookDto)
     {
         if (bookDto is null)
         {
