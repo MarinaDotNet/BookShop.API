@@ -310,7 +310,7 @@ public interface IBookService
     /// All fields in <paramref name="bookDto"/> are applied to the existing record.
     /// </summary>
     /// <param name="bookDto">
-    /// A <see cref="BookDto"/> containing the updated data. Cannot be <c>null</c> and must include a valid book ID.
+    /// A <see cref="BookUpdateDto"/> containing the updated data. Cannot be <c>null</c> and must include a valid book ID.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the updated <see cref="BookDto"/> object. 
@@ -324,7 +324,7 @@ public interface IBookService
     /// <exception cref="InvalidOperationException">
     /// Thrown when the update operation fails due to an unexpected error.
     /// </exception>
-    Task<BookDto> UpdateBookAsync(BookDto bookDto);
+    Task<BookDto> UpdateBookAsync(BookUpdateDto bookDto);
 
     /// <summary>
     /// Partially updates an existing book in the data source using PATCH semantics.

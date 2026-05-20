@@ -341,7 +341,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// All fields in <paramref name="bookDto"/> are applied to the existing record.
     /// </summary>
     /// <param name="bookDto">
-    /// A <see cref="BookDto"/> containing the updated data. Cannot be <c>null</c> and must include a valid book ID.
+    /// A <see cref="BookUpdateDto"/> containing the updated data. Cannot be <c>null</c> and must include a valid book ID.
     /// </param>
     /// <returns>
     /// A <see cref="Task"/> representing the asynchronous operation.
@@ -353,11 +353,8 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="InvalidOperationException">
     /// Thrown when the update operation fails.
     /// </exception>
-    public async Task<BookDto> UpdateBookAsync(BookDto bookDto)
+    public async Task<BookDto> UpdateBookAsync(BookUpdateDto bookDto)
     {
-        ValidateBookDto(bookDto);
-        ValidateObjectId(bookDto.Id);
-
         if (!await IsBookExistsAsync(bookDto.Id))
         {
             throw new NotFoundException($"Book with ID '{bookDto.Id}' not found.");

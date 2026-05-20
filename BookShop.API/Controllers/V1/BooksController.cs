@@ -402,8 +402,8 @@ public class BooksController(IBookService service) : ControllerBase
     /// <summary>
     /// Updates an existing book completely using HTTP PUT.
     /// </summary>
-    /// <param name="id">The unique identifier of the book to update. Must match <see cref="BookDto.Id"/>.</param>
-    /// <param name="bookDto">The <see cref="BookDto"/> containing the updated book data.</param>
+    /// <param name="id">The unique identifier of the book to update. Must match <see cref="BookUpdateDto.Id"/>.</param>
+    /// <param name="bookDto">The <see cref="BookUpdateDto"/> containing the updated book data.</param>
     /// <returns>
     /// An <see cref="IActionResult"/> containing the updated <see cref="BookDto"/> if successful,
     /// or <c>400 Bad Request</c> if the route ID does not match the body ID.
@@ -438,7 +438,7 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("Books: Write")]
-    public async Task<IActionResult> UpdateBook(string id, [FromBody]BookDto bookDto)
+    public async Task<IActionResult> UpdateBook(string id, [FromBody]BookUpdateDto bookDto)
     {
         if (!id.Equals(bookDto.Id, StringComparison.OrdinalIgnoreCase))
         {
