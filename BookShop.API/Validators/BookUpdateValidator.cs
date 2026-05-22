@@ -34,7 +34,7 @@ public sealed class BookUpdateValidator : AbstractValidator<BookUpdateDto>
             .NotEmpty()
             .WithMessage("Publisher cannot be empty.")
             .MaximumLength(100)
-            .WithMessage("Publisher cannot excee 100 characters.");
+            .WithMessage("Publisher cannot exceed 100 characters.");
 
         RuleFor(x => x.Language)
             .Cascade(CascadeMode.Stop)
