@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using BookShop.API.DTOs.Shared;
+using AutoMapper;
 
 namespace BookShop.API.Helpers;
 
@@ -81,6 +82,37 @@ public static class PaginationHelper
             source.PageSize,
             source.TotalCount,
             source.TotalPages);
+    }
+
+    /// <summary>
+    /// Maps a paginated result object from one item type to another using an AutoMapper instance, while preserving the pagination metadata.
+    /// </summary>
+    /// <typeparam name="TSource">
+    /// The type of items contained in the source paginated result.
+    /// </typeparam>
+    /// <typeparam name="TDestination">
+    /// The type of items contained in the destination paginated result.
+    /// </typeparam>
+    /// <param name="mapper">
+    /// The AutoMapper instance used to map the items from the source type to the destination type. This parameter is required and must not
+    /// be null. If nul, an <see cref="ArgumentNullException"/> will be thrown. 
+    /// </param>
+    /// <param name="source">
+    /// The source paginated result containing the original items and pagination metadata. This parameter is required and must not be null.
+    /// If null, an <see cref="ArgumentNullException"/> will be thrown. 
+    /// </param>
+    /// <returns>
+    /// A <see cref="PageResultDto{TDestination}"/> containing the mapped items and the original pagination metadata. The items in the returned
+    /// paginated result are mapped from the source items to the destination type using the provided AutoMapper instance. If the source paginated
+    /// result contains no items, the returned paginated result will also contain an empty collection of items, but will still preserve the pagination
+    /// metadata such as page number, page size, total count, and total pages from the source paginated result. 
+    /// </returns>
+    public static PageResultDto<TDestination> MapPageResult<TSource, TDestination>(IMapper mapper, PageResultDto<TSource> source)
+    {
+        ArgumentNullException.ThrowIfNull(mapper, nameof(mapper));
+        ArgumentNullException.ThrowIfNull(source, nameof(source));
+        var items = mapper.Map<IReadOnlyCollection<TDestination>>(source.Items);
+        return MapPageResult(source, items);
     }
 
 }

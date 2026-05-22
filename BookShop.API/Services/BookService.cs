@@ -22,7 +22,7 @@ namespace BookShop.API.Services;
 public class BookService(IBookRepository bookRepository, IMapper mapper) : IBookService
 {
     private readonly IBookRepository _bookRepository = bookRepository ?? throw new ArgumentNullException(nameof(bookRepository));
-    private readonly IMapper _mapper = mapper;
+    private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
 
     #region Getters
 
@@ -40,26 +40,18 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </param>
     /// <returns>
     /// A paginated result containing book DTOs and pagination metadata.
-    /// </returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when the pagination object is null.
-    /// </exception> 
+    /// </returns> 
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </exception>
     public async Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination)
     {
         PageResultDto<Book> query = await _bookRepository.GetAllBooksAsync(isAvailable, pagination);
 
-        return new PageResultDto<BookDto>(
-            _mapper.Map<IReadOnlyCollection<BookDto>>(query.Items),
-            query.PageNumber,
-            query.PageSize,
-            query.TotalCount,
-            query.TotalPages);
+        return PaginationHelper.MapPageResult<Book, BookDto>(_mapper, query);
     }
 
 
@@ -104,15 +96,11 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <paramref name="request"/>  is null or contains an invalid search term.
     /// </exception>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when the pagination object is null.
-    /// </exception>
-
     public async Task<PageResultDto<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination) =>
         await GetBooksByExactMatchAsync(request, request.IsAvailable, pagination);
 
@@ -132,15 +120,11 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <paramref name="request"/>  is null or contains an invalid search term.
     /// </exception>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when the pagination object is null.
-    /// </exception>
-
     public async Task<PageResultDto<BookDto>> GetAvailableBooksByExactMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination) =>
         await GetBooksByExactMatchAsync(request, true, pagination);
 
@@ -161,13 +145,10 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
-    /// </exception>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when the pagination object is null.
     /// </exception>
     public async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination) =>
         await GetBooksByPartialMatchAsync(request, request.IsAvailable, pagination);
@@ -188,13 +169,10 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
-    /// </exception>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when the pagination object is null.
     /// </exception>
     public async Task<PageResultDto<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination) =>
         await GetBooksByPartialMatchAsync(request, true, pagination);
@@ -233,10 +211,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// If null then no availability filter is applied.
     /// </param>
     /// <returns>
-    /// A <see cref="BookDto"/> representing the asynchronous operation.
-    /// The task result contains a read-only collection of <see cref="BookDto"/> objects representing the top cheapest books 
-    /// that match the specified criteria.
-    /// If no books are found matching the criteria, an empty collection is returned.
+    /// A task that represents the asynchronous operation. The task result contains a read-only collection of <see cref="BookDto"/>
+    /// representing the top cheapest books that match the specified criteria. If no books are found matching the criteria, an empty
+    /// collection is returned.
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when <paramref name="count"/> is not a positive integer.
@@ -254,7 +231,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     }
 
     /// <summary>
-    /// Asynchronously retrives the top expensive books from the data source, with an optional filter for availability.
+    /// Asynchronously retrieves the top expensive books from the data source, with an optional filter for availability.
     /// </summary>
     /// <param name="count">
     /// The maximum number of expensive books to retrieve. Must be a positive integer.
@@ -263,7 +240,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// An optional parameter to filter books by their availability status. If null then no availability filter is applied.
     /// </param>
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a read-only colleciton of <see cref="BookDto"/>
+    /// A task that represents the asynchronous operation. The task result contains a read-only collection of <see cref="BookDto"/>
     /// objects representing the top expensive books that match the specified criteria. If no books are found matching the criteria,
     /// an empty collection is returned. 
     /// </returns>
@@ -407,7 +384,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
         updates.AddIfNotNull(bookDto.Price, b => b.Price, v => v > 0);
         updates.AddIfNotNull(bookDto.Pages, b => b.Pages, v => v > 0);
         updates.AddIfNotNull(bookDto.Link, b => b.Link, v => !string.IsNullOrWhiteSpace(v.ToString()) && Uri.IsWellFormedUriString(v.ToString(), UriKind.Absolute));
-        updates.AddIfNotNull(bookDto.IsAvailable, b => b.IsAvailable, v => v is not null);
+        updates.AddIfNotNull(bookDto.IsAvailable, b => b.IsAvailable);
 
         if (updates.Count == 0)
         {
@@ -471,8 +448,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
 
         bool inValid = string.IsNullOrWhiteSpace(bookDto.Title) ||
             IsNullOrEmptyStringCollection(bookDto.Authors) ||
-            bookDto.Price <= 0 || Decimal.TryParse(bookDto.Price.ToString(), out _) == false ||
-            bookDto.Pages <= 0 || Int32.TryParse(bookDto.Pages.ToString(), out _) == false ||
+            bookDto.Price <= 0 || bookDto.Pages <= 0 ||
             string.IsNullOrWhiteSpace(bookDto.Publisher) ||
             string.IsNullOrWhiteSpace(bookDto.Language) ||
             IsNullOrEmptyStringCollection(bookDto.Genres) ||
@@ -486,17 +462,17 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     }
 
     /// <summary>
-    /// Determines whether a collection of strings is null, empty, or its first element is null, empty, or whitespace.
+    /// Determines whether a collection of strings is null, empty, or contains any null, empty, or whitespace elements.
     /// </summary>
     /// <param name="collection">
     /// The collection of strings to check.
     /// </param>
     /// <returns>
-    /// <c>true</c> if <paramref name="collection"/> is <c>null</c>, empty, or its first element is null, empty, or whitespace; otherwise, <c>false</c>.
+    /// <c>true</c> if <paramref name="collection"/> is <c>null</c>, empty, or contains any null, empty, or whitespace elements; otherwise, <c>false</c>.
     /// </returns>
-    private static bool IsNullOrEmptyStringCollection(IReadOnlyCollection<string>? collection)
+    private static bool IsNullOrEmptyStringCollection(List<string>? collection)
     {
-        return collection is null || collection.Count == 0 || string.IsNullOrWhiteSpace(collection.First());
+        return collection is null || collection.Count == 0 || collection.Any(string.IsNullOrWhiteSpace);
     }
 
     /// <summary>
@@ -518,8 +494,8 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <paramref name="request"/>  is null or contains an invalid search term.
     /// </exception>
@@ -535,9 +511,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
 
         var query = await _bookRepository.GetBooksByExactMatchAsync(request.SearchTerm, isAvailable, pagination);
 
-        var items = _mapper.Map<IReadOnlyCollection<BookDto>>(query.Items);
-
-        return PaginationHelper.MapPageResult<Book, BookDto>(query, items);
+        return PaginationHelper.MapPageResult<Book, BookDto>(_mapper, query);
     }
 
     /// <summary>
@@ -559,8 +533,8 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>
@@ -569,16 +543,14 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     private async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination)
     {
-        if (string.IsNullOrWhiteSpace(request.SearchTerm))
+        if (request is null || string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             throw new ValidationException("Search term cannot be null or empty.");
         }
 
         var query = await _bookRepository.GetBooksByPartialMatchAsync(request.SearchTerm, isAvailable, pagination);
 
-        var items = _mapper.Map<IReadOnlyCollection<BookDto>>(query.Items);
-
-        return PaginationHelper.MapPageResult<Book, BookDto>(query, items);
+        return PaginationHelper.MapPageResult<Book, BookDto>(_mapper, query);
     }
 
     /// <summary>
@@ -600,8 +572,8 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>   
@@ -609,9 +581,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     {
         var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query, pagination);
 
-        var items = _mapper.Map<IReadOnlyCollection<BookDto>>(result.Items);
-
-        return PaginationHelper.MapPageResult<Book, BookDto>(result, items);
+        return PaginationHelper.MapPageResult<Book, BookDto>(_mapper, result);
     }
 
     /// <summary>
@@ -633,8 +603,8 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>   
@@ -642,9 +612,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     {
         var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query with { IsAvailable = true }, pagination);
 
-        var items = _mapper.Map<IReadOnlyCollection<BookDto>>(result.Items);
-
-        return PaginationHelper.MapPageResult<Book, BookDto>(result, items);
+        return PaginationHelper.MapPageResult<Book, BookDto>(_mapper, result);
     }
     #endregion Helpers
 }

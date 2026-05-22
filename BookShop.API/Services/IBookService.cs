@@ -33,8 +33,8 @@ public interface IBookService
     /// </exception> 
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </exception>
     Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination);
@@ -76,8 +76,8 @@ public interface IBookService
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <paramref name="request"/>  is null or contains an invalid search term.
     /// </exception>
@@ -103,8 +103,8 @@ public interface IBookService
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <paramref name="request"/>  is null or contains an invalid search term.
     /// </exception>
@@ -130,8 +130,8 @@ public interface IBookService
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>
@@ -155,8 +155,8 @@ public interface IBookService
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>
@@ -239,8 +239,8 @@ public interface IBookService
     /// </exception>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </exception>  
     Task<PageResultDto<BookDto>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination);
@@ -264,8 +264,8 @@ public interface IBookService
     /// </exception>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>  
