@@ -64,8 +64,8 @@ public class BooksController(IBookService service) : ControllerBase
     /// <response code="400">
     /// This can occur when:
     /// - <see cref="PaginationQueryDto"/> object is null.
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </response>
     [HttpGet("all")]
@@ -143,8 +143,8 @@ public class BooksController(IBookService service) : ControllerBase
     /// The search request is invalid. This can occur when:
     /// - The search term is null, empty, or contains only whitespace.
     /// - <see cref="PaginationQueryDto"/> object is null.
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </response>
     /// <response code="401">
@@ -190,8 +190,8 @@ public class BooksController(IBookService service) : ControllerBase
     /// The search request is invalid. This can occur when:
     /// - The search term is null, empty, or contains only whitespace.
     /// - <see cref="PaginationQueryDto"/> object is null.
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </response>
     /// <response code="401">
@@ -281,8 +281,8 @@ public class BooksController(IBookService service) : ControllerBase
     /// The request is invalid. This can occur when:
     /// - The <see cref="BookQueryDto"/> object is null.
     /// - The <see cref="PaginationQueryDto"/> object is null.
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less then 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less then 1.
+    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
+    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </response>
     /// <response code="401">
