@@ -40,10 +40,6 @@ public sealed class BookQueryValidator : AbstractValidator<BookQueryDto>
         RuleFor(x => x.MaxPrice)
             .GreaterThanOrEqualTo(0)
             .WithMessage("MaxPrice must be greater than or equal to 0.");
-
-        RuleFor(x => x)
-            .NotNull()
-            .NotEmpty()
-            .WithMessage("BookQueryDto cannot be null.");
     }
+
 }
