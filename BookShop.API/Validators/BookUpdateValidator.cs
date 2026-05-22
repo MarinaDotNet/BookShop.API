@@ -21,11 +21,7 @@ public sealed class BookUpdateValidator : AbstractValidator<BookUpdateDto>
     /// when validating instances of <see cref="BookUpdateDto"/>.
     /// </summary>
     public BookUpdateValidator()
-    {
-        RuleFor(x => x)
-            .NotNull()
-            .WithMessage("BookUpdateDto cannot be null.");
-        
+    {   
         RuleFor(x => x.Title)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
@@ -57,16 +53,12 @@ public sealed class BookUpdateValidator : AbstractValidator<BookUpdateDto>
         RuleFor(x => x.Price)
             .Cascade(CascadeMode.Stop)
             .GreaterThanOrEqualTo(0)
-            .WithMessage("Price must be greater than or equal to 0.")
-            .LessThanOrEqualTo(decimal.MaxValue)
-            .WithMessage("Price must be less than or equal to the maximum decimal value.");
+            .WithMessage("Price must be greater than or equal to 0.");
 
         RuleFor(x => x.Pages)
             .Cascade(CascadeMode.Stop)
             .GreaterThanOrEqualTo(1)
-            .WithMessage("Pages must be a positive integer.")
-            .LessThanOrEqualTo(int.MaxValue)
-            .WithMessage("Pages must be less than or equal to the maximum integer value.");
+            .WithMessage("Pages must be a positive integer.");
 
         RuleFor(x => x.Authors)
             .Cascade(CascadeMode.Stop)
