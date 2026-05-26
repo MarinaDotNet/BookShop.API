@@ -274,14 +274,14 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="ValidationException">
     /// Thrown if <paramref name="bookDto"/> is invalid according to business rules.
     /// </exception>
-    public async Task<BookDto> CreateBookAsync(BookDto bookDto)
+    public async Task<BookCreateDto> CreateBookAsync(BookCreateDto bookDto)
     {
-        ValidateBookDto(bookDto);
+        //ValidateBookDto(bookDto);
 
         var book = _mapper.Map<Book>(bookDto);
         var addedBook = await _bookRepository.AddBookAsync(book);
 
-        return _mapper.Map<BookDto>(addedBook);
+        return _mapper.Map<BookCreateDto>(addedBook);
     }
 
     /// <summary>

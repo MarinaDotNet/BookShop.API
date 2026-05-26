@@ -22,5 +22,10 @@ public class BookMappingProfile : Profile
         CreateMap<Book, BookSearchRequestDto>();
 
         CreateMap<BookUpdateDto, Book>();
+
+        CreateMap<Book, BookCreateDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id!.ToString()));
+
+        CreateMap<BookCreateDto, Book>();
     }
 }

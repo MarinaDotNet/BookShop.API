@@ -315,7 +315,7 @@ public class BooksController(IBookService service) : ControllerBase
     /// Adds a new book to the collection.
     /// </summary>
     /// <param name="bookDto">
-    /// A <see cref="BookDto"/> object representing the book to be added.
+    /// A <see cref="BookCreateDto"/> object representing the book to be added.
     /// </param>
     /// <returns>
     /// An <see cref="IActionResult"/> containing the created <see cref="BookDto"/> object.
@@ -344,12 +344,12 @@ public class BooksController(IBookService service) : ControllerBase
     /// </response>
     [HttpPost("add")]
     [MapToApiVersion("1.0")]
-    [ProducesResponseType(typeof(BookDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(BookCreateDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("Books: Write")]
-    public async Task<IActionResult> CreateBook([FromBody] BookDto bookDto)
+    public async Task<IActionResult> CreateBook([FromBody] BookCreateDto bookDto)
     {
         var createdBook = await _service.CreateBookAsync(bookDto);
         return CreatedAtAction(nameof(GetById), new { id = createdBook.Id }, createdBook);

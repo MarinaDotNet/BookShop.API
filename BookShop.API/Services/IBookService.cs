@@ -278,13 +278,13 @@ public interface IBookService
     /// Asynchronously adds a new book to the data source.
     /// </summary>
     /// <param name="bookDto">
-    /// A <see cref="BookDto"/> object containing the details of the book to be added.
+    /// A <see cref="BookCreateDto"/> object containing the details of the book to be added.
     /// </param>
     /// <returns>
-    /// A <see cref="Task{BookDto}"/> representing the asynchronous operation.
-    /// The task result contains the added <see cref="BookDto"/> object, including the generated Id.
+    /// A <see cref="Task{BookCreateDto}"/> representing the asynchronous operation.
+    /// The task result contains the added <see cref="BookCreateDto"/> object, including the generated Id.
     /// </returns>
-    Task<BookDto> CreateBookAsync(BookDto bookDto);
+    Task<BookCreateDto> CreateBookAsync(BookCreateDto bookDto);
 
     /// <summary>
     /// Asynchronously deletes the <see cref="Book"/> with the specified identifier
