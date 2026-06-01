@@ -79,9 +79,6 @@ public class AuthServices(
     /// found.</exception>
     public async Task<int> RegisterUserAsync(UserRegisterDto userRegisterDto, CancellationToken cancellationToken)
     {
-        //Validate DTO
-        ValidateRegistrationInput(userRegisterDto);
-
         //Check if user exists
         var normalizedUsername = NormalizeInput(userRegisterDto.Username);
         var normalizedEmail = NormalizeInput(userRegisterDto.Email);
@@ -168,8 +165,6 @@ public class AuthServices(
     /// </exception>
     public async Task<int> RegisterAdminAsync(UserRegisterDto userRegisterDto, CancellationToken cancellationToken)
     {
-        ValidateRegistrationInput(userRegisterDto);
-
         var normalizedAdminName = NormalizeInput(userRegisterDto.Username);
         var normalizedEmail = NormalizeInput(userRegisterDto.Email);
         await EnsureUserDoesNotExists(normalizedAdminName, normalizedEmail, cancellationToken);
@@ -1002,19 +997,6 @@ public class AuthServices(
 
         return user;
     }
-
-    /// <summary>
-    /// Validates the user registration input for required fields, email format, and password rules.
-    /// </summary>
-    /// <param name="dto">
-    /// The registration DTO to validate
-    /// </param>
-    private static void ValidateRegistrationInput(UserRegisterDto dto)
-    {
-        ValidateUserRegisterDto(dto);
-        ValidateEmailPatern(dto.Email);
-        ValidatePasswordPatern(dto.Password);
-    }
     
     /// <summary>
     /// Retrieves an active user by their email address. This method checks if a user with the specified email exists and is active (not deleted and marked as active and email confirmed).
@@ -1154,28 +1136,6 @@ public class AuthServices(
 
         await _userRepository.SaveRefreshTokenAsync(refreshTokenEntity, cancellationToken);
         return refreshToken;
-    }
-
-    /// <summary>
-    /// Validates the specified user registration data transfer object to ensure all required fields are present.
-    /// </summary>
-    /// <param name="dto">The user registration data to validate. Must not be null and must contain non-empty values for Username, Email,
-    /// and Password.</param>
-    /// <exception cref="ArgumentException">Thrown if <paramref name="dto"/> is null, or if the Username, Email, or Password properties of <paramref
-    /// name="dto"/> are null or empty.</exception>
-    private static void ValidateUserRegisterDto(UserRegisterDto dto)
-    {
-        if (dto is null)
-        {
-            throw new ArgumentException("Invalid user registration data.");
-        }
-
-        if (string.IsNullOrEmpty(dto.Username) ||
-           string.IsNullOrEmpty(dto.Email) ||
-           string.IsNullOrEmpty(dto.Password))
-        {
-            throw new ArgumentException("Username, Email, and Password are required.");
-        }
     }
 
     /// <summary>
