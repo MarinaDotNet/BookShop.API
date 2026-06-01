@@ -276,8 +276,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </exception>
     public async Task<BookCreateDto> CreateBookAsync(BookCreateDto bookDto)
     {
-        //ValidateBookDto(bookDto);
-
         var book = _mapper.Map<Book>(bookDto);
         var addedBook = await _bookRepository.AddBookAsync(book);
 
@@ -418,46 +416,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
         if(!ObjectId.TryParse(id, out _))
         {
             throw new ValidationException("Invalid Book ID format.");
-        }
-    }
-
-    /// <summary>
-    /// Validates the provided <see cref="BookDto"/> instance.
-    /// </summary>
-    /// <param name="bookDto">
-    /// The <see cref="BookDto"/> object containing book data to validate.
-    /// </param>
-    /// <exception cref="ValidationException">
-    /// Thrown when the <paramref name="bookDto"/> is <c>null</c> or contains invalid or missing fields.
-    /// </exception>
-    /// <remarks>
-    /// This method performs structural and business-rule validation, including:
-    /// <list type="bullet">
-    /// <item><description>Non-empty title, publisher, language, and annotation</description></item>
-    /// <item><description>At least one author and one genre</description></item>
-    /// <item><description>Positive numeric values for price and pages</description></item>
-    /// <item><description>A well-formed absolute URI for the book link</description></item>
-    /// </list>
-    /// </remarks>
-    private static void ValidateBookDto(BookDto bookDto)
-    {
-        if (bookDto is null)
-        {
-            throw new ValidationException("Book data cannot be null.");
-        }
-
-        bool inValid = string.IsNullOrWhiteSpace(bookDto.Title) ||
-            IsNullOrEmptyStringCollection(bookDto.Authors) ||
-            bookDto.Price <= 0 || bookDto.Pages <= 0 ||
-            string.IsNullOrWhiteSpace(bookDto.Publisher) ||
-            string.IsNullOrWhiteSpace(bookDto.Language) ||
-            IsNullOrEmptyStringCollection(bookDto.Genres) ||
-            string.IsNullOrWhiteSpace(bookDto.Annotation) ||
-            bookDto.Link is null || !Uri.IsWellFormedUriString(bookDto.Link.ToString(), UriKind.Absolute) || string.IsNullOrWhiteSpace(bookDto.Link.ToString());
-
-        if (inValid)
-        {
-            throw new ValidationException("Book fields cannot be empty.");
         }
     }
 
