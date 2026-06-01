@@ -45,31 +45,27 @@ public sealed class BookUpdatePartlyValidator : AbstractValidator<BookUpdatePart
     public BookUpdatePartlyValidator()
     {
         RuleFor(x => x.Id)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-            .WithMessage("Id cannot be empty.")
-            .Must(id => ObjectId.TryParse(id, out _))
-            .WithMessage("Id must be a valid ObjectId.");
+            .RequiredObjectId();
 
         RuleFor(x => x)
             .Must(HaveAtLeastOneFieldToUpdate)
             .WithMessage("At least one field must be provided for update.");
 
-        When(x => x.Title is not null, () =>
-            RuleFor(x => x.Title)
-                .OptionalText(200, "Title"));
+        RuleFor(x => x.Title)
+            .OptionalText(200, "Title")
+            .When(x => x.Title is not null);
         
-        When(x => x.Publisher is not null, () =>
-            RuleFor(x => x.Publisher)
-                .OptionalText(100, "Publisher"));
+        RuleFor(x => x.Publisher)
+            .OptionalText(100, "Publisher")
+            .When(x => x.Publisher is not null);
 
-        When(x => x.Language is not null, () =>
-            RuleFor(x => x.Language)
-                .OptionalText(50, "Language"));
+        RuleFor(x => x.Language)
+            .OptionalText(50, "Language")
+            .When(x => x.Language is not null);
 
-        When(x => x.Annotation is not null, () =>
-            RuleFor(x => x.Annotation)
-                .OptionalText(10000, "Annotation"));
+        RuleFor(x => x.Annotation)
+            .OptionalText(10000, "Annotation")
+            .When(x => x.Annotation is not null);
         
         RuleFor(x => x.Price)
             .GreaterThanOrEqualTo(0)
@@ -81,17 +77,16 @@ public sealed class BookUpdatePartlyValidator : AbstractValidator<BookUpdatePart
             .WithMessage("Pages must be a positive integer.")
             .When(x => x.Pages.HasValue);
 
-        When(x => x.Authors is not null, () =>
-            RuleFor(x => x.Authors)
-                .OptionalStringCollection("Authors"));
+        RuleFor(x => x.Authors)
+            .OptionalStringCollection("Authors")
+            .When(x => x.Authors is not null);
 
-        When(x => x.Genres is not null, () =>
-            RuleFor(x => x.Genres)
-                .OptionalStringCollection("Genres"));
+        RuleFor(x => x.Genres)
+            .OptionalStringCollection("Genres")
+            .When(x => x.Genres is not null);
 
         RuleFor(x => x.Link)
-            .Must(link => Uri.IsWellFormedUriString(link?.ToString(), UriKind.Absolute))
-            .WithMessage("Link must be a valid URI.")
+            .OptionalUri()
             .When(x => x.Link is not null);
     }
 

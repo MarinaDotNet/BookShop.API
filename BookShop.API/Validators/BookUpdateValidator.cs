@@ -1,4 +1,5 @@
 using BookShop.API.DTOs.Catalog;
+using BookShop.API.Helpers;
 using FluentValidation;
 using MongoDB.Bson;
 
@@ -23,32 +24,16 @@ public sealed class BookUpdateValidator : AbstractValidator<BookUpdateDto>
     public BookUpdateValidator()
     {   
         RuleFor(x => x.Title)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-            .WithMessage("Title cannot be empty.")
-            .MaximumLength(200)
-            .WithMessage("Title cannot exceed 200 characters.");
+            .RequiredText(200, "Title");
 
         RuleFor(x => x.Publisher)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-            .WithMessage("Publisher cannot be empty.")
-            .MaximumLength(100)
-            .WithMessage("Publisher cannot exceed 100 characters.");
+            .RequiredText(100, "Publisher");
 
         RuleFor(x => x.Language)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-            .WithMessage("Language cannot be empty.")
-            .MaximumLength(50)
-            .WithMessage("Language cannot exceed 50 characters.");
+            .RequiredText(50, "Language");
 
         RuleFor(x => x.Annotation)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-            .WithMessage("Annotation cannot be empty.")
-            .MaximumLength(10000)
-            .WithMessage("Annotation cannot exceed 10000 characters.");
+            .RequiredText(10000, "Annotation");
 
         RuleFor(x => x.Price)
             .Cascade(CascadeMode.Stop)
@@ -61,31 +46,15 @@ public sealed class BookUpdateValidator : AbstractValidator<BookUpdateDto>
             .WithMessage("Pages must be a positive integer.");
 
         RuleFor(x => x.Authors)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-            .WithMessage("Authors cannot be empty.")
-            .Must(authors => authors.All(author => !string.IsNullOrWhiteSpace(author)))
-            .WithMessage("Authors cannot contain empty or whitespace-only names.");
+            .RequiredStringCollection("Authors");
 
         RuleFor(x => x.Genres)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-            .WithMessage("Genres cannot be empty.")
-            .Must(genres => genres.All(genre => !string.IsNullOrWhiteSpace(genre)))
-            .WithMessage("Genres cannot contain empty or whitespace-only names.");
+            .RequiredStringCollection("Genres");
 
         RuleFor(x => x.Link)
-            .Cascade(CascadeMode.Stop)
-            .NotNull()
-            .WithMessage("Link cannot be null.")
-            .Must(link => Uri.IsWellFormedUriString(link.ToString(), UriKind.Absolute))
-            .WithMessage("Link must be a valid URI.");
+            .RequiredUri();
 
         RuleFor(x => x.Id)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-            .WithMessage("Id cannot be empty.")
-            .Must(id => ObjectId.TryParse(id, out _))
-            .WithMessage("Id must be a valid ObjectId.");
+            .RequiredObjectId();
     }
 }
