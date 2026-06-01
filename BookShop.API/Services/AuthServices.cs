@@ -251,8 +251,6 @@ public class AuthServices(
         string? userAgent, 
         CancellationToken cancellationToken)
     {
-        ValidateLoginInput(userLoginDto);
-
         var user = await GetActiveUserByEmailAsync(userLoginDto.Email, cancellationToken);
 
         VerifyPasswordOrThrow(user, userLoginDto.Password);
@@ -1017,18 +1015,6 @@ public class AuthServices(
         ValidateEmailPatern(dto.Email);
         ValidatePasswordPatern(dto.Password);
     }
-
-    /// <summary>
-    /// Validates the user login input for required fields and email format.
-    /// </summary>
-    /// <param name="dto">
-    /// The login DTO to validate
-    /// </param>
-    private static void ValidateLoginInput(UserLoginDto dto)
-    {
-        ValidateUserLoginDto(dto);
-        ValidateEmailPatern(dto.Email);
-    }
     
     /// <summary>
     /// Retrieves an active user by their email address. This method checks if a user with the specified email exists and is active (not deleted and marked as active and email confirmed).
@@ -1075,26 +1061,6 @@ public class AuthServices(
         if (result == PasswordVerificationResult.Failed)
         {
             throw new UnauthorizedAccessException("Invalid email or password.");
-        }
-    }
-
-    /// <summary>
-    /// Validates the specified user login data transfer object to ensure all required fields are present and valid.
-    /// </summary>
-    /// <param name="dto">
-    /// The user login DTO to validate. Must not be null and must contain non-empty values for Email and Password.
-    /// </param>
-    /// <exception cref="ArgumentException">
-    /// Thrown if <paramref name="dto"/> is null, or if the Email or Password properties of <paramref name="dto"/> are null or empty.
-    /// </exception>
-    private static void ValidateUserLoginDto(UserLoginDto dto)
-    {
-        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
-
-        if (string.IsNullOrEmpty(dto.Email) ||
-           string.IsNullOrEmpty(dto.Password))
-        {
-            throw new ArgumentException("Email and Password are required.");
         }
     }
 

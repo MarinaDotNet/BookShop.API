@@ -272,4 +272,82 @@ public static class ValidationExtensions
             .Must(id => ObjectId.TryParse(id, out _))
             .WithMessage("Id must be a valid ObjectId.");
     }
+
+    /// <summary>
+    /// Defines validation rules for required email fields.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The type being validated.
+    /// </typeparam>
+    /// <param name="ruleBuilder">
+    /// The rule builder used to configure validation rules.
+    /// </param>
+    /// <returns>
+    /// The configured rule builder options.
+    /// </returns>
+    /// <remarks>
+    /// This validation ensures that:
+    /// <list type="bullet">
+    /// <item>
+    /// <description>The email is not empty.</description>
+    /// </item>
+    /// <item>
+    /// <description>The email is a valid email address format.</description>
+    /// </item>
+    /// </list>
+    /// This method is intended for required fields and should be used without a <c>When(...)</c> condition.
+    /// </remarks>
+    public static IRuleBuilderOptions<T, string> RequiredEmail<T>(this IRuleBuilderInitial<T, string> ruleBuilder)
+    {
+        return ruleBuilder
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
+            .WithMessage("Email cannot be empty.")
+            .EmailAddress()
+            .WithMessage("Email must be a valid email address.");
+    }
+
+    /// <summary>
+    /// Defines validation rules for required password fields.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The type being validated.
+    /// </typeparam>
+    /// <param name="ruleBuilder">
+    /// The rule builder used to configure validation rules.
+    /// </param>
+    /// <returns>
+    /// The configured rule builder options.
+    /// </returns>
+    /// <remarks>
+    /// This validation ensures that:
+    /// <list type="bullet">
+    /// <item>
+    /// <description>The password is not empty.</description>
+    /// </item>
+    /// <item>
+    /// <description>The password is at least 8 characters long.</description>
+    /// </item>
+    /// <item>
+    /// <description>The password contains at least one letter.</description>
+    /// </item>
+    /// <item>
+    /// <description>The password contains at least one number.</description>
+    /// </item>
+    /// </list>
+    /// This method is intended for required fields and should be used without a <c>When(...)</c> condition.
+    /// </remarks> 
+    public static IRuleBuilderOptions<T, string> RequiredPassword<T>(this IRuleBuilderInitial<T, string> ruleBuilder)
+    {
+        return ruleBuilder
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
+            .WithMessage("Password cannot be empty.")
+            .MinimumLength(8)
+            .WithMessage("Password must be at least 8 characters long.")
+            .Matches("[A-Za-z]")
+            .WithMessage("Password must contain at least one letter.")
+            .Matches(@"\d")
+            .WithMessage("Password must contain at least one number.");
+    }
 }
