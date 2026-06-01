@@ -364,13 +364,6 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </remarks>
     public async Task<BookDto> UpdateBookPartlyAsync(BookUpdatePartlyDto bookDto)
     {
-        if (bookDto is null)
-        {
-            throw new ValidationException("Book data cannot be null.");
-        }
-
-        ValidateObjectId(bookDto.Id);
-
         var updates = new List<UpdateDefinition<Book>>();
 
         updates.AddIfNotNull(bookDto.Title, b => b.Title, v => !string.IsNullOrWhiteSpace(v));
