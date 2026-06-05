@@ -316,6 +316,9 @@ public static class ValidationExtensions
     /// <param name="ruleBuilder">
     /// The rule builder used to configure validation rules.
     /// </param>
+    /// <param name="fieldName">
+    /// The display name of the validated field used in validation messages. The default value is "Password".
+    /// </param>
     /// <returns>
     /// The configured rule builder options.
     /// </returns>
@@ -329,6 +332,9 @@ public static class ValidationExtensions
     /// <description>The password is at least 8 characters long.</description>
     /// </item>
     /// <item>
+    /// <description>The password does not exceed 512 characters.</description>
+    /// </item>
+    /// <item>
     /// <description>The password contains at least one letter.</description>
     /// </item>
     /// <item>
@@ -337,17 +343,20 @@ public static class ValidationExtensions
     /// </list>
     /// This method is intended for required fields and should be used without a <c>When(...)</c> condition.
     /// </remarks> 
-    public static IRuleBuilderOptions<T, string> RequiredPassword<T>(this IRuleBuilderInitial<T, string> ruleBuilder)
+    public static IRuleBuilderOptions<T, string> RequiredPassword<T>(this IRuleBuilderInitial<T, string> ruleBuilder, 
+    string? fieldName = "Password")
     {
         return ruleBuilder
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
-            .WithMessage("Password cannot be empty.")
+            .WithMessage($"{fieldName} cannot be empty.")
             .MinimumLength(8)
-            .WithMessage("Password must be at least 8 characters long.")
+            .WithMessage($"{fieldName} must be at least 8 characters long.")
+            .MaximumLength(512)
+            .WithMessage($"{fieldName} cannot exceed 512 characters.")
             .Matches("[A-Za-z]")
-            .WithMessage("Password must contain at least one letter.")
+            .WithMessage($"{fieldName} must contain at least one letter.")
             .Matches(@"\d")
-            .WithMessage("Password must contain at least one number.");
+            .WithMessage($"{fieldName} must contain at least one number.");
     }
 }
