@@ -772,12 +772,6 @@ public class AuthServices(
     /// <returns>
     /// A task that represents an asynchronous opertion.
     /// </returns>
-    /// <exception cref="ArgumentNullException">
-    /// Throw if <see cref="ResetPasswordDto"/> is null. 
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Throw if <see cref="ResetPasswordDto.NewPassword"/> or <see cref="ResetPasswordDto.Token"/>  is null, empty, or consists only of white space characters.
-    /// </exception>
     /// <exception cref="InvalidTokenException">
     /// Thrown when the provided password reset token is invalid or exprired.
     /// </exception>
@@ -786,9 +780,6 @@ public class AuthServices(
     /// </exception>
     public async Task ResetPasswordAsync(ResetPasswordDto dto, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
-        ArgumentException.ThrowIfNullOrWhiteSpace(dto.NewPassword, nameof(dto));
-        ArgumentException.ThrowIfNullOrWhiteSpace(dto.Token, nameof(dto));
         if(! _authTokenService.TryValidateToken(dto.Token, AuthTokenPurpose.PasswordReset, out var payload))
         {
             throw new InvalidTokenException();
@@ -798,7 +789,7 @@ public class AuthServices(
         {
             return;
         }
-        ValidatePasswordPatern(dto.NewPassword);
+
         if(_passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.NewPassword) == PasswordVerificationResult.Success)
         {
             throw new ValidationException("New password must be different from the current password.");
@@ -1122,22 +1113,6 @@ public class AuthServices(
         if (!Regex.IsMatch(email, emailPattern, RegexOptions.IgnoreCase))
         {
             throw new ArgumentException("Invalid email format.");
-        }
-    }
-
-    /// <summary>
-    /// Validates that the specified password meets the required pattern of containing at least eight characters,
-    /// including both letters and numbers.
-    /// </summary>
-    /// <param name="password">The password string to validate. Must be at least eight characters long and contain both letters and numbers.</param>
-    /// <exception cref="ArgumentException">Thrown if <paramref name="password"/> does not meet the required pattern of at least eight characters with both
-    /// letters and numbers.</exception>
-    private static void ValidatePasswordPatern(string password)
-    {
-        string passwordPattern = @"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$";
-        if (!Regex.IsMatch(password, passwordPattern))
-        {
-            throw new ArgumentException("Password must be at least 8 characters long and contain both letters and numbers.");
         }
     }
 
