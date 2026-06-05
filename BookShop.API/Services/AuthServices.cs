@@ -547,12 +547,6 @@ public class AuthServices(
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when <paramref name="userId"/> is less than or equal to zero.
     /// </exception>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when the <see cref="UpdateUsernameDto"/> is null.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown when the new username is null, empty, or consists only of whitespace characters.
-    /// </exception>
     /// <exception cref="UnauthorizedAccessException">
     /// Thrown when the user account is not available or cannot be accessed for this operation.
     /// </exception>
@@ -565,7 +559,7 @@ public class AuthServices(
 
         var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
             ?? throw new UnauthorizedAccessException("The user account is not available.");
-            
+
         var normalizedUsername = NormalizeInput(dto.NewUserName);
         if(user!.NormalizedUsername == normalizedUsername)
         {
@@ -596,12 +590,6 @@ public class AuthServices(
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when <paramref name="userId"/> is less than or equal to zero.
     /// </exception>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="dto"/> is null.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown when the current or new password is empty.
-    /// </exception>
     /// <exception cref="ValidationException">
     /// Thrown when the new password does not meet the required policy or mathes the current password.
     /// </exception>
@@ -611,11 +599,7 @@ public class AuthServices(
     public async Task UpdatePasswordAsync(int userId, UpdatePasswordDto dto, CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId, nameof(userId));
-        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
-        if(string.IsNullOrWhiteSpace(dto.CurrentPassword) || string.IsNullOrWhiteSpace(dto.NewPassword))
-        {
-            throw new ArgumentException("The current and new passwords are required.");
-        }
+
         var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
             ?? throw new UnauthorizedAccessException("Access to the user account is denied.");
 
@@ -624,7 +608,7 @@ public class AuthServices(
             throw new UnauthorizedAccessException();
         }
         VerifyPasswordOrThrow(user, dto.CurrentPassword);
-        ValidatePasswordPatern(dto.NewPassword);
+
         if(dto.CurrentPassword == dto.NewPassword)
         {
             throw new ValidationException("New password must be different from the current password.");
