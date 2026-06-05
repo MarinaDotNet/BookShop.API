@@ -562,13 +562,10 @@ public class AuthServices(
     public async Task UpdateUsernameAsync(int userId, UpdateUsernameDto dto, CancellationToken cancellationToken)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(userId, nameof(userId));
-        ArgumentNullException.ThrowIfNull(dto, nameof(dto));
-        if (string.IsNullOrWhiteSpace(dto.NewUserName))
-        {
-            throw new ArgumentException("The new account username is required.");
-        }
+
         var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
-        ?? throw new UnauthorizedAccessException("The user account is not available.");
+            ?? throw new UnauthorizedAccessException("The user account is not available.");
+            
         var normalizedUsername = NormalizeInput(dto.NewUserName);
         if(user!.NormalizedUsername == normalizedUsername)
         {
