@@ -442,11 +442,36 @@ public class BrevoAuthEmailSender : IAuthEmailSender
         }
     }
 
+    /// <summary>
+    /// Formats the email content by converting line breaks to HTML paragraphs and appending signatures, then sends the email using
+    /// the SendAsync method.
+    /// </summary>
+    /// <param name="toEmail">
+    /// The recipient's email address to which the formatted message will be sent. Cannot be null, empty, or consist only of white-space
+    /// characters.
+    /// </param>
+    /// <param name="subject">
+    /// The subject of the email to be sent. Cannot be null, empty, or consist only of white-space characters.
+    /// </param>
+    /// <param name="textContent">
+    /// The plain text content of the email to be sent. This content will be formatted into HTML by converting line breaks into paragraphs.
+    /// Cannot be null, empty, or consist only of white-space characters.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The cancellation token that can be used to cancel the email sending operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation of sending the formatted email message.
+    /// </returns>
     private async Task SendFormatedMessageAsync(string toEmail, string subject, string textContent, CancellationToken cancellationToken)
     {
-        List<string> lines = [.. textContent.Split(["\r\n", "\n"], StringSplitOptions.None)];
+        var lines = textContent
+            .Split(["\r\n", "\n"], StringSplitOptions.None)
+            .Select(line => line.Trim())
+            .Where(line => !string.IsNullOrEmpty(line));
 
-        string htmlContent = string.Join("<p>", lines.Select(line => line.Trim()).Where(line => !string.IsNullOrEmpty(line)), "</p>");
+        string htmlContent = $"<p>{string.Join("</p><p>", lines)}</p>";
+
         htmlContent += HtmlSignature;
         textContent += TextSignature;
 
