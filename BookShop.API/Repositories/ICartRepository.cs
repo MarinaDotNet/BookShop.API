@@ -16,7 +16,7 @@ public interface ICartRepository
     /// <returns>
     /// The cart if found; otherwise <c>null</c>.
     /// </returns>
-    Task<Cart?> GetUserByIdAsync(string userId);
+    Task<Cart?> GetByUserIdAsync(string userId);
 
     /// <summary>
     /// Persists a new cart document to the database.
@@ -44,7 +44,7 @@ public interface ICartRepository
     Task<Cart?> AddItemAsync(string userId, Item item);
 
     /// <summary>
-    /// Removes a specific item from the user's cart.
+    /// Update the quantity of the specific item in the user's cart.
     /// </summary>
     /// <param name="userId">
     /// The identifier of the user whose cart to update.
