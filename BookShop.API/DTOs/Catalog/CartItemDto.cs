@@ -1,7 +1,7 @@
 namespace BookShop.API.DTOs.Catalog;
 
 /// <summary>
-/// Represents a singl ebook entry within a <see cref="CartDto"/>. 
+/// Represents a single book entry within a <see cref="CartDto"/>. 
 /// </summary>
 /// <param name="BookId">
 /// The identifier of the referenced book.
