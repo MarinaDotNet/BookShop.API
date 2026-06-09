@@ -4,7 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace BookShop.API.Models.Catalog;
 
 /// <summary>
-/// Represents a shoping cart document stored in MongoDB.
+/// Represents a shopping cart document stored in MongoDB.
 /// </summary>
 /// <remarks>
 /// Each cart belongs to exactly one user and holds a snapshot of selected books.
