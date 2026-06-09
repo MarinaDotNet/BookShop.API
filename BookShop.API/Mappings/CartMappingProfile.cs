@@ -19,7 +19,7 @@ public class CartMappingProfile : Profile
         CreateMap<CartDto, Cart>();
 
         CreateMap<Cart, CartDto>()
-            .ForCtorParam("totalPrice", opt => opt.MapFrom(src => src.Items.Sum(i => i.Price * i.Quantity)));
+            .ForCtorParam("TotalPrice", opt => opt.MapFrom(src => src.Items.Sum(i => i.Price * i.Quantity)));
 
         CreateMap<CartItemDto, Item>();
 
