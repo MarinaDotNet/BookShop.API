@@ -1,5 +1,3 @@
-using BookShop.API.Models.Catalog;
-
 namespace BookShop.API.DTOs.Catalog;
 
 /// <summary>
@@ -15,4 +13,4 @@ namespace BookShop.API.DTOs.Catalog;
 /// The total price of all items in the cart. Computed as the sum of 
 /// <see cref="CartItemDto.Price"/> multiplied by <see cref="CartItemDto.Quantity"/> for each item.  
 /// </param>
-public sealed record CartDto(string Id, List<Item>Items, decimal TotalPrice);
+public sealed record CartDto(string? Id, List<CartItemDto>Items, decimal TotalPrice);
