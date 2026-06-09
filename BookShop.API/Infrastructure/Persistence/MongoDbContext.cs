@@ -19,6 +19,5 @@ public class MongoDbContext(IOptions<MongoDbSettings> settings) : BaseMongoDbCon
     /// <summary>
     /// Returns the MongoDB collection used to store and retrieve <see cref="Book"/> documents. 
     /// </summary>
-    /// <returns></returns>
     public new IMongoCollection<Book> GetCollection() => base.GetCollection(); 
 }

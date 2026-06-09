@@ -26,7 +26,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Configuration.AddUserSecrets<StartupBase>();
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDB"));
+builder.Services.Configure<CartMongoDbSettings>(builder.Configuration.GetSection("CartMongoDB"));
 builder.Services.AddSingleton<MongoDbContext>();
+builder.Services.AddSingleton<CartMongoDbContext>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 builder.Services.Configure<BrevoOptions>(builder.Configuration.GetSection("Brevo"));
