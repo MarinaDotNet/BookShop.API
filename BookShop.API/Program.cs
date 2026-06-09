@@ -70,7 +70,8 @@ builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
 builder.Services.AddSingleton<IRefreshTokenHasher, RefreshTokenHasher>();
 
-builder.Services.AddSingleton<ICartRepository>();
+builder.Services.AddSingleton<ICartRepository, CartRepository>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 builder.Services.AddApiVersioning(options =>
     {
@@ -152,7 +153,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationAutoValidation();
 
 // Auto Mapper Configurations
-builder.Services.AddAutoMapper(_ => {}, typeof(BookMappingProfile), typeof(UserMappingProfile));
+builder.Services.AddAutoMapper(_ => {}, typeof(BookMappingProfile), typeof(UserMappingProfile), typeof(CartMappingProfile));
 
 // Add ProblemDetails middleware
 builder.Services.AddProblemDetails(options =>
