@@ -70,6 +70,8 @@ builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
 builder.Services.AddSingleton<IRefreshTokenHasher, RefreshTokenHasher>();
 
+builder.Services.AddSingleton<ICartRepository>();
+
 builder.Services.AddApiVersioning(options =>
     {
         options.DefaultApiVersion = new ApiVersion(3, 0);
