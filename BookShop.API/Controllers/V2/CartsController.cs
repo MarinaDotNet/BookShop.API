@@ -4,6 +4,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using BookShop.API.DTOs.Catalog;
+using BookShop.API.Models.Catalog;
 
 namespace BookShop.API.Controllers.V2;
 
@@ -87,5 +88,40 @@ public class CartsController(ICartService service) : BaseApiController
         var result = await _service.CreateAsync(userId.ToString());
 
         return CreatedAtAction(nameof(GetByUserId), result);
+    }
+
+    /// <summary>
+    /// Adds the specified book to the shopping cart of the currently authenticated user.
+    /// Creates a new cart if one does not exist. Increments quantity if the book is already in the cart.
+    /// </summary>
+    /// <param name="addToCartDto">
+    /// The book identifier and quantity to add. Must not be null.
+    /// </param>
+    /// <returns>
+    /// The updated cart, or HTTP 404 if the specified book does not exist.
+    /// </returns>
+    /// <response code="200">
+    /// The item was added and the updated cart is returned.
+    /// </response>
+    /// <response code="400">
+    /// The request body is invalid or the book is not available.
+    /// </response>
+    /// <response code="401">
+    /// The request is not authenticated.
+    /// </response>
+    /// <response code="404">
+    /// The book with the specified ID was not found.
+    /// </response>
+    [HttpPost("items")]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(typeof(CartDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AddItem([FromBody]AddToCartDto addToCartDto)
+    {
+        string userId = GetCurrentUserId().ToString();
+        var result = await _service.AddItemAsync(userId, addToCartDto);
+        return Ok(result);
     }
 }

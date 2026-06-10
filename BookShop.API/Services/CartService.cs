@@ -3,6 +3,7 @@ using BookShop.API.DTOs.Catalog;
 using BookShop.API.Exceptions;
 using BookShop.API.Models.Catalog;
 using BookShop.API.Repositories;
+using MongoDB.Bson;
 
 namespace BookShop.API.Services;
 
@@ -15,9 +16,14 @@ namespace BookShop.API.Services;
 /// <param name="mapper">
 /// The AutoMapper instance used to project cart models to DTOs. Must not be null.
 /// </param>
-public class CartService(ICartRepository cartRepository, IMapper mapper) : ICartService
+/// <param name="bookRepository">
+/// The repository used to acces book data. Must not be null.
+/// </param>
+public class CartService(ICartRepository cartRepository, IBookRepository bookRepository, IMapper mapper) : ICartService
 {
     private readonly ICartRepository _cartRepository = cartRepository ?? throw new ArgumentNullException(nameof(cartRepository));
+    private readonly IBookRepository _bookRepository = bookRepository ?? throw new ArgumentNullException(nameof(bookRepository));
+
     private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
 
     /// <summary>
@@ -29,12 +35,12 @@ public class CartService(ICartRepository cartRepository, IMapper mapper) : ICart
     /// <returns>
     /// The mapped <see cref="CartDto"/> if the cart exists; otherwise <c>null</c>. 
     /// </returns>
-    /// <exception cref="ArgumentNullException">
+    /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="userId"/> is null or whitespace.
     /// </exception>
     public async Task<CartDto?> GetByUserIdAsync(string userId)
     {
-        ArgumentNullException.ThrowIfNullOrWhiteSpace(userId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
 
         var cart = await _cartRepository.GetByUserIdAsync(userId);
 
@@ -63,7 +69,7 @@ public class CartService(ICartRepository cartRepository, IMapper mapper) : ICart
     /// </exception>
     public async Task<CartDto> CreateAsync(string userId)
     {
-        ArgumentNullException.ThrowIfNullOrWhiteSpace(userId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
 
         if (await IsCartExistsAsync(userId))
         {
@@ -85,6 +91,62 @@ public class CartService(ICartRepository cartRepository, IMapper mapper) : ICart
     }
 
     /// <summary>
+    /// Adds requested item to the cart for the specified user if cart exists and requested item not in cart yet.
+    /// If user does not have cart than creates new cart and adds to it requested item.
+    /// If item already in the user's cart than increments the quantity of this item in cart.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of user into whose cart to add item. Must not be null or whitespace.
+    /// </param>
+    /// <param name="addToCart">
+    /// The item which needs to be added into cart.
+    /// </param>
+    /// <returns>
+    /// The mapped <see cref="CartDto"/> with added item if the item added successfully. 
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="userId"/> is null or whitespace.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="addToCart"/> is null.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown when the book with the specified ID does not exist.
+    /// </exception>
+    /// <exception cref="ValidationException">
+    /// Thrown when the BookId format is invalid or the book is not available.
+    /// </exception>
+    public async Task<CartDto> AddItemAsync(string userId, AddToCartDto addToCart)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        ArgumentNullException.ThrowIfNull(addToCart);
+        ArgumentException.ThrowIfNullOrWhiteSpace(addToCart.BookId);
+
+        var cart = await GetOrCreateCartAsync(userId);
+
+        var book = await _bookRepository.GetBookByIdAsync(addToCart.BookId)
+            ?? throw new NotFoundException(nameof(Book));
+
+        if (!book.IsAvailable)
+        {
+            throw new ValidationException(nameof(book.IsAvailable));
+        }
+
+        if(cart.Items.Any(i => i.BookId == book.Id))
+        {
+            int newQuantity = cart.Items.First(i => i.BookId == book.Id).Quantity + addToCart.Quantity;
+
+            cart = await _cartRepository.UpdateItemQuantityAsync(userId, book.Id!, newQuantity) ?? cart;
+        }
+        else
+        {
+           cart = await _cartRepository.AddItemAsync(userId, BuildCartItem(book, addToCart.Quantity)) ?? cart;
+        }
+
+        return _mapper.Map<CartDto>(cart);
+    }
+
+    /// <summary>
     /// Checks if the specified user already has the cart.
     /// </summary>
     /// <param name="userId">
@@ -96,5 +158,50 @@ public class CartService(ICartRepository cartRepository, IMapper mapper) : ICart
     private async Task<bool> IsCartExistsAsync(string userId)
     {
         return await _cartRepository.GetByUserIdAsync(userId) is not null;
+    }
+
+    /// <summary>
+    /// Returns the existing cart for the user, or creates and returns a new one.
+    /// </summary>
+    /// <param name="userId">
+    /// The unique identifier currently authenticated user, whose cart to return.
+    /// </param>
+    /// <returns>
+    /// The existing or new cart of authenticated user.
+    /// </returns>
+    private async Task<Cart> GetOrCreateCartAsync(string userId)
+    {
+        return await _cartRepository.GetByUserIdAsync(userId)
+            ?? await _cartRepository.CreateAsync(new Cart
+            {
+               UserId = userId,
+               Items = [],
+               CreatedAt = DateTime.UtcNow,
+               UpdatedAt = DateTime.UtcNow 
+            });
+    }
+
+    /// <summary>
+    /// Creates a cart item snapshot from the given <paramref name="book"/> and <paramref name="quantity"/>.
+    /// </summary>
+    /// <param name="book">
+    /// The book to create the snapshot from.
+    /// </param>
+    /// <param name="quantity">
+    /// The quantity of <paramref name="book"/> items.
+    /// </param>
+    /// <returns>
+    /// Snapshot from the <paramref name="book"/> with quantity <paramref name="quantity"/>.
+    /// </returns>
+    private static Item BuildCartItem(Book book, int quantity)
+    {
+        return new()
+        {
+            BookId = book.Id,
+            Title = book.Title,
+            Authors = book.Authors ?? [],
+            Price = book.Price,
+            Quantity = quantity
+        };
     }
 }

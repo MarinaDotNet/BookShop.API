@@ -44,7 +44,7 @@ public interface ICartRepository
     Task<Cart?> AddItemAsync(string userId, Item item);
 
     /// <summary>
-    /// Update the quantity of the specific item in the user's cart.
+    /// Updates the quantity of the specific item in the user's cart.
     /// </summary>
     /// <param name="userId">
     /// The identifier of the user whose cart to update.

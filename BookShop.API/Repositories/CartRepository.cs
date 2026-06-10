@@ -1,4 +1,6 @@
+using BookShop.API.Exceptions;
 using BookShop.API.Infrastructure.Persistence;
+using BookShop.API.Models.Auth;
 using BookShop.API.Models.Catalog;
 using MongoDB.Driver;
 
@@ -51,11 +53,25 @@ public class CartRepository(CartMongoDbContext context) : ICartRepository
     /// </returns>
     public async Task<Cart?> AddItemAsync(string userId, Item item)
     {
-        throw new NotImplementedException();
+        var filter = Builders<Cart>
+            .Filter
+            .Eq(c => c.UserId, userId);
+
+        var update = Builders<Cart>
+            .Update
+            .Push(c => c.Items, item)
+            .Set(c => c.UpdatedAt, DateTime.UtcNow);
+
+        var options = new FindOneAndUpdateOptions<Cart>
+        {
+            ReturnDocument = ReturnDocument.After
+        };
+
+        return await _cartCollection.FindOneAndUpdateAsync(filter, update, options);
     }
 
     /// <summary>
-    /// Update the quantity of the specific item in the user's cart.
+    /// Updates the quantity of the specific item in the user's cart.
     /// </summary>
     /// <param name="userId">
     /// The identifier of the user whose cart to update.
@@ -71,7 +87,22 @@ public class CartRepository(CartMongoDbContext context) : ICartRepository
     /// </returns>
     public async Task<Cart?> UpdateItemQuantityAsync(string userId, string bookId, int quantity)
     {
-        throw new NotImplementedException();
+        var filter = Builders<Cart>.Filter.And(
+            Builders<Cart>.Filter.Eq(c => c.UserId, userId),
+            Builders<Cart>.Filter.ElemMatch(c => c.Items, i => i.BookId == bookId)
+        );
+
+        var update = Builders<Cart>
+            .Update
+            .Set(c => c.Items[-1].Quantity, quantity)
+            .Set(c => c.UpdatedAt, DateTime.UtcNow);
+
+        var options = new FindOneAndUpdateOptions<Cart>
+        {
+            ReturnDocument = ReturnDocument.After
+        };
+
+        return await _cartCollection.FindOneAndUpdateAsync(filter, update, options);
     }
     
     /// <summary>
