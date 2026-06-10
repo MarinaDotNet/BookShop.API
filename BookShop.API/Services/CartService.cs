@@ -1,5 +1,6 @@
 using AutoMapper;
 using BookShop.API.DTOs.Catalog;
+using BookShop.API.Exceptions;
 using BookShop.API.Models.Catalog;
 using BookShop.API.Repositories;
 
@@ -43,5 +44,57 @@ public class CartService(ICartRepository cartRepository, IMapper mapper) : ICart
         }
 
         return _mapper.Map<Cart, CartDto>(cart);
+    }
+
+    /// <summary>
+    /// Creates and maps the cart for the specified user.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the user for whom to create new cart. Must not be null or whitespace.
+    /// </param>
+    /// <returns>
+    /// The mapped <see cref="CartDto"/> if the cart created successfully.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="userId"/> is null or whitespace.
+    /// </exception>
+    /// <exception cref="ConflictException">
+    /// Thrown when cart already exists for the specified user.
+    /// </exception>
+    public async Task<CartDto> CreateAsync(string userId)
+    {
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(userId);
+
+        if (await IsCartExistsAsync(userId))
+        {
+            throw new ConflictException(nameof(userId));
+        }
+
+        DateTime currentTime = DateTime.UtcNow;
+
+        Cart cart = new()
+        {
+            UserId = userId,
+            Items = [],
+            CreatedAt = currentTime,
+            UpdatedAt = currentTime
+        };
+
+        await _cartRepository.CreateAsync(cart);
+        return _mapper.Map<CartDto>(cart);
+    }
+
+    /// <summary>
+    /// Checks if the specified user already has the cart.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of user for whom to check if cart exists or not.
+    /// </param>
+    /// <returns>
+    /// The <c>true</c> if cart exists; otherwise <c>false</c>
+    /// </returns>
+    private async Task<bool> IsCartExistsAsync(string userId)
+    {
+        return await _cartRepository.GetByUserIdAsync(userId) is not null;
     }
 }

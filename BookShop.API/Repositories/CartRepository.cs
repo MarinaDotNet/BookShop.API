@@ -33,7 +33,8 @@ public class CartRepository(CartMongoDbContext context) : ICartRepository
     /// </returns>
     public async Task<Cart> CreateAsync(Cart cart)
     {
-        throw new NotImplementedException();
+        await _cartCollection.InsertOneAsync(cart);
+        return cart;
     }
 
     /// <summary>

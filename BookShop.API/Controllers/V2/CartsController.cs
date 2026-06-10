@@ -56,4 +56,36 @@ public class CartsController(ICartService service) : BaseApiController
             ? NotFound()
             : Ok(result);
     }
+
+    /// <summary>
+    /// Creates shopping cart for currently authenticated user.
+    /// </summary>
+    /// <returns>
+    /// The created cart to the authenticated user, or HTTP 409 if the cart already exists.
+    /// </returns>
+    /// <response code="201">
+    /// The cart was created successfully.
+    /// </response>
+    /// <response code="401">
+    /// The request is not authenticated.
+    /// </response>
+    /// <response code="400">
+    /// The user identifier claim is missing or invalid.
+    /// </response>
+    /// <response code="409">
+    /// The cart already exists in database.
+    /// </response>
+    [HttpPost]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(typeof(CartDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> CreateCart()
+    {
+        int userId = GetCurrentUserId();
+        var result = await _service.CreateAsync(userId.ToString());
+
+        return CreatedAtAction(nameof(GetByUserId), result);
+    }
 }
