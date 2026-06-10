@@ -3,6 +3,7 @@ using BookShop.API.Infrastructure.Persistence;
 using BookShop.API.Models.Auth;
 using BookShop.API.Models.Catalog;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 
 namespace BookShop.API.Repositories;
 
@@ -94,7 +95,7 @@ public class CartRepository(CartMongoDbContext context) : ICartRepository
 
         var update = Builders<Cart>
             .Update
-            .Set(c => c.Items[-1].Quantity, quantity)
+            .Set(c => c.Items.FirstMatchingElement().Quantity, quantity)
             .Set(c => c.UpdatedAt, DateTime.UtcNow);
 
         var options = new FindOneAndUpdateOptions<Cart>
