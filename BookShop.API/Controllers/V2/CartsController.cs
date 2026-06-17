@@ -124,4 +124,41 @@ public class CartsController(ICartService service) : BaseApiController
         var result = await _service.AddItemAsync(userId, addToCartDto);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Updates the quantity of a specific item in the shopping cart of the currently authenticated user.
+    /// </summary>
+    /// <param name="bookId">
+    /// The identifier of the book whose quantity to update.
+    /// </param>
+    /// <param name="quantity">
+    /// The new quantity. Must not be null and greater than zero.
+    /// </param>
+    /// <returns>
+    /// The updated cart, or HTTP 404 if the cart or the specified item does not exist.
+    /// </returns>
+    /// <response code="200">
+    /// The item quantity was updated and the updated cart is returned.
+    /// </response>
+    /// <response code="400">
+    /// The request is invalid or the quantity is less than zero.
+    /// </response>
+    /// <response code="401">
+    /// The request is not authenticated.
+    /// </response>
+    /// <response code="404">
+    /// The cart or the specified item was not found.
+    /// </response>
+    [HttpPut("items/{bookId}")]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(typeof(CartDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateItemQuantity([FromRoute]string bookId, int quantity)
+    {
+        string userId = GetCurrentUserId().ToString();
+        var result = await _service.UpdateItemQuantityAsync(userId, bookId, quantity);
+        return Ok(result);
+    }
 }
