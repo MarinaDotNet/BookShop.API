@@ -155,7 +155,7 @@ public class CartsController(ICartService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateItemQuantity([FromRoute]string bookId, int quantity)
+    public async Task<IActionResult> UpdateItemQuantity([FromRoute]string bookId, UpdateItemQuantityDto quantity)
     {
         string userId = GetCurrentUserId().ToString();
         var result = await _service.UpdateItemQuantityAsync(userId, bookId, quantity);

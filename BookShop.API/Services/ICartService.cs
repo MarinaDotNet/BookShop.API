@@ -74,7 +74,7 @@ public interface ICartService
     /// The identifier of the book whose quantity to change. Must not be null or whitepace.
     /// </param>
     /// <param name="quantity">
-    /// The new quantit. Must be greater than zero.
+    /// The new quantity. Must be greater than zero.
     /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> with the updated item quantity. 
@@ -86,7 +86,7 @@ public interface ICartService
     /// <exception cref="NotFoundException">
     /// Thrown when the cart or the specified item does not exist.
     /// </exception>
-    Task<CartDto> UpdateItemQuantityAsync(string userId, string bookId, int quantity);
+    Task<CartDto> UpdateItemQuantityAsync(string userId, string bookId, UpdateItemQuantityDto quantity);
 
     /// <summary>
     /// Removes a specific item form the shopping cart of the currently authenticated user.

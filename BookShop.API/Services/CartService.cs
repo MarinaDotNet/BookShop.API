@@ -156,7 +156,7 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// The identifier of the book whose quantity to change. Must not be null or whitepace.
     /// </param>
     /// <param name="quantity">
-    /// The new quantit. Must be greater than zero.
+    /// The new quantity. Must be greater than zero.
     /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> with the updated item quantity. 
@@ -168,16 +168,13 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <exception cref="NotFoundException">
     /// Thrown when the cart or the specified item does not exist.
     /// </exception>
-    public async Task<CartDto> UpdateItemQuantityAsync(string userId, string bookId, int quantity)
+    public async Task<CartDto> UpdateItemQuantityAsync(string userId, string bookId, UpdateItemQuantityDto quantity)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
         ArgumentException.ThrowIfNullOrWhiteSpace(bookId);
-        if(quantity <= 0)
-        {
-            throw new ArgumentException("The quantity should be greater than zero.", nameof(quantity));
-        }
+        ArgumentNullException.ThrowIfNull(quantity);
 
-        var cart = await _cartRepository.UpdateItemQuantityAsync(userId, bookId, quantity)
+        var cart = await _cartRepository.UpdateItemQuantityAsync(userId, bookId, quantity.Quantity)
             ?? throw new NotFoundException("Cart or item not found.");
 
         return _mapper.Map<CartDto>(cart);
