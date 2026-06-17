@@ -184,6 +184,35 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     }
 
     /// <summary>
+    /// Removes a specific item form the shopping cart of the currently authenticated user.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the user whose cart to updated. Must not be null or whitespace.
+    /// </param>
+    /// <param name="bookId">
+    /// The identifier of the book to remove from the cart. Must not be null or whitespace.
+    /// </param>
+    /// <returns>
+    /// The mapped <see cref="CartDto"/> without the specified <paramref name="bookId"/> item. 
+    /// </returns>
+    /// <exception cref="NotFoundException">
+    /// Thrown when the cart does not exists.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="userId"/> or <paramref name="bookId"/> is null or whitespace.
+    /// </exception> 
+    public async Task<CartDto> RemoveItemAsync(string userId, string bookId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(bookId);
+
+        var cart = await _cartRepository.RemoveItemAsync(userId, bookId)
+            ?? throw new NotFoundException("Cart or item not found.");
+
+        return _mapper.Map<CartDto>(cart);
+    }
+
+    /// <summary>
     /// Checks if the specified user already has the cart.
     /// </summary>
     /// <param name="userId">

@@ -161,4 +161,39 @@ public class CartsController(ICartService service) : BaseApiController
         var result = await _service.UpdateItemQuantityAsync(userId, bookId, quantity);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Removes a specific item from the shopping cart or the currently authenticated user.
+    /// </summary>
+    /// <param name="bookId">
+    /// The identifier of the book to remove from the cart.
+    /// </param>
+    /// <returns>
+    /// The udpated cart, or HTTP 404 if the cart was not found.
+    /// </returns>
+    /// <response code="200">
+    /// The item was removed and the updated cart is returned.
+    /// </response>
+    /// <response code="400">
+    /// The user identifier claim is missing or invalid.
+    /// </response>
+    /// <response code="401">
+    /// The request is not authenticated.
+    /// </response>
+    /// <response code="404">
+    /// The cart was not found.
+    /// </response>
+    [HttpDelete("items/{bookId}")]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(typeof(CartDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveItem([FromRoute]string bookId)
+    {
+        string userId = GetCurrentUserId().ToString();
+        var result = await _service.RemoveItemAsync(userId, bookId);
+        return Ok(result);
+    }
+
 }

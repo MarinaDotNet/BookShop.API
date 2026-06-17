@@ -120,7 +120,19 @@ public class CartRepository(CartMongoDbContext context) : ICartRepository
     /// </returns>
     public async Task<Cart?> RemoveItemAsync(string userId, string bookId)
     {
-        throw new NotImplementedException();
+        var filter = Builders<Cart>.Filter.Eq(c => c.UserId, userId);
+
+        var update = Builders<Cart>
+            .Update
+            .PullFilter(c => c.Items, i => i.BookId == bookId)
+            .Set(c => c.UpdatedAt, DateTime.UtcNow);
+
+        var options = new FindOneAndUpdateOptions<Cart>
+        {
+            ReturnDocument = ReturnDocument.After
+        };
+
+        return await _cartCollection.FindOneAndUpdateAsync(filter, update, options);
     }
 
     /// <summary>
