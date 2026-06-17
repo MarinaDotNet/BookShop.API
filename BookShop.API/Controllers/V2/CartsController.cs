@@ -196,4 +196,34 @@ public class CartsController(ICartService service) : BaseApiController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Deletes the shopping cart of the currently authenticated user.
+    /// </summary>
+    /// <returns>
+    /// HTTP 204 No Content on success, or HTTP 404 if the cart does not exist.
+    /// </returns>
+    /// <response code="204">
+    /// The cart was successfully deleted.
+    /// </response>
+    /// <response code="400">
+    /// The user identifier claim is missing or invalid.
+    /// </response>
+    /// <response code="401">
+    /// The request is not authenticated.
+    /// </response>
+    /// <response code="404">
+    /// The cart was not found.
+    /// </response>
+    [HttpDelete]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Clear()
+    {
+        string userId = GetCurrentUserId().ToString();
+        await _service.ClearAsync(userId);
+        return NoContent();
+    }
 }

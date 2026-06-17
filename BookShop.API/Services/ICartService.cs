@@ -107,4 +107,18 @@ public interface ICartService
     /// Thrown if <paramref name="userId"/> or <paramref name="bookId"/> is null or whitespace.
     /// </exception> 
     Task<CartDto> RemoveItemAsync(string userId, string bookId);
+
+    /// <summary>
+    /// Deletes the cart of the specified user.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the user whose cart to delete. Must not be null or whitespace.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="userId"/> is null or whitespace.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown if the cart does not exist.
+    /// </exception> 
+    Task ClearAsync(string userId);
 }

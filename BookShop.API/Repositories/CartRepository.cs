@@ -136,16 +136,18 @@ public class CartRepository(CartMongoDbContext context) : ICartRepository
     }
 
     /// <summary>
-    /// Removes all items from the user's cart.
+    /// Delets the cart of the specified user.
     /// </summary>
     /// <param name="userId">
-    /// The identifier of the user whose cart to clear.
+    /// The identifier of the user whose cart to delete.
     /// </param>
     /// <returns>
-    /// <c>true</c> if the cart was found and cleared; otherwise <c>false</c>.
+    /// <c>true</c> if the cart was found and deleted; otherwise <c>false</c>.
     /// </returns>
     public async Task<bool> ClearAsync(string userId)
     {
-        throw new NotImplementedException();
+        var filter = Builders<Cart>.Filter.Eq(c => c.UserId, userId);
+        var result = await _cartCollection.FindOneAndDeleteAsync(filter);
+        return result is not null;
     }
 }

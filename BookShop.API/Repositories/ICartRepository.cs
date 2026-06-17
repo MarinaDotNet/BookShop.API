@@ -75,13 +75,13 @@ public interface ICartRepository
     Task<Cart?> RemoveItemAsync(string userId, string bookId);
 
     /// <summary>
-    /// Removes all items from the user's cart.
+    /// Delets the cart of the specified user.
     /// </summary>
     /// <param name="userId">
-    /// The identifier of the user whose cart to clear.
+    /// The identifier of the user whose cart to delete.
     /// </param>
     /// <returns>
-    /// <c>true</c> if the cart was found and cleared; otherwise <c>false</c>.
+    /// <c>true</c> if the cart was found and deleted; otherwise <c>false</c>.
     /// </returns>
     Task<bool> ClearAsync(string userId);
 }

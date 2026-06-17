@@ -213,6 +213,28 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     }
 
     /// <summary>
+    /// Deletes the cart of the specified user.
+    /// </summary>
+    /// <param name="userId">
+    /// The identifier of the user whose cart to delete. Must not be null or whitespace.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="userId"/> is null or whitespace.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown if the cart does not exist.
+    /// </exception> 
+    public async Task ClearAsync(string userId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+
+        if(!await _cartRepository.ClearAsync(userId))
+        {
+            throw new NotFoundException("Cart not found.");
+        }
+    }
+
+    /// <summary>
     /// Checks if the specified user already has the cart.
     /// </summary>
     /// <param name="userId">
