@@ -56,6 +56,10 @@ builder.Services.AddSingleton<IAuthLinkGenerator, AuthLinkGenerator>();
 builder.Services.AddDbContext<AuthDbContext>(options => 
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql")));
 
+builder.Services.AddDbContext<OrderDbContext>(options => 
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql"),
+    x => x.MigrationsHistoryTable("__OrderMigrationHistory")));
+
 // Dependency Injection
 builder.Services.AddSingleton<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IBookService, BookService>();

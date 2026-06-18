@@ -18,11 +18,6 @@ public class Order
     public int UserId {get; set;}
 
     /// <summary>
-    /// The user who placed the order.
-    /// </summary>
-    public User User {get; set;} = null!;
-
-    /// <summary>
     /// The list of items included in the order.
     /// </summary>
     public ICollection<OrderItem> Items {get; set;} = [];
