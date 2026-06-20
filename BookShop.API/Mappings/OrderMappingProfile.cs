@@ -5,6 +5,13 @@ using BookShop.API.Models.Order;
 
 namespace BookShop.API.Mappings;
 
+/// <summary>
+/// Defines AutoMapper mapping configuration for order-related types.
+/// </summary>
+/// <remarks>
+/// Maps <see cref="Item"/> to <see cref="OrderItem"/> capture a snapshot of cart item deatils at the time of order creation.
+/// Maps <see cref="Order"/> to <see cref="OrderDto"/> converting <see cref="OrderStatus"/> to its string representation.
+/// </remarks>
 public class OrderMappingProfile : Profile
 {
     public OrderMappingProfile()
