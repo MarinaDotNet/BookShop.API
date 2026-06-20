@@ -160,7 +160,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationAutoValidation();
 
 // Auto Mapper Configurations
-builder.Services.AddAutoMapper(_ => {}, typeof(BookMappingProfile), typeof(UserMappingProfile), typeof(CartMappingProfile));
+builder.Services.AddAutoMapper(_ => {}, typeof(BookMappingProfile), typeof(UserMappingProfile), typeof(CartMappingProfile), typeof(OrderMappingProfile));
 
 // Add ProblemDetails middleware
 builder.Services.AddProblemDetails(options =>
