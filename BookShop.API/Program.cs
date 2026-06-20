@@ -78,6 +78,7 @@ builder.Services.AddSingleton<ICartRepository, CartRepository>();
 builder.Services.AddScoped<ICartService, CartService>();
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services.AddApiVersioning(options =>
     {
