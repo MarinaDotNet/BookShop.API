@@ -77,6 +77,8 @@ builder.Services.AddSingleton<IRefreshTokenHasher, RefreshTokenHasher>();
 builder.Services.AddSingleton<ICartRepository, CartRepository>();
 builder.Services.AddScoped<ICartService, CartService>();
 
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
 builder.Services.AddApiVersioning(options =>
     {
         options.DefaultApiVersion = new ApiVersion(3, 0);
