@@ -27,7 +27,7 @@ public interface IOrderRepository
     /// <returns>
     /// A collection of orders placed by the specified user. Returns an empty collection if none exist.
     /// </returns>
-    Task<IEnumerable<Order>> GitByUserIdAsync(int userId);
+    Task<IEnumerable<Order>> GetByUserIdAsync(int userId);
 
     /// <summary>
     /// Persists a new order to the database.

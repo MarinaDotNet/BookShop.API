@@ -38,9 +38,13 @@ public class OrderRepository(OrderDbContext context) : IOrderRepository
     /// <returns>
     /// A collection of orders placed by the specified user. Returns an empty collection if none exist.
     /// </returns>
-    public async Task<IEnumerable<Order>> GitByUserIdAsync(int userId)
+    public async Task<IEnumerable<Order>> GetByUserIdAsync(int userId)
     {
-        throw new NotImplementedException();
+        return await _context.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .Where(o => o.UserId == userId)
+            .ToListAsync();
     }
 
     /// <summary>

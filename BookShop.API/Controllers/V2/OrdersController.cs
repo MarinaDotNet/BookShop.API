@@ -53,4 +53,31 @@ public class OrdersController(IOrderService service) : BaseApiController
             ? NotFound() 
             : Ok(result);
     }
+
+    /// <summary>
+    /// Retrieves all orders placed by the currenlty authenticated user.
+    /// </summary>
+    /// <returns>
+    /// A collection of orders belonging to the user.
+    /// </returns>
+    /// <response code="200">
+    /// Returns the user's orders, or an empty list if none exist.
+    /// </response>
+    /// <response code="400">
+    /// The user identifier extracted from the token is invalid.
+    /// </response>
+    /// <response code="401">
+    /// The user is not authenticated.
+    /// </response>
+    [HttpGet]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(typeof(IEnumerable<OrderDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetByUserId()
+    {
+        var userId = GetCurrentUserId();
+        var result = await _service.GetByUserIdAsync(userId);
+        return Ok(result);
+    }
 }

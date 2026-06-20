@@ -54,9 +54,17 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <returns>
     /// A collection of <see cref="OrderDto"/> representing the user's orders. 
     /// </returns>
-    public async Task<IEnumerable<OrderDto>> GitByUserIdAsync(int userId)
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="userId"/> is equals to 0 or less than 0.
+    /// </exception> 
+    public async Task<IEnumerable<OrderDto>> GetByUserIdAsync(int userId)
     {
-        throw new NotImplementedException();
+        if(userId <= 0)
+        {
+            throw new ArgumentException("User ID must be greater than 0.", nameof(userId));
+        }
+        var result = await _orderRepository.GetByUserIdAsync(userId);
+        return _mapper.Map<IEnumerable<OrderDto>>(result);
     }
     
     /// <summary>

@@ -32,7 +32,10 @@ public interface IOrderService
     /// <returns>
     /// A collection of <see cref="OrderDto"/> representing the user's orders. 
     /// </returns>
-    Task<IEnumerable<OrderDto>> GitByUserIdAsync(int userId);
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="userId"/> is equals to 0 or less than 0.
+    /// </exception>
+    Task<IEnumerable<OrderDto>> GetByUserIdAsync(int userId);
     
     /// <summary>
     /// Creates a new order from the current user's shopping cart.
