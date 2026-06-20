@@ -30,6 +30,9 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <returns>
     /// The <see cref="OrderDto"/> if found; otherwise, <c>null</c>.  
     /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="orderId"/> is equals to 0 or less than 0.
+    /// </exception>
     public async Task<OrderDto?> GetByIdAsync(int orderId)
     {
         if(orderId <= 0)
