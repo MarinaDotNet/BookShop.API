@@ -4,6 +4,8 @@ using BookShop.API.Exceptions;
 using BookShop.API.Models.Order;
 using AutoMapper;
 using BookShop.API.Models.Catalog;
+using System.Data.Common;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 
 namespace BookShop.API.Services;
 
@@ -76,12 +78,29 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <returns>
     /// The created <see cref="OrderDto"/>. 
     /// </returns>
-    /// <exception cref="NotFoundException">
-    /// Thrown when the user's cart does not exist or is emptyl.
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="userId"/> is less than or equal to 0.
     /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown when the user's cart does not exist or is empty.
+    /// </exception> 
     public async Task<OrderDto> CreateOrderAsync(int userId)
     {
-        throw new NotImplementedException();
+        if(userId <= 0)
+        {
+            throw new ArgumentException("User ID must be greater than 0.", nameof(userId));
+        }
+
+        var cart = await _cartRepository.GetByUserIdAsync(userId.ToString()) 
+            ?? throw new NotFoundException("Cart for required user was not found.");
+
+        if(cart.Items.Count == 0)
+        {
+            throw new NotFoundException("Cart is empty.");
+        }
+
+        var result = await _orderRepository.CreateOrderAsync(CreateOrderFromCart(cart));
+        return _mapper.Map<OrderDto>(result);
     }
 
     /// <summary>
@@ -99,5 +118,42 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     public async Task<OrderDto?> UpdateStatusAsync(int orderId, OrderStatus status)
     {
         throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref="Order"/> entity from the provided shopping cart, capturing a snapshot of each item's details at the time
+    /// of order creation. 
+    /// </summary>
+    /// <param name="cart">
+    /// The shopping cart to convert into an order.
+    /// </param>
+    /// <returns>
+    /// A new <see cref="Order"/> with status <see cref="OrderStatus.Pending"/>.  
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <see cref="Cart.UserId"/> is null or whitespace.
+    /// </exception>  
+    private Order CreateOrderFromCart(Cart cart)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(cart.UserId);
+
+        decimal totalPrice = 0.0M;
+
+        var dateTimeNow = DateTime.UtcNow;
+
+        foreach(Item i in cart.Items)
+        {
+            totalPrice += i.Price * i.Quantity;
+        }
+
+        return new()
+        {
+          UserId = int.Parse(cart.UserId),
+          Items = _mapper.Map<ICollection<OrderItem>>(cart.Items),
+          TotalPrice = totalPrice,
+          Status = OrderStatus.Pending,
+          CreatedAt = dateTimeNow,
+          UpdatedAt = dateTimeNow
+        };
     }
 }

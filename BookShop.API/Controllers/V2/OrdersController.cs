@@ -80,4 +80,35 @@ public class OrdersController(IOrderService service) : BaseApiController
         var result = await _service.GetByUserIdAsync(userId);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Creates a new order from the currenlty authenticated user's shopping cart.
+    /// </summary>
+    /// <returns>
+    /// The created order.
+    /// </returns>
+    /// <response code="201">
+    /// Returns the newly created order.
+    /// </response>
+    /// <response code="400">
+    /// The user identifier extracted from the token is invalid.
+    /// </response>
+    /// <response code="401">
+    /// The user is not authenticated.
+    /// </response>
+    /// <response code="404">
+    /// The user's cart does not exist or is empty.
+    /// </response>
+    [HttpPost]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CreateOrder()
+    {
+        int userId = GetCurrentUserId();
+        var result = await _service.CreateOrderAsync(userId);
+        return StatusCode(StatusCodes.Status201Created, result);
+    }
 }

@@ -46,9 +46,12 @@ public interface IOrderService
     /// <returns>
     /// The created <see cref="OrderDto"/>. 
     /// </returns>
-    /// <exception cref="NotFoundException">
-    /// Thrown when the user's cart does not exist or is emptyl.
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="userId"/> is less than or equal to 0.
     /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown when the user's cart does not exist or is empty.
+    /// </exception> 
     Task<OrderDto> CreateOrderAsync(int userId);
 
     /// <summary>

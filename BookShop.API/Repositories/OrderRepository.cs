@@ -58,7 +58,9 @@ public class OrderRepository(OrderDbContext context) : IOrderRepository
     /// </returns>
     public async Task<Order> CreateOrderAsync(Order order)
     {
-        throw new NotImplementedException();
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync();
+        return order;
     }
 
     /// <summary>
