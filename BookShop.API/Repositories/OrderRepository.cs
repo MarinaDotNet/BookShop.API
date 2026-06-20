@@ -4,6 +4,9 @@ using MongoDB.Driver;
 
 namespace BookShop.API.Repositories;
 
+/// <summary>
+/// Provides data access operations for orders using Entity Framework Core.
+/// </summary>
 public class OrderRepository(OrderDbContext context) : IOrderRepository
 {
     private OrderDbContext _context = context;

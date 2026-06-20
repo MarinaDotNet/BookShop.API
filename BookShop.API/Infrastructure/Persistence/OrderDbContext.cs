@@ -3,10 +3,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookShop.API.Infrastructure.Persistence;
 
+/// <summary>
+/// Provides an Entity Framework Core database context for managing orders and order items.
+/// </summary>
+/// <remarks>
+/// This context targets the same PostgreSQL database as <see cref="AuthDbContext"/> but uses a
+/// separate migrations history table (<c>__OrderMigrationsHistory</c>) to keep migration histories independent.
+/// There is intentionally no foreign key relationship to the <c>Users</c> table - <see cref="Order.UserId"/>
+/// references users managed by <see cref="AuthDbContext"/> across a context boundary.
+/// </remarks>
 public class OrderDbContext(DbContextOptions<OrderDbContext> options) : DbContext(options)
 {
+    /// <summary>
+    /// Gets or sets the collection of orders.
+    /// </summary>
     public DbSet<Order> Orders => Set<Order>();
 
+    /// <summary>
+    /// Gets or sets the collection of order items.
+    /// </summary>
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -2,14 +2,26 @@ using BookShop.API.Repositories;
 using BookShop.API.DTOs.Order;
 using BookShop.API.Exceptions;
 using BookShop.API.Models.Order;
+using AutoMapper;
+using BookShop.API.Models.Catalog;
 
 namespace BookShop.API.Services;
 
-public class OrderService(IOrderRepository repository) : IOrderService
+/// <summary>
+/// Provides order management operations including cration from cart, retrieval, and status updates.
+/// </summary>
+/// <remarks>
+/// Order cration reads the current user's shopping cart, captures a snapshot of each item's
+/// details (title, authors, price) at the time order, then persists the order via <see cref="IOrderRepository"/>. 
+/// The cart is not cleared automatically - that is left to the caller.
+/// </remarks> 
+public class OrderService(IOrderRepository orderRepository, ICartRepository cartRepository, IMapper mapper) : IOrderService
 {
-    private IOrderRepository _repository = repository;
+    private IOrderRepository _orderRepository = orderRepository;
+    private ICartRepository _cartRepository = cartRepository;
+    private IMapper _mapper = mapper;
 
-     /// <summary>
+    /// <summary>
     /// Retrieves an order by its unique identifier.
     /// </summary>
     /// <param name="orderId">
