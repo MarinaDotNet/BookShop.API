@@ -16,7 +16,7 @@ public interface IOrderRepository
     /// <returns>
     /// The order if found; otherwise <c>null</c>.
     /// </returns>
-    Task<Order?> GetByIAsync(int orderId);
+    Task<Order?> GetByIdAsync(int orderId);
 
     /// <summary>
     /// Retrieves all orders belonging to the specified user.

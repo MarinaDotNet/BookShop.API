@@ -17,7 +17,7 @@ public class OrderRepository(OrderDbContext context) : IOrderRepository
     /// <returns>
     /// The order if found; otherwise <c>null</c>.
     /// </returns>
-    public Task<Order?> GetByIAsync(int orderId)
+    public Task<Order?> GetByIdAsync(int orderId)
     {
         throw new NotImplementedException();
     }
