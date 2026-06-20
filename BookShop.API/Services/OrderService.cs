@@ -32,7 +32,14 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// </returns>
     public async Task<OrderDto?> GetByIdAsync(int orderId)
     {
-        throw new NotImplementedException();
+        if(orderId <= 0)
+        {
+            throw new ArgumentException("Order ID must be greater than 0.", nameof(orderId));
+        }
+        var result = await _orderRepository.GetByIdAsync(orderId);
+        return result is null 
+            ? null 
+            : _mapper.Map<OrderDto>(result);
     }
 
     /// <summary>

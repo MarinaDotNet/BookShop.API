@@ -1,5 +1,6 @@
 using BookShop.API.Infrastructure.Persistence;
 using BookShop.API.Models.Order;
+using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 
 namespace BookShop.API.Repositories;
@@ -9,7 +10,7 @@ namespace BookShop.API.Repositories;
 /// </summary>
 public class OrderRepository(OrderDbContext context) : IOrderRepository
 {
-    private OrderDbContext _context = context;
+    private readonly OrderDbContext _context = context;
 
     /// <summary>
     /// Retrieves an order by its identifier.
@@ -22,7 +23,10 @@ public class OrderRepository(OrderDbContext context) : IOrderRepository
     /// </returns>
     public async Task<Order?> GetByIdAsync(int orderId)
     {
-        throw new NotImplementedException();
+        return await _context.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
     }
 
     /// <summary>

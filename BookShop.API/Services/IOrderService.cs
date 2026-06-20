@@ -18,6 +18,9 @@ public interface IOrderService
     /// <returns>
     /// The <see cref="OrderDto"/> if found; otherwise, <c>null</c>.  
     /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="orderId"/> is equals to 0 or less than 0.
+    /// </exception>
     Task<OrderDto?> GetByIdAsync(int orderId);
 
     /// <summary>
