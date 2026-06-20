@@ -17,7 +17,7 @@ public class OrderRepository(OrderDbContext context) : IOrderRepository
     /// <returns>
     /// The order if found; otherwise <c>null</c>.
     /// </returns>
-    public Task<Order?> GetByIdAsync(int orderId)
+    public async Task<Order?> GetByIdAsync(int orderId)
     {
         throw new NotImplementedException();
     }
@@ -31,7 +31,7 @@ public class OrderRepository(OrderDbContext context) : IOrderRepository
     /// <returns>
     /// A collection of orders placed by the specified user. Returns an empty collection if none exist.
     /// </returns>
-    public Task<IEnumerable<Order>> GitByUserIdAsync(int userId)
+    public async Task<IEnumerable<Order>> GitByUserIdAsync(int userId)
     {
         throw new NotImplementedException();
     }
@@ -45,7 +45,7 @@ public class OrderRepository(OrderDbContext context) : IOrderRepository
     /// <returns>
     /// The created order as stored in the database.
     /// </returns>
-    public Task<Order> CreateOrderAsync(Order order)
+    public async Task<Order> CreateOrderAsync(Order order)
     {
         throw new NotImplementedException();
     }
@@ -62,7 +62,7 @@ public class OrderRepository(OrderDbContext context) : IOrderRepository
     /// <returns>
     /// The updated order if found; otherwise <c>null</c>.
     /// </returns>
-    public Task<Order?> UpdateStatusAsync(int orderId, OrderStatus status)
+    public async Task<Order?> UpdateStatusAsync(int orderId, OrderStatus status)
     {
         throw new NotImplementedException();
     }
