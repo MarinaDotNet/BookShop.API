@@ -77,7 +77,9 @@ public class OrderRepository(OrderDbContext context) : IOrderRepository
     /// </returns>
     public async Task<Order?> UpdateStatusAsync(int orderId, OrderStatus status)
     {
-        var order = await _context.Orders.FindAsync(orderId);
+        var order = await _context.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
 
         if(order is null)
         {
