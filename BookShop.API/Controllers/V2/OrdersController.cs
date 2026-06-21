@@ -186,7 +186,7 @@ public class OrdersController(IOrderService service) : BaseApiController
     public async Task<IActionResult> CancelOrder([FromRoute]int orderId)
     {
         var userId = GetCurrentUserId();
-        var result = await _service.CancellOrderAsync(orderId, userId);
+        var result = await _service.CancelOrderAsync(orderId, userId);
         return result is null
             ? NotFound()
             : Ok(result);
