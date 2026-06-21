@@ -19,9 +19,9 @@ namespace BookShop.API.Services;
 /// </remarks> 
 public class OrderService(IOrderRepository orderRepository, ICartRepository cartRepository, IMapper mapper) : IOrderService
 {
-    private IOrderRepository _orderRepository = orderRepository;
-    private ICartRepository _cartRepository = cartRepository;
-    private IMapper _mapper = mapper;
+    private readonly IOrderRepository _orderRepository = orderRepository;
+    private readonly ICartRepository _cartRepository = cartRepository;
+    private readonly IMapper _mapper = mapper;
 
     /// <summary>
     /// Retrieves an order by its unique identifier.
@@ -100,6 +100,9 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
         }
 
         var result = await _orderRepository.CreateOrderAsync(CreateOrderFromCart(cart));
+
+        await _cartRepository.ClearAsync(userId.ToString());
+
         return _mapper.Map<OrderDto>(result);
     }
 
@@ -164,7 +167,7 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
         {
             throw new NotFoundException("Order was not found.");
         }
-        
+
         var result = await _orderRepository.UpdateStatusAsync(orderId, OrderStatus.Cancelled);
         return result is null ? null : _mapper.Map<OrderDto>(result);
     }
