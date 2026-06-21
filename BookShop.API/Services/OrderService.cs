@@ -131,6 +131,45 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     }
 
     /// <summary>
+    /// Cancells the specified order on behalf of the authenticated user.
+    /// </summary>
+    /// <param name="orderId">
+    /// The unique identifier of the order to cancel.
+    /// </param>
+    /// <param name="userId">
+    /// The unique identifier of user requesting the cancellation.
+    /// </param>
+    /// <returns>
+    /// The cancelled <see cref="OrderDto"/> if successful; otherwise, <c>null</c>.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="orderId"/> or <paramref name="userId"/> is less or equal to 0.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown if the order does not exist or belong to the specified user.
+    /// </exception> 
+    public async Task<OrderDto?> CancellOrderAsync(int orderId, int userId)
+    {
+        if(orderId <= 0)
+        {
+            throw new ArgumentException("Order ID must be greater than 0.", nameof(orderId));
+        }
+        if(userId <= 0)
+        {
+            throw new ArgumentException("User ID must be greater than 0.", nameof(userId));
+        }
+
+        var order = await _orderRepository.GetByIdAsync(orderId);
+        if(order is null || order.UserId != userId)
+        {
+            throw new NotFoundException("Order was not found.");
+        }
+        
+        var result = await _orderRepository.UpdateStatusAsync(orderId, OrderStatus.Cancelled);
+        return result is null ? null : _mapper.Map<OrderDto>(result);
+    }
+
+    /// <summary>
     /// Builds an <see cref="Order"/> entity from the provided shopping cart, capturing a snapshot of each item's details at the time
     /// of order creation. 
     /// </summary>

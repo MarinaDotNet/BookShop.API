@@ -155,4 +155,40 @@ public class OrdersController(IOrderService service) : BaseApiController
             ? NotFound()
             : Ok(result);
     }
+
+    /// <summary>
+    /// Cancels the specified order on behalf of the currently authenticated user.
+    /// </summary>
+    /// <param name="orderId">
+    /// The unique identifier of the order to cancel.
+    /// </param>
+    /// <returns>
+    /// The cancelled order.
+    /// </returns>
+    /// <response code="200">
+    /// Returns the cancelled order.
+    /// </response>
+    /// <response code="400">
+    /// The provided order ID is invalid.
+    /// </response>
+    /// <response code="401">
+    /// The user is not authenticated.
+    /// </response>
+    /// <response code="404">
+    /// No order with the specified ID was found, or the order does not belong to the current user.
+    /// </response>
+    [HttpPut("{orderId}/cancel")]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CancelOrder([FromRoute]int orderId)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _service.CancellOrderAsync(orderId, userId);
+        return result is null
+            ? NotFound()
+            : Ok(result);
+    }
 }

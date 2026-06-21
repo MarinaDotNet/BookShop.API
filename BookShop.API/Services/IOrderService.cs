@@ -71,4 +71,23 @@ public interface IOrderService
     /// </exception>
     Task<OrderDto?> UpdateStatusAsync(int orderId, OrderStatus status);
 
+    /// <summary>
+    /// Cancells the specified order on behalf of the authenticated user.
+    /// </summary>
+    /// <param name="orderId">
+    /// The unique identifier of the order to cancel.
+    /// </param>
+    /// <param name="userId">
+    /// The unique identifier of user requesting the cancellation.
+    /// </param>
+    /// <returns>
+    /// The cancelled <see cref="OrderDto"/> if successful; otherwise, <c>null</c>.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="orderId"/> or <paramref name="userId"/> is less or equal to 0.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Thrown if the order does not exist or belong to the specified user.
+    /// </exception> 
+    Task<OrderDto?> CancellOrderAsync(int orderId, int userId);
 }
