@@ -89,5 +89,5 @@ public interface IOrderService
     /// <exception cref="NotFoundException">
     /// Thrown if the order does not exist or belong to the specified user.
     /// </exception> 
-    Task<OrderDto?> CancellOrderAsync(int orderId, int userId);
+    Task<OrderDto?> CancelOrderAsync(int orderId, int userId);
 }

@@ -151,7 +151,7 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <exception cref="NotFoundException">
     /// Thrown if the order does not exist or belong to the specified user.
     /// </exception> 
-    public async Task<OrderDto?> CancellOrderAsync(int orderId, int userId)
+    public async Task<OrderDto?> CancelOrderAsync(int orderId, int userId)
     {
         if(orderId <= 0)
         {
