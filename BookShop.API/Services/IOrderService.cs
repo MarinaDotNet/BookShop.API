@@ -66,6 +66,9 @@ public interface IOrderService
     /// <returns>
     /// The updated <see cref="OrderDto"/> if found; otherwise <c>null</c>. 
     /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="orderId"/> is  less than or equal to 0.
+    /// </exception>
     Task<OrderDto?> UpdateStatusAsync(int orderId, OrderStatus status);
 
 }

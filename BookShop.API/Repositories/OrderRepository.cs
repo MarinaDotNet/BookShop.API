@@ -77,7 +77,17 @@ public class OrderRepository(OrderDbContext context) : IOrderRepository
     /// </returns>
     public async Task<Order?> UpdateStatusAsync(int orderId, OrderStatus status)
     {
-        throw new NotImplementedException();
+        var order = await _context.Orders.FindAsync(orderId);
+
+        if(order is null)
+        {
+            return null;
+        }
+
+        order.Status = status;
+        await _context.SaveChangesAsync();
+
+        return order;
     }
 
 }

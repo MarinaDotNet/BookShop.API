@@ -4,6 +4,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using BookShop.API.DTOs.Order;
+using BookShop.API.Models.Order;
 
 namespace BookShop.API.Controllers.V2;
 
@@ -110,5 +111,43 @@ public class OrdersController(IOrderService service) : BaseApiController
         int userId = GetCurrentUserId();
         var result = await _service.CreateOrderAsync(userId);
         return StatusCode(StatusCodes.Status201Created, result);
+    }
+
+    /// <summary>
+    /// Updates the status of an existing order.
+    /// </summary>
+    /// <param name="orderId">
+    /// The unique identifier of the order to update.
+    /// </param>
+    /// <param name="status">
+    /// The new status to assign to the order.
+    /// </param>
+    /// <returns>
+    /// The updated order.
+    /// </returns>
+    /// <response code="200">
+    /// Returns the updated order.
+    /// </response>
+    /// <response code="400">
+    /// The provided ID is invalid.
+    /// </response>
+    /// <response code="401">
+    /// The user is not authenticated.
+    /// </response>
+    /// <response code="404">
+    /// No order with the specified ID was found.
+    /// </response>
+    [HttpPut("{orderId}")]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateStatus([FromRoute] int orderId, [FromBody] OrderStatus status)
+    {
+        var result = await _service.UpdateStatusAsync(orderId, status);
+        return result is null
+            ? NotFound()
+            : Ok(result);
     }
 }

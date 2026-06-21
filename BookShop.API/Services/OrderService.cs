@@ -115,9 +115,19 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <returns>
     /// The updated <see cref="OrderDto"/> if found; otherwise <c>null</c>. 
     /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown if <paramref name="orderId"/> is  less than or equal to 0.
+    /// </exception>
     public async Task<OrderDto?> UpdateStatusAsync(int orderId, OrderStatus status)
     {
-        throw new NotImplementedException();
+        if(orderId <= 0)
+        {
+            throw new ArgumentException("Order ID must be greater than 0.", nameof(orderId));
+        }
+
+        var result = await _orderRepository.UpdateStatusAsync(orderId, status);
+
+        return result is null ? null : _mapper.Map<OrderDto>(result);
     }
 
     /// <summary>
