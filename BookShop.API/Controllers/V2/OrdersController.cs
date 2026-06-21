@@ -129,7 +129,7 @@ public class OrdersController(IOrderService service) : BaseApiController
     /// Returns the updated order.
     /// </response>
     /// <response code="400">
-    /// The provided ID is invalid.
+    /// The provided ID is invalid, or the provided <see cref="OrderStatus"/> value is invalid.
     /// </response>
     /// <response code="401">
     /// The user is not authenticated.
@@ -137,13 +137,18 @@ public class OrdersController(IOrderService service) : BaseApiController
     /// <response code="404">
     /// No order with the specified ID was found.
     /// </response>
+    /// <response code="403">
+    /// The user does not have permission to perform this action.
+    /// </response>
     [HttpPut("{orderId}")]
+    [Authorize(Roles = "admin")]
     [MapToApiVersion("2.0")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateStatus([FromRoute] int orderId, [FromBody] OrderStatus status)
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> UpdateStatus([FromRoute] int orderId, [FromQuery] OrderStatus status)
     {
         var result = await _service.UpdateStatusAsync(orderId, status);
         return result is null
