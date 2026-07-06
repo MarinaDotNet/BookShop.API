@@ -13,10 +13,13 @@ public interface IOrderRepository
     /// <param name="orderId">
     /// The identifier of the order to retrieve.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The order if found; otherwise <c>null</c>.
     /// </returns>
-    Task<Order?> GetByIdAsync(int orderId);
+    Task<Order?> GetByIdAsync(int orderId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Retrieves all orders belonging to the specified user.
@@ -24,10 +27,13 @@ public interface IOrderRepository
     /// <param name="userId">
     /// The identifier of the user whose orders to retrieve.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A collection of orders placed by the specified user. Returns an empty collection if none exist.
     /// </returns>
-    Task<IEnumerable<Order>> GetByUserIdAsync(int userId);
+    Task<IEnumerable<Order>> GetByUserIdAsync(int userId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Persists a new order to the database.
@@ -35,10 +41,13 @@ public interface IOrderRepository
     /// <param name="order">
     /// The order to create. Must not be null.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The created order as stored in the database.
     /// </returns>
-    Task<Order> CreateOrderAsync(Order order);
+    Task<Order> CreateOrderAsync(Order order, CancellationToken cancellationToken);
 
     /// <summary>
     /// Updates the status of the specified order.
@@ -46,11 +55,14 @@ public interface IOrderRepository
     /// <param name="orderId">
     /// The identifier of the order to update.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <param name="status">
     /// The new status to assign to the order.
     /// </param>
     /// <returns>
     /// The updated order if found; otherwise <c>null</c>.
     /// </returns>
-    Task<Order?> UpdateStatusAsync(int orderId, OrderStatus status);
+    Task<Order?> UpdateStatusAsync(int orderId, OrderStatus status, CancellationToken cancellationToken);
 }

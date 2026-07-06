@@ -15,13 +15,16 @@ public interface IOrderService
     /// <param name="orderId">
     /// The unique identifier of the order.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The <see cref="OrderDto"/> if found; otherwise, <c>null</c>.  
     /// </returns>
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="orderId"/> is equals to 0 or less than 0.
     /// </exception>
-    Task<OrderDto?> GetByIdAsync(int orderId);
+    Task<OrderDto?> GetByIdAsync(int orderId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Retrieves all orders placed by a specified user.
@@ -29,13 +32,16 @@ public interface IOrderService
     /// <param name="userId">
     /// The unique identifier of the user.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A collection of <see cref="OrderDto"/> representing the user's orders. 
     /// </returns>
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="userId"/> is equals to 0 or less than 0.
     /// </exception>
-    Task<IEnumerable<OrderDto>> GetByUserIdAsync(int userId);
+    Task<IEnumerable<OrderDto>> GetByUserIdAsync(int userId, CancellationToken cancellationToken);
     
     /// <summary>
     /// Creates a new order from the current user's shopping cart.
@@ -66,13 +72,16 @@ public interface IOrderService
     /// <param name="status">
     /// The new status assign to the order.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The updated <see cref="OrderDto"/> if found; otherwise <c>null</c>. 
     /// </returns>
     /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="orderId"/> is  less than or equal to 0.
     /// </exception>
-    Task<OrderDto?> UpdateStatusAsync(int orderId, OrderStatus status);
+    Task<OrderDto?> UpdateStatusAsync(int orderId, OrderStatus status, CancellationToken cancellationToken);
 
     /// <summary>
     /// Cancells the specified order on behalf of the authenticated user.
@@ -83,6 +92,9 @@ public interface IOrderService
     /// <param name="userId">
     /// The unique identifier of user requesting the cancellation.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The cancelled <see cref="OrderDto"/> if successful; otherwise, <c>null</c>.
     /// </returns>
@@ -92,5 +104,5 @@ public interface IOrderService
     /// <exception cref="NotFoundException">
     /// Thrown if the order does not exist or belong to the specified user.
     /// </exception> 
-    Task<OrderDto?> CancelOrderAsync(int orderId, int userId);
+    Task<OrderDto?> CancelOrderAsync(int orderId, int userId, CancellationToken cancellationToken);
 }

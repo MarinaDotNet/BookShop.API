@@ -29,19 +29,22 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <param name="orderId">
     /// The unique identifier of the order.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The <see cref="OrderDto"/> if found; otherwise, <c>null</c>.  
     /// </returns>
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="orderId"/> is equals to 0 or less than 0.
     /// </exception>
-    public async Task<OrderDto?> GetByIdAsync(int orderId)
+    public async Task<OrderDto?> GetByIdAsync(int orderId, CancellationToken cancellationToken)
     {
         if(orderId <= 0)
         {
             throw new ArgumentException("Order ID must be greater than 0.", nameof(orderId));
         }
-        var result = await _orderRepository.GetByIdAsync(orderId);
+        var result = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         return result is null 
             ? null 
             : _mapper.Map<OrderDto>(result);
@@ -53,19 +56,22 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <param name="userId">
     /// The unique identifier of the user.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A collection of <see cref="OrderDto"/> representing the user's orders. 
     /// </returns>
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="userId"/> is equals to 0 or less than 0.
     /// </exception> 
-    public async Task<IEnumerable<OrderDto>> GetByUserIdAsync(int userId)
+    public async Task<IEnumerable<OrderDto>> GetByUserIdAsync(int userId, CancellationToken cancellationToken)
     {
         if(userId <= 0)
         {
             throw new ArgumentException("User ID must be greater than 0.", nameof(userId));
         }
-        var result = await _orderRepository.GetByUserIdAsync(userId);
+        var result = await _orderRepository.GetByUserIdAsync(userId, cancellationToken);
         return _mapper.Map<IEnumerable<OrderDto>>(result);
     }
     
@@ -102,7 +108,7 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
             throw new NotFoundException("Cart is empty.");
         }
 
-        var result = await _orderRepository.CreateOrderAsync(CreateOrderFromCart(cart));
+        var result = await _orderRepository.CreateOrderAsync(CreateOrderFromCart(cart), cancellationToken);
 
         await _cartRepository.ClearAsync(userId.ToString(), cancellationToken);
 
@@ -118,20 +124,23 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <param name="status">
     /// The new status assign to the order.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The updated <see cref="OrderDto"/> if found; otherwise <c>null</c>. 
     /// </returns>
     /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="orderId"/> is  less than or equal to 0.
     /// </exception>
-    public async Task<OrderDto?> UpdateStatusAsync(int orderId, OrderStatus status)
+    public async Task<OrderDto?> UpdateStatusAsync(int orderId, OrderStatus status, CancellationToken cancellationToken)
     {
         if(orderId <= 0)
         {
             throw new ArgumentException("Order ID must be greater than 0.", nameof(orderId));
         }
 
-        var result = await _orderRepository.UpdateStatusAsync(orderId, status);
+        var result = await _orderRepository.UpdateStatusAsync(orderId, status, cancellationToken);
 
         return result is null ? null : _mapper.Map<OrderDto>(result);
     }
@@ -145,6 +154,9 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <param name="userId">
     /// The unique identifier of user requesting the cancellation.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The cancelled <see cref="OrderDto"/> if successful; otherwise, <c>null</c>.
     /// </returns>
@@ -154,7 +166,7 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <exception cref="NotFoundException">
     /// Thrown if the order does not exist or belong to the specified user.
     /// </exception> 
-    public async Task<OrderDto?> CancelOrderAsync(int orderId, int userId)
+    public async Task<OrderDto?> CancelOrderAsync(int orderId, int userId, CancellationToken cancellationToken)
     {
         if(orderId <= 0)
         {
@@ -165,13 +177,13 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
             throw new ArgumentException("User ID must be greater than 0.", nameof(userId));
         }
 
-        var order = await _orderRepository.GetByIdAsync(orderId);
+        var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if(order is null || order.UserId != userId)
         {
             throw new NotFoundException("Order was not found.");
         }
 
-        var result = await _orderRepository.UpdateStatusAsync(orderId, OrderStatus.Cancelled);
+        var result = await _orderRepository.UpdateStatusAsync(orderId, OrderStatus.Cancelled, cancellationToken);
         return result is null ? null : _mapper.Map<OrderDto>(result);
     }
 

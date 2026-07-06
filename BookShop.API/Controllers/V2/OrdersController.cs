@@ -26,6 +26,9 @@ public class OrdersController(IOrderService service) : BaseApiController
     /// <param name="orderId">
     /// The unique identifier of the order.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The order is found.
     /// </returns>
@@ -47,9 +50,9 @@ public class OrdersController(IOrderService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetById([FromRoute]int orderId)
+    public async Task<IActionResult> GetById([FromRoute]int orderId, CancellationToken cancellationToken)
     {
-        var result = await _service.GetByIdAsync(orderId);
+        var result = await _service.GetByIdAsync(orderId, cancellationToken);
         return result == null 
             ? NotFound() 
             : Ok(result);
@@ -58,6 +61,9 @@ public class OrdersController(IOrderService service) : BaseApiController
     /// <summary>
     /// Retrieves all orders placed by the currenlty authenticated user.
     /// </summary>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A collection of orders belonging to the user.
     /// </returns>
@@ -75,16 +81,19 @@ public class OrdersController(IOrderService service) : BaseApiController
     [ProducesResponseType(typeof(IEnumerable<OrderDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetByUserId()
+    public async Task<IActionResult> GetByUserId(CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
-        var result = await _service.GetByUserIdAsync(userId);
+        var result = await _service.GetByUserIdAsync(userId, cancellationToken);
         return Ok(result);
     }
 
     /// <summary>
     /// Creates a new order from the currenlty authenticated user's shopping cart.
     /// </summary>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The created order.
     /// </returns>
@@ -122,6 +131,9 @@ public class OrdersController(IOrderService service) : BaseApiController
     /// <param name="status">
     /// The new status to assign to the order.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The updated order.
     /// </returns>
@@ -148,9 +160,9 @@ public class OrdersController(IOrderService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> UpdateStatus([FromRoute] int orderId, [FromQuery] OrderStatus status)
+    public async Task<IActionResult> UpdateStatus([FromRoute] int orderId, [FromQuery] OrderStatus status, CancellationToken cancellationToken)
     {
-        var result = await _service.UpdateStatusAsync(orderId, status);
+        var result = await _service.UpdateStatusAsync(orderId, status, cancellationToken);
         return result is null
             ? NotFound()
             : Ok(result);
@@ -161,6 +173,9 @@ public class OrdersController(IOrderService service) : BaseApiController
     /// </summary>
     /// <param name="orderId">
     /// The unique identifier of the order to cancel.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// The cancelled order.
@@ -183,10 +198,10 @@ public class OrdersController(IOrderService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CancelOrder([FromRoute]int orderId)
+    public async Task<IActionResult> CancelOrder([FromRoute]int orderId, CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
-        var result = await _service.CancelOrderAsync(orderId, userId);
+        var result = await _service.CancelOrderAsync(orderId, userId, cancellationToken);
         return result is null
             ? NotFound()
             : Ok(result);
