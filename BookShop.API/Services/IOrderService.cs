@@ -43,6 +43,9 @@ public interface IOrderService
     /// <param name="userId">
     /// The unique identifier of the user placing the order.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The created <see cref="OrderDto"/>. 
     /// </returns>
@@ -52,7 +55,7 @@ public interface IOrderService
     /// <exception cref="NotFoundException">
     /// Thrown when the user's cart does not exist or is empty.
     /// </exception> 
-    Task<OrderDto> CreateOrderAsync(int userId);
+    Task<OrderDto> CreateOrderAsync(int userId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Updates the status of an existing order.

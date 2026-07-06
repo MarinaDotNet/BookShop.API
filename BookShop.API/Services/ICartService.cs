@@ -14,13 +14,16 @@ public interface ICartService
     /// <param name="userId">
     /// The identifier of the user whose cart to retrieve. Must not be null or whitespace.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> if the cart exists; otherwise <c>null</c>. 
     /// </returns>
     /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="userId"/> is null or whitespace.
     /// </exception> 
-    Task<CartDto?> GetByUserIdAsync(string userId);
+    Task<CartDto?> GetByUserIdAsync(string userId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Creates and maps the cart for the  specified user.
@@ -28,13 +31,16 @@ public interface ICartService
     /// <param name="userId">
     /// The identifier of the user for whom to create new cart. Must not be null or whitespace.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> if the cart created successfully.
     /// </returns>
     /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="userId"/> is null or whitespace.
     /// </exception>
-    Task<CartDto> CreateAsync(string userId);
+    Task<CartDto> CreateAsync(string userId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Adds requested item to the cart for the specified user if cart exists and requested item not in cart yet.
@@ -79,6 +85,9 @@ public interface ICartService
     /// <param name="quantity">
     /// The new quantity. Must be greater than zero.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> with the updated item quantity. 
     /// </returns>
@@ -89,7 +98,7 @@ public interface ICartService
     /// <exception cref="NotFoundException">
     /// Thrown when the cart or the specified item does not exist.
     /// </exception>
-    Task<CartDto> UpdateItemQuantityAsync(string userId, string bookId, UpdateItemQuantityDto quantity);
+    Task<CartDto> UpdateItemQuantityAsync(string userId, string bookId, UpdateItemQuantityDto quantity, CancellationToken cancellationToken);
 
     /// <summary>
     /// Removes a specific item form the shopping cart of the currently authenticated user.
@@ -100,6 +109,9 @@ public interface ICartService
     /// <param name="bookId">
     /// The identifier of the book to remove from the cart. Must not be null or whitespace.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> without the specified <paramref name="bookId"/> item. 
     /// </returns>
@@ -109,7 +121,7 @@ public interface ICartService
     /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="userId"/> or <paramref name="bookId"/> is null or whitespace.
     /// </exception> 
-    Task<CartDto> RemoveItemAsync(string userId, string bookId);
+    Task<CartDto> RemoveItemAsync(string userId, string bookId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Deletes the cart of the specified user.
@@ -117,11 +129,14 @@ public interface ICartService
     /// <param name="userId">
     /// The identifier of the user whose cart to delete. Must not be null or whitespace.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="userId"/> is null or whitespace.
     /// </exception>
     /// <exception cref="NotFoundException">
     /// Thrown if the cart does not exist.
     /// </exception> 
-    Task ClearAsync(string userId);
+    Task ClearAsync(string userId, CancellationToken cancellationToken);
 }

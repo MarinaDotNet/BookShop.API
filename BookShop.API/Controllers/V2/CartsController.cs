@@ -27,6 +27,9 @@ public class CartsController(ICartService service) : BaseApiController
     /// <summary>
     /// Retrieves the shopping cart of the currently authenticated user.
     /// </summary>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The cart belonging to the authenticated user, or HTTP 404 if no cart exists yet.
     /// </returns>
@@ -48,10 +51,10 @@ public class CartsController(ICartService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetByUserId()
+    public async Task<IActionResult> GetByUserId(CancellationToken cancellationToken)
     {
         int userId = GetCurrentUserId();
-        var result = await _service.GetByUserIdAsync(userId.ToString());
+        var result = await _service.GetByUserIdAsync(userId.ToString(), cancellationToken);
 
         return result == null 
             ? NotFound()
@@ -61,6 +64,9 @@ public class CartsController(ICartService service) : BaseApiController
     /// <summary>
     /// Creates shopping cart for currently authenticated user.
     /// </summary>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The created cart to the authenticated user, or HTTP 409 if the cart already exists.
     /// </returns>
@@ -82,10 +88,10 @@ public class CartsController(ICartService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> CreateCart()
+    public async Task<IActionResult> CreateCart(CancellationToken cancellationToken)
     {
         int userId = GetCurrentUserId();
-        var result = await _service.CreateAsync(userId.ToString());
+        var result = await _service.CreateAsync(userId.ToString(), cancellationToken);
 
         return CreatedAtAction(nameof(GetByUserId), result);
     }
@@ -137,6 +143,9 @@ public class CartsController(ICartService service) : BaseApiController
     /// <param name="quantity">
     /// The new quantity. Must not be null and greater than zero.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The updated cart, or HTTP 404 if the cart or the specified item does not exist.
     /// </returns>
@@ -158,10 +167,10 @@ public class CartsController(ICartService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateItemQuantity([FromRoute]string bookId, UpdateItemQuantityDto quantity)
+    public async Task<IActionResult> UpdateItemQuantity([FromRoute]string bookId, UpdateItemQuantityDto quantity, CancellationToken cancellationToken)
     {
         string userId = GetCurrentUserId().ToString();
-        var result = await _service.UpdateItemQuantityAsync(userId, bookId, quantity);
+        var result = await _service.UpdateItemQuantityAsync(userId, bookId, quantity, cancellationToken);
         return Ok(result);
     }
 
@@ -170,6 +179,9 @@ public class CartsController(ICartService service) : BaseApiController
     /// </summary>
     /// <param name="bookId">
     /// The identifier of the book to remove from the cart.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// The udpated cart, or HTTP 404 if the cart was not found.
@@ -192,16 +204,19 @@ public class CartsController(ICartService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RemoveItem([FromRoute]string bookId)
+    public async Task<IActionResult> RemoveItem([FromRoute]string bookId, CancellationToken cancellationToken)
     {
         string userId = GetCurrentUserId().ToString();
-        var result = await _service.RemoveItemAsync(userId, bookId);
+        var result = await _service.RemoveItemAsync(userId, bookId, cancellationToken);
         return Ok(result);
     }
 
     /// <summary>
     /// Deletes the shopping cart of the currently authenticated user.
     /// </summary>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// HTTP 204 No Content on success, or HTTP 404 if the cart does not exist.
     /// </returns>
@@ -223,10 +238,10 @@ public class CartsController(ICartService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Clear()
+    public async Task<IActionResult> Clear(CancellationToken cancellationToken)
     {
         string userId = GetCurrentUserId().ToString();
-        await _service.ClearAsync(userId);
+        await _service.ClearAsync(userId, cancellationToken);
         return NoContent();
     }
 }

@@ -106,10 +106,10 @@ public class OrdersController(IOrderService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CreateOrder()
+    public async Task<IActionResult> CreateOrder(CancellationToken cancellationToken)
     {
         int userId = GetCurrentUserId();
-        var result = await _service.CreateOrderAsync(userId);
+        var result = await _service.CreateOrderAsync(userId, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
     }
 

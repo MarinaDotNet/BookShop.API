@@ -32,17 +32,20 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <param name="userId">
     /// The identifier of the user whose cart to retrieve. Must not be null or whitespace.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> if the cart exists; otherwise <c>null</c>. 
     /// </returns>
     /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="userId"/> is null or whitespace.
     /// </exception>
-    public async Task<CartDto?> GetByUserIdAsync(string userId)
+    public async Task<CartDto?> GetByUserIdAsync(string userId, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
 
-        var cart = await _cartRepository.GetByUserIdAsync(userId);
+        var cart = await _cartRepository.GetByUserIdAsync(userId, cancellationToken);
 
         if(cart is null)
         {
@@ -58,6 +61,9 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <param name="userId">
     /// The identifier of the user for whom to create new cart. Must not be null or whitespace.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> if the cart created successfully.
     /// </returns>
@@ -67,11 +73,11 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <exception cref="ConflictException">
     /// Thrown when cart already exists for the specified user.
     /// </exception>
-    public async Task<CartDto> CreateAsync(string userId)
+    public async Task<CartDto> CreateAsync(string userId, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
 
-        if (await IsCartExistsAsync(userId))
+        if (await IsCartExistsAsync(userId, cancellationToken))
         {
             throw new ConflictException(nameof(userId));
         }
@@ -86,7 +92,7 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
             UpdatedAt = currentTime
         };
 
-        await _cartRepository.CreateAsync(cart);
+        await _cartRepository.CreateAsync(cart, cancellationToken);
         return _mapper.Map<CartDto>(cart);
     }
 
@@ -125,7 +131,7 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
         ArgumentNullException.ThrowIfNull(addToCart);
         ArgumentException.ThrowIfNullOrWhiteSpace(addToCart.BookId);
 
-        var cart = await GetOrCreateCartAsync(userId);
+        var cart = await GetOrCreateCartAsync(userId, cancellationToken);
 
         var book = await _bookRepository.GetBookByIdAsync(addToCart.BookId, cancellationToken)
             ?? throw new NotFoundException(nameof(Book));
@@ -139,11 +145,11 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
         {
             int newQuantity = cart.Items.First(i => i.BookId == book.Id).Quantity + addToCart.Quantity;
 
-            cart = await _cartRepository.UpdateItemQuantityAsync(userId, book.Id!, newQuantity) ?? cart;
+            cart = await _cartRepository.UpdateItemQuantityAsync(userId, book.Id!, newQuantity, cancellationToken) ?? cart;
         }
         else
         {
-           cart = await _cartRepository.AddItemAsync(userId, BuildCartItem(book, addToCart.Quantity)) ?? cart;
+           cart = await _cartRepository.AddItemAsync(userId, BuildCartItem(book, addToCart.Quantity), cancellationToken) ?? cart;
         }
 
         return _mapper.Map<CartDto>(cart);
@@ -161,6 +167,9 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <param name="quantity">
     /// The new quantity. Must be greater than zero.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> with the updated item quantity. 
     /// </returns>
@@ -171,13 +180,13 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <exception cref="NotFoundException">
     /// Thrown when the cart or the specified item does not exist.
     /// </exception>
-    public async Task<CartDto> UpdateItemQuantityAsync(string userId, string bookId, UpdateItemQuantityDto quantity)
+    public async Task<CartDto> UpdateItemQuantityAsync(string userId, string bookId, UpdateItemQuantityDto quantity, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
         ArgumentException.ThrowIfNullOrWhiteSpace(bookId);
         ArgumentNullException.ThrowIfNull(quantity);
 
-        var cart = await _cartRepository.UpdateItemQuantityAsync(userId, bookId, quantity.Quantity)
+        var cart = await _cartRepository.UpdateItemQuantityAsync(userId, bookId, quantity.Quantity, cancellationToken)
             ?? throw new NotFoundException("Cart or item not found.");
 
         return _mapper.Map<CartDto>(cart);
@@ -192,6 +201,9 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <param name="bookId">
     /// The identifier of the book to remove from the cart. Must not be null or whitespace.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> without the specified <paramref name="bookId"/> item. 
     /// </returns>
@@ -201,12 +213,12 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="userId"/> or <paramref name="bookId"/> is null or whitespace.
     /// </exception> 
-    public async Task<CartDto> RemoveItemAsync(string userId, string bookId)
+    public async Task<CartDto> RemoveItemAsync(string userId, string bookId, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
         ArgumentException.ThrowIfNullOrWhiteSpace(bookId);
 
-        var cart = await _cartRepository.RemoveItemAsync(userId, bookId)
+        var cart = await _cartRepository.RemoveItemAsync(userId, bookId, cancellationToken)
             ?? throw new NotFoundException("Cart or item not found.");
 
         return _mapper.Map<CartDto>(cart);
@@ -218,17 +230,20 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <param name="userId">
     /// The identifier of the user whose cart to delete. Must not be null or whitespace.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <exception cref="ArgumentException">
     /// Thrown if <paramref name="userId"/> is null or whitespace.
     /// </exception>
     /// <exception cref="NotFoundException">
     /// Thrown if the cart does not exist.
     /// </exception> 
-    public async Task ClearAsync(string userId)
+    public async Task ClearAsync(string userId, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
 
-        if(!await _cartRepository.ClearAsync(userId))
+        if(!await _cartRepository.ClearAsync(userId, cancellationToken))
         {
             throw new NotFoundException("Cart not found.");
         }
@@ -240,12 +255,15 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <param name="userId">
     /// The identifier of user for whom to check if cart exists or not.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The <c>true</c> if cart exists; otherwise <c>false</c>
     /// </returns>
-    private async Task<bool> IsCartExistsAsync(string userId)
+    private async Task<bool> IsCartExistsAsync(string userId, CancellationToken cancellationToken)
     {
-        return await _cartRepository.GetByUserIdAsync(userId) is not null;
+        return await _cartRepository.GetByUserIdAsync(userId, cancellationToken) is not null;
     }
 
     /// <summary>
@@ -254,19 +272,22 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <param name="userId">
     /// The unique identifier currently authenticated user, whose cart to return.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The existing or new cart of authenticated user.
     /// </returns>
-    private async Task<Cart> GetOrCreateCartAsync(string userId)
+    private async Task<Cart> GetOrCreateCartAsync(string userId, CancellationToken cancellationToken)
     {
-        return await _cartRepository.GetByUserIdAsync(userId)
+        return await _cartRepository.GetByUserIdAsync(userId, cancellationToken)
             ?? await _cartRepository.CreateAsync(new Cart
             {
                UserId = userId,
                Items = [],
                CreatedAt = DateTime.UtcNow,
                UpdatedAt = DateTime.UtcNow 
-            });
+            }, cancellationToken);
     }
 
     /// <summary>

@@ -75,6 +75,9 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <param name="userId">
     /// The unique identifier of the user placing the order.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The created <see cref="OrderDto"/>. 
     /// </returns>
@@ -84,14 +87,14 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
     /// <exception cref="NotFoundException">
     /// Thrown when the user's cart does not exist or is empty.
     /// </exception> 
-    public async Task<OrderDto> CreateOrderAsync(int userId)
+    public async Task<OrderDto> CreateOrderAsync(int userId, CancellationToken cancellationToken)
     {
         if(userId <= 0)
         {
             throw new ArgumentException("User ID must be greater than 0.", nameof(userId));
         }
 
-        var cart = await _cartRepository.GetByUserIdAsync(userId.ToString()) 
+        var cart = await _cartRepository.GetByUserIdAsync(userId.ToString(), cancellationToken) 
             ?? throw new NotFoundException("Cart for required user was not found.");
 
         if(cart.Items.Count == 0)
@@ -101,7 +104,7 @@ public class OrderService(IOrderRepository orderRepository, ICartRepository cart
 
         var result = await _orderRepository.CreateOrderAsync(CreateOrderFromCart(cart));
 
-        await _cartRepository.ClearAsync(userId.ToString());
+        await _cartRepository.ClearAsync(userId.ToString(), cancellationToken);
 
         return _mapper.Map<OrderDto>(result);
     }
