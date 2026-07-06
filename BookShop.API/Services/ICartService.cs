@@ -47,6 +47,9 @@ public interface ICartService
     /// <param name="addToCart">
     /// The item which needs to be added into cart.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> with added item if the item added successfully. 
     /// </returns>
@@ -62,7 +65,7 @@ public interface ICartService
     /// <exception cref="ValidationException">
     /// Thrown when the BookId format is invalid or the book is not available.
     /// </exception>
-    Task<CartDto> AddItemAsync(string userId, AddToCartDto addToCart);
+    Task<CartDto> AddItemAsync(string userId, AddToCartDto addToCart, CancellationToken cancellationToken);
 
     /// <summary>
     /// Updates the quantity of a specific item in user's cart.

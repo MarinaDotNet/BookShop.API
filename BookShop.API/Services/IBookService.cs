@@ -24,6 +24,9 @@ public interface IBookService
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated read-only collection of 
     /// <see cref="BookDto"/>.
@@ -37,7 +40,7 @@ public interface IBookService
     /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </exception>
-    Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination);
+    Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves a book by its unique identifier. This method returns a <see cref="BookDto"/> object representing the book with the 
@@ -46,6 +49,9 @@ public interface IBookService
     /// </summary>
     /// <param name="id">
     /// The unique identifier of the book to retrieve. Must be a non-empty string.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the <see cref="BookDto"/> object 
@@ -57,7 +63,7 @@ public interface IBookService
     /// <exception cref="NotFoundException">
     /// Thrown when a book with the specified identifier is not found.
     /// </exception>  
-    Task<BookDto> GetBookByIdAsync(string id);
+    Task<BookDto> GetBookByIdAsync(string id, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves books that exactly match the specified search term with an 
@@ -68,6 +74,9 @@ public interface IBookService
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
@@ -84,8 +93,7 @@ public interface IBookService
     /// <exception cref="ArgumentNullException">
     /// Thrown when the pagination object is null.
     /// </exception>
-
-    Task<PageResultDto<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination);
+    Task<PageResultDto<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves available books that exactly match the specified search term.
@@ -95,6 +103,9 @@ public interface IBookService
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
@@ -111,8 +122,7 @@ public interface IBookService
     /// <exception cref="ArgumentNullException">
     /// Thrown when the pagination object is null.
     /// </exception>
-
-    Task<PageResultDto<BookDto>> GetAvailableBooksByExactMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination);
+    Task<PageResultDto<BookDto>> GetAvailableBooksByExactMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves books that partially match the specified search term
@@ -123,7 +133,10 @@ public interface IBookService
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
-    /// </param> 
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated read-only 
     /// collection of <see cref="BookDto"/> objects that match the specified search criteria.
@@ -138,7 +151,7 @@ public interface IBookService
     /// <exception cref="ArgumentNullException">
     /// Thrown when the pagination object is null.
     /// </exception>
-    Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination);
+    Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves available books that partially match the specified search term.
@@ -148,7 +161,10 @@ public interface IBookService
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
-    /// </param> 
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated read-only 
     /// collection of <see cref="BookDto"/> objects that partly match the specified search criteria.
@@ -163,7 +179,7 @@ public interface IBookService
     /// <exception cref="ArgumentNullException">
     /// Thrown when the pagination object is null.
     /// </exception>
-    Task<PageResultDto<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination);
+    Task<PageResultDto<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously checks if a book with the specified identifier exists
@@ -172,6 +188,9 @@ public interface IBookService
     /// <param name="id">
     /// The unique identifier of the book to check. Cannot be <c>null</c> or empty.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A <see cref="Task{Boolean}"/> representing the asynchronous operation.
     /// The task result is <c>true</c> if the book exists; otherwise, <c>false</c>.
@@ -179,7 +198,7 @@ public interface IBookService
     /// <exception cref="ValidationException">
     /// Thrown when the provided identifier is null, empty, or not a valid ObjectId
     /// </exception>
-    Task<bool> IsBookExistsAsync(string id);
+    Task<bool> IsBookExistsAsync(string id, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves the top cheapest books from the data source, with an optional filter for availability.
@@ -191,6 +210,9 @@ public interface IBookService
     /// An optional parameter to filter books by their availability status.
     /// If null then no availability filter is applied.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents a read-only collection of <see cref="BookDto"/> objects representing the top cheapest books 
     /// that match the specified criteria.
@@ -198,7 +220,7 @@ public interface IBookService
     /// <exception cref="ValidationException">
     /// Thrown when <paramref name="count" />is not a positive integer.
     /// </exception> 
-    Task<IReadOnlyCollection<BookDto>> GetTopCheapestBooksAsync(int count, bool? isAvailable);
+    Task<IReadOnlyCollection<BookDto>> GetTopCheapestBooksAsync(int count, bool? isAvailable, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves the top expensive books from the data source, with an optional filter for availability.
@@ -210,6 +232,9 @@ public interface IBookService
     /// An optional parameter to filter books by their availability status.
     /// If null then no availability filter is applied.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents a read-only collection of <see cref="BookDto"/> objects representing the top expensive books
     /// that match the specified criteria.
@@ -217,7 +242,7 @@ public interface IBookService
     /// <exception cref="ValidationException">
     /// Thrown when <paramref name="count" /> is not a positive integer.
     /// </exception>  
-    Task<IReadOnlyCollection<BookDto>> GetTopExpensiveBooksAsync(int count, bool? isAvailable);
+    Task<IReadOnlyCollection<BookDto>> GetTopExpensiveBooksAsync(int count, bool? isAvailable, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves books from the data source based on sorting and filtering criteria specified in the 
@@ -227,10 +252,13 @@ public interface IBookService
     /// <param name="query">
     /// The query object containing search criteria, and sorting options.
     /// </param>
-    /// <returns>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated collection of <see cref="BookDto"/>
     /// objects that match the specified sorting and filtering criteria. 
     /// </returns>
@@ -243,7 +271,7 @@ public interface IBookService
     /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </exception>  
-    Task<PageResultDto<BookDto>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination);
+    Task<PageResultDto<BookDto>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves available books that match the specified search criteria and sorting options.
@@ -254,7 +282,9 @@ public interface IBookService
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
-    /// A task th
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated read-only collection of available
     /// <see cref="BookDto"/> objects that match the specified search criteria and sorting options. 
@@ -269,7 +299,7 @@ public interface IBookService
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>  
-    Task<PageResultDto<BookDto>> GetSortedAndFilteredAvailableBooksAsync(BookQueryDto query, PaginationQueryDto pagination);
+    Task<PageResultDto<BookDto>> GetSortedAndFilteredAvailableBooksAsync(BookQueryDto query, PaginationQueryDto pagination, CancellationToken cancellationToken);
     #endregion Getters
 
     #region Setters
@@ -280,11 +310,14 @@ public interface IBookService
     /// <param name="bookDto">
     /// A <see cref="BookCreateDto"/> object containing the details of the book to be added.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A <see cref="Task{BookCreateDto}"/> representing the asynchronous operation.
     /// The task result contains the added <see cref="BookCreateDto"/> object, including the generated Id.
     /// </returns>
-    Task<BookCreateDto> CreateBookAsync(BookCreateDto bookDto);
+    Task<BookCreateDto> CreateBookAsync(BookCreateDto bookDto, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously deletes the <see cref="Book"/> with the specified identifier
@@ -292,6 +325,9 @@ public interface IBookService
     /// </summary>
     /// <param name="id">
     /// The unique identifier of the book to be deleted. Cannot be <c>null</c> or empty.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A <see cref="Task{BookDto}"/> representing the asynchronous operation.
@@ -303,7 +339,7 @@ public interface IBookService
     /// <exception cref="NotFoundException">
     /// Thrown when a book with the specified identifier does not exist in the data source.
     /// </exception> 
-    Task<BookDto> DeleteBookByIdAsync(string id);
+    Task<BookDto> DeleteBookByIdAsync(string id, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously updates an existing book in the data source.
@@ -311,6 +347,9 @@ public interface IBookService
     /// </summary>
     /// <param name="bookDto">
     /// A <see cref="BookUpdateDto"/> containing the updated data. Cannot be <c>null</c> and must include a valid book ID.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the updated <see cref="BookDto"/> object. 
@@ -324,7 +363,7 @@ public interface IBookService
     /// <exception cref="InvalidOperationException">
     /// Thrown when the update operation fails due to an unexpected error.
     /// </exception>
-    Task<BookDto> UpdateBookAsync(BookUpdateDto bookDto);
+    Task<BookDto> UpdateBookAsync(BookUpdateDto bookDto, CancellationToken cancellationToken);
 
     /// <summary>
     /// Partially updates an existing book in the data source using PATCH semantics.
@@ -333,10 +372,13 @@ public interface IBookService
     /// <param name="bookDto">
     /// A <see cref="BookUpdatePartlyDto"/> containing the fields to update. Cannot be <c>null</c> and must include a valid book ID.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the updated <see cref="BookDto"/> object. 
     /// </returns>
-    Task<BookDto> UpdateBookPartlyAsync(BookUpdatePartlyDto bookDto);
+    Task<BookDto> UpdateBookPartlyAsync(BookUpdatePartlyDto bookDto, CancellationToken cancellationToken);
 
     #endregion Setters
 }

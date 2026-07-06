@@ -41,6 +41,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// The number of cheapest books to retrieve. Must be betwee <see cref="MaxCount"/> and <see cref="MinCount"/> inclusive.
     /// If not provided, the default value of <see cref="DefaultCount"/> is used.   
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <response code="200">
     /// A collection of the books is returned successfully. If no books match the criteria, 
     /// and empty collection is returned with HTTP 200 OK.
@@ -54,10 +57,10 @@ public class BooksController(IBookService service) : ControllerBase
     [MapToApiVersion("3.0")]
     [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetTopCheapestBooks([FromQuery] int count = DefaultCount)
+    public async Task<IActionResult> GetTopCheapestBooks(CancellationToken cancellationToken, [FromQuery] int count = DefaultCount)
     {
         ValidateCount(count);
-        return Ok( await _service.GetTopCheapestBooksAsync(count, true));
+        return Ok( await _service.GetTopCheapestBooksAsync(count, true, cancellationToken));
     }
 
     /// <summary>
@@ -72,6 +75,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// The number of expensive books to retrieve. Must be betwee <see cref="MaxCount"/> and <see cref="MinCount"/> inclusive.
     /// If not provided, the default value of <see cref="DefaultCount"/> is used.   
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <response code="200">
     /// A collection of the books is returned successfully. If no books match the criteria, 
     /// and empty collection is returned with HTTP 200 OK.
@@ -84,10 +90,10 @@ public class BooksController(IBookService service) : ControllerBase
     [HttpGet("expensive")]
     [ProducesResponseType(typeof(IReadOnlyCollection<BookDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetTopExpensiveBooks([FromQuery] int count = DefaultCount)
+    public async Task<IActionResult> GetTopExpensiveBooks(CancellationToken cancellationToken, [FromQuery] int count = DefaultCount)
     {
         ValidateCount(count);
-        return Ok(await _service.GetTopExpensiveBooksAsync(count, true));
+        return Ok(await _service.GetTopExpensiveBooksAsync(count, true, cancellationToken));
     }
 
     /// <summary>

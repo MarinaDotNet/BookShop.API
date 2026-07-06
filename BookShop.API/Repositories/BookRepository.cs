@@ -40,12 +40,15 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated collection 
     /// of books that match the availability filter, or all books if filter not applied. 
     /// The collection is empty if no books are found.
     /// </returns>
-    public async Task<PageResultDto<Book>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination)
+    public async Task<PageResultDto<Book>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
         var filter = isAvailable.HasValue
             ? Builders<Book>.Filter.Eq(b => b.IsAvailable, isAvailable.Value)
@@ -62,7 +65,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             .Find(filter)
             .Skip(PaginationHelper.CalculateSkip(pagination.PageNumber, pagination.PageSize))
             .Limit(pagination.PageSize)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return CreateBookPageResult(books, pagination, totalCount);
     }
@@ -70,12 +73,19 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// <summary>
     /// Asynchronously retrieves a book with the specified identifier.
     /// </summary>
-    /// <param name="id">The unique identifier of the book to retrieve. Cannot be null.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the <see cref="Book"/> with the
-    /// specified identifier, or <see langword="null"/> if no matching book is found.</returns>
-    public async Task<Book> GetBookByIdAsync(string id)
+    /// <param name="id">
+    /// The unique identifier of the book to retrieve. Cannot be null.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the <see cref="Book"/> with the
+    /// specified identifier, or <see langword="null"/> if no matching book is found.
+    /// </returns>
+    public async Task<Book> GetBookByIdAsync(string id, CancellationToken cancellationToken)
     {
-        var book = await _booksCollection.Find(b => b.Id!.Equals(id)).FirstOrDefaultAsync();
+        var book = await _booksCollection.Find(b => b.Id!.Equals(id)).FirstOrDefaultAsync(cancellationToken);
         return book;
     }
 
@@ -93,11 +103,14 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
-    /// </param> 
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated collection of books.
     /// </returns>
-    public async Task<PageResultDto<Book>> GetBooksByExactMatchAsync(string searchTerm, bool? isAvailable, PaginationQueryDto pagination)
+    public async Task<PageResultDto<Book>> GetBooksByExactMatchAsync(string searchTerm, bool? isAvailable, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
         var regex = BuildCaseInsensitiveRegex(searchTerm);
 
@@ -118,7 +131,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             filters = Builders<Book>.Filter.And(filters, availabilityFilter);
         }
 
-        long totalCount = await _booksCollection.CountDocumentsAsync(filters);
+        long totalCount = await _booksCollection.CountDocumentsAsync(filters, cancellationToken: cancellationToken);
 
         if(totalCount == 0)
         {
@@ -129,7 +142,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             .Find(filters)
             .Skip(PaginationHelper.CalculateSkip(pagination.PageNumber, pagination.PageSize))
             .Limit(pagination.PageSize)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return CreateBookPageResult(books, pagination, totalCount);
     }
@@ -148,12 +161,15 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
-    /// </param> 
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// The task result contains a paginated read-only collection of matching books.
     /// </returns>
-    public async Task<PageResultDto<Book>> GetBooksByPartialMatchAsync(string searchTerm, bool? isAvailable, PaginationQueryDto pagination)
+    public async Task<PageResultDto<Book>> GetBooksByPartialMatchAsync(string searchTerm, bool? isAvailable, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
         var regex = BuildCaseInsensitiveRegex(searchTerm);
 
@@ -174,7 +190,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             filter = Builders<Book>.Filter.And(filter, availabilityFilter);
         }
 
-        long totalCount = await _booksCollection.CountDocumentsAsync(filter);
+        long totalCount = await _booksCollection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
 
         if(totalCount == 0)
         {
@@ -185,7 +201,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             .Find(filter)
             .Skip(PaginationHelper.CalculateSkip(pagination.PageNumber, pagination.PageSize))
             .Limit(pagination.PageSize)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return CreateBookPageResult(books, pagination, totalCount);
     }
@@ -196,15 +212,18 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// <param name="id">
     /// The unique identifier of the book to check. Cannot be <c>null</c> or empty.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A <see cref="Task{Boolean}"/> representing the asynchronous operation.
     /// The task result is <c>true</c> if the book exists; otherwise, <c>false</c>.
     /// </returns>
-    public async Task<bool> GetBookByIdAnyAsync(string id)
+    public async Task<bool> GetBookByIdAnyAsync(string id, CancellationToken cancellationToken)
     {
         var filter = Builders<Book>.Filter.Eq(b => b.Id, id);
 
-        return await _booksCollection.Find(filter).AnyAsync();
+        return await _booksCollection.Find(filter).AnyAsync(cancellationToken);
     }
 
     /// <summary>
@@ -223,17 +242,20 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// If provided, only books match the specified availability status will be returned. 
     /// If null, no avialability filter is applied.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a collection of the top N cheapest books
     /// that match the specified criteria. The collection is empty if no matching books are found.
     /// </returns>
-    public async Task<IReadOnlyCollection<Book>> GetTopCheapestBooksAsync(int count, bool? isAvailable)
+    public async Task<IReadOnlyCollection<Book>> GetTopCheapestBooksAsync(int count, bool? isAvailable, CancellationToken cancellationToken)
     {
         var filter = isAvailable.HasValue
             ? Builders<Book>.Filter.Eq(b => b.IsAvailable, isAvailable.Value)
             : Builders<Book>.Filter.Empty;
 
-        return await _booksCollection.Find(filter).SortBy(b => b.Price).Limit(count).ToListAsync();
+        return await _booksCollection.Find(filter).SortBy(b => b.Price).Limit(count).ToListAsync(cancellationToken);
     }
 
     /// <summary>
@@ -250,17 +272,20 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// If provided, only books match the specified availability status will be returned.
     /// If null, no availability filter is applied.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a collection of the top N expensive books
     /// that match the specified criteria. The collection is empty if no matching booka are found.
     /// </returns>
-    public async Task<IReadOnlyCollection<Book>> GetTopExpensiveBooksAsync(int count, bool? isAvailable)
+    public async Task<IReadOnlyCollection<Book>> GetTopExpensiveBooksAsync(int count, bool? isAvailable, CancellationToken cancellationToken)
     {
         var filter = isAvailable.HasValue
             ? Builders<Book>.Filter.Eq(b => b.IsAvailable, isAvailable.Value)
             : Builders<Book>.Filter.Empty;
 
-        return await _booksCollection.Find(filter).SortByDescending(b => b.Price).Limit(count).ToListAsync();
+        return await _booksCollection.Find(filter).SortByDescending(b => b.Price).Limit(count).ToListAsync(cancellationToken);
     }
 
     /// <summary>
@@ -274,15 +299,18 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated collection of <see cref="Book"/> entities
     /// that match the specified criteria. The collection is empty if no matching books are found. 
     /// </returns>
-    public async Task<PageResultDto<Book>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination)
+    public async Task<PageResultDto<Book>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
         var filterDefinition = BuildFilterDefinition(query);
 
-        long totalCount = await _booksCollection.CountDocumentsAsync(filterDefinition);
+        long totalCount = await _booksCollection.CountDocumentsAsync(filterDefinition, cancellationToken: cancellationToken);
 
         if(totalCount == 0)
         {
@@ -295,7 +323,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             .Sort(sortDefinition)
             .Skip(PaginationHelper.CalculateSkip(pagination.PageNumber, pagination.PageSize))
             .Limit(pagination.PageSize)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return CreateBookPageResult(books, pagination, totalCount);
     }
@@ -307,13 +335,16 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// <param name="book">
     /// The <see cref="Book"/> object containing the details of the book to be added.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A <see cref="Task{Book}"/> representing the asynchronous operation.
     /// The task result contains the added <see cref="Book"/> object, including the generated Id.
     /// </returns>
-    public async Task<Book> AddBookAsync(Book book)
+    public async Task<Book> AddBookAsync(Book book, CancellationToken cancellationToken)
     {
-        await _booksCollection.InsertOneAsync(book);
+        await _booksCollection.InsertOneAsync(book, cancellationToken: cancellationToken);
         return book;
     }
 
@@ -323,6 +354,9 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// <param name="id">
     /// The unique identifier of the book to be deleted. Cannot be <c>null</c> or empty.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A <see cref="Task{Book}"/> representing the asynchronous operation.
     /// The task result contains the deleted <see cref="Book"/> object.
@@ -331,11 +365,11 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// If the book with the specified ID does not exist, a <see cref="Exceptions.NotFoundException"/>
     /// is typically thrown by the service layer.
     /// </remarks>
-    public async Task<Book> DeleteBookByIdAsync(string id)
+    public async Task<Book> DeleteBookByIdAsync(string id, CancellationToken cancellationToken)
     {
         var filter = Builders<Book>.Filter.Eq(b => b.Id, id);
 
-        var deletedBook = await _booksCollection.FindOneAndDeleteAsync(filter);
+        var deletedBook = await _booksCollection.FindOneAndDeleteAsync(filter, cancellationToken: cancellationToken);
 
         return deletedBook;
     }
@@ -343,12 +377,17 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// <summary>
     /// Asynchronously updates a full <see cref="Book"/> entity in the data source.
     /// </summary>
-    /// <param name="book">The <see cref="Book"/> object containing updated data. Must have a valid ID.</param>
+    /// <param name="book">
+    /// The <see cref="Book"/> object containing updated data. Must have a valid ID.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A <see cref="Task{Book}"/> representing the asynchronous operation.
     /// The task result contains the updated <see cref="Book"/> entity.
     /// </returns>
-    public async Task<Book> UpdateBookAsync(Book book)
+    public async Task<Book> UpdateBookAsync(Book book, CancellationToken cancellationToken)
     {
         var filter = Builders<Book>.Filter.Eq(b => b.Id, book.Id);
 
@@ -357,23 +396,30 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             ReturnDocument = ReturnDocument.After
         };
 
-        return await _booksCollection.FindOneAndReplaceAsync(filter, book, options);
+        return await _booksCollection.FindOneAndReplaceAsync(filter, book, options, cancellationToken);
     }
 
     /// <summary>
     /// Asynchronously applies partial updates to a <see cref="Book"/> using MongoDB <see cref="UpdateDefinition{Book}"/>.
     /// </summary>
-    /// <param name="updates">A list of update definitions specifying the fields to update.</param>
-    /// <param name="id">The unique identifier of the book to update.</param>
+    /// <param name="updates">
+    /// A list of update definitions specifying the fields to update.
+    /// </param>
+    /// <param name="id">
+    /// The unique identifier of the book to update.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A <see cref="Book"/> representing the asynchronous operation.
     /// The task result contains the updated <see cref="Book"/> if found; otherwise, <c>null</c>.
     /// </returns>
-    public async Task<Book?> UpdateBookPartlyAsync(List<UpdateDefinition<Book>> updates, string id)
+    public async Task<Book?> UpdateBookPartlyAsync(List<UpdateDefinition<Book>> updates, string id, CancellationToken cancellationToken)
     {
         if(updates == null || updates.Count == 0)
         {
-            return await _booksCollection.Find(b => b.Id!.Equals(id)).FirstOrDefaultAsync();
+            return await _booksCollection.Find(b => b.Id!.Equals(id)).FirstOrDefaultAsync(cancellationToken);
         }
 
         var filter = Builders<Book>.Filter.Eq(b => b.Id, id);
@@ -385,7 +431,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
             ReturnDocument = ReturnDocument.After
         };
 
-        return await _booksCollection.FindOneAndUpdateAsync(filter, update, options);
+        return await _booksCollection.FindOneAndUpdateAsync(filter, update, options, cancellationToken);
     }
     #endregion Setters
 

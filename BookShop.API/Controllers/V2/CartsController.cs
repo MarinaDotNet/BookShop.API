@@ -97,6 +97,9 @@ public class CartsController(ICartService service) : BaseApiController
     /// <param name="addToCartDto">
     /// The book identifier and quantity to add. Must not be null.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The updated cart, or HTTP 404 if the specified book does not exist.
     /// </returns>
@@ -118,10 +121,10 @@ public class CartsController(ICartService service) : BaseApiController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AddItem([FromBody]AddToCartDto addToCartDto)
+    public async Task<IActionResult> AddItem([FromBody]AddToCartDto addToCartDto, CancellationToken cancellationToken)
     {
         string userId = GetCurrentUserId().ToString();
-        var result = await _service.AddItemAsync(userId, addToCartDto);
+        var result = await _service.AddItemAsync(userId, addToCartDto, cancellationToken);
         return Ok(result);
     }
 

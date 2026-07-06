@@ -41,6 +41,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A paginated collection of books that match the specified criteria.
     /// Returned with HTTP 200 status code.
@@ -75,9 +78,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Tags("Books: Read")]
-    public async Task<IActionResult> GetAll(bool? isAvailable, [FromQuery] PaginationQueryDto pagination)
+    public async Task<IActionResult> GetAll(bool? isAvailable, [FromQuery] PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        return Ok( await _service.GetAllBooksAsync(isAvailable, pagination));
+        return Ok( await _service.GetAllBooksAsync(isAvailable, pagination, cancellationToken));
     }
 
     /// <summary>
@@ -85,6 +88,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </summary>
     /// <param name="id">
     /// The unique identifier of the book to retrieve.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// An <see cref="IActionResult"/> containing the book with the specified identifier.
@@ -118,9 +124,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [Tags("Books: Read")]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
     {
-        return Ok( await _service.GetBookByIdAsync(id));
+        return Ok( await _service.GetBookByIdAsync(id, cancellationToken));
     }
 
     /// <summary>
@@ -131,6 +137,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A paginated collection of books that exactly match the search criteria.
@@ -164,9 +173,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Tags("Books: Read")]
-    public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request, [FromQuery]  PaginationQueryDto pagination)
+    public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request, [FromQuery]  PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        return Ok( await _service.GetBooksByExactMatchAsync(request, pagination));
+        return Ok( await _service.GetBooksByExactMatchAsync(request, pagination, cancellationToken));
     }
 
     /// <summary>
@@ -177,6 +186,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A paginated collection of <see cref="BookDto"/>
@@ -211,9 +223,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Tags("Books: Read")]
-    public async Task<IActionResult> GetByPartialMatch([FromQuery] BookSearchRequestDto request, [FromQuery] PaginationQueryDto pagination)
+    public async Task<IActionResult> GetByPartialMatch([FromQuery] BookSearchRequestDto request, [FromQuery] PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        return Ok( await _service.GetBooksByPartialMatchAsync(request, pagination));
+        return Ok( await _service.GetBooksByPartialMatchAsync(request, pagination, cancellationToken));
     }
 
     /// <summary>
@@ -221,6 +233,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </summary>
     /// <param name="id">
     /// The unique identifier of the book to check.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// An <see cref="IActionResult"/> indicating existence.
@@ -252,9 +267,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("Books: Read")]
-    public async Task<IActionResult> Exists(string id)
+    public async Task<IActionResult> Exists(string id, CancellationToken cancellationToken)
     {
-        var exists = await _service.IsBookExistsAsync(id);
+        var exists = await _service.IsBookExistsAsync(id, cancellationToken);
         return exists ? Ok() : NotFound();
     }
 
@@ -268,6 +283,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated collection of books that match the
@@ -302,9 +320,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Tags("Books: Read")]
-    public async Task<IActionResult> GetSortedAndFilteredBooks([FromQuery] BookQueryDto query, [FromQuery] PaginationQueryDto pagination)
+    public async Task<IActionResult> GetSortedAndFilteredBooks([FromQuery] BookQueryDto query, [FromQuery] PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        return Ok(await _service.GetSortedAndFilteredBooksAsync(query, pagination));
+        return Ok(await _service.GetSortedAndFilteredBooksAsync(query, pagination, cancellationToken));
     }
 
     #endregion Books: Read
@@ -316,6 +334,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </summary>
     /// <param name="bookDto">
     /// A <see cref="BookCreateDto"/> object representing the book to be added.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// An <see cref="IActionResult"/> containing the created <see cref="BookDto"/> object.
@@ -349,9 +370,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("Books: Write")]
-    public async Task<IActionResult> CreateBook([FromBody] BookCreateDto bookDto)
+    public async Task<IActionResult> CreateBook([FromBody] BookCreateDto bookDto, CancellationToken cancellationToken)
     {
-        var createdBook = await _service.CreateBookAsync(bookDto);
+        var createdBook = await _service.CreateBookAsync(bookDto, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = createdBook.Id }, createdBook);
     }
 
@@ -360,6 +381,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </summary>
     /// <param name="id">
     /// The unique identifier of the book to delete.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// An <see cref="IActionResult"/> with HTTP 204 (No Content) if the deletion
@@ -392,9 +416,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("Books: Write")]
-    public async Task<IActionResult> DeleteById(string id)
+    public async Task<IActionResult> DeleteById(string id, CancellationToken cancellationToken)
     {
-       await _service.DeleteBookByIdAsync(id);
+       await _service.DeleteBookByIdAsync(id, cancellationToken);
 
         return NoContent();
     }
@@ -404,6 +428,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </summary>
     /// <param name="id">The unique identifier of the book to update. Must match <see cref="BookUpdateDto.Id"/>.</param>
     /// <param name="bookDto">The <see cref="BookUpdateDto"/> containing the updated book data.</param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// An <see cref="IActionResult"/> containing the updated <see cref="BookDto"/> if successful,
     /// or <c>400 Bad Request</c> if the route ID does not match the body ID.
@@ -438,14 +465,14 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("Books: Write")]
-    public async Task<IActionResult> UpdateBook(string id, [FromBody]BookUpdateDto bookDto)
+    public async Task<IActionResult> UpdateBook(string id, [FromBody]BookUpdateDto bookDto, CancellationToken cancellationToken)
     {
         if (!id.Equals(bookDto.Id, StringComparison.OrdinalIgnoreCase))
         {
             return BadRequest("Route ID does not match body ID.");
         }
 
-        var updatedBook = await _service.UpdateBookAsync(bookDto);
+        var updatedBook = await _service.UpdateBookAsync(bookDto, cancellationToken);
         return Ok(updatedBook);
     }
 
@@ -455,6 +482,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </summary>
     /// <param name="id">The unique identifier of the book to update. Must match <see cref="BookUpdatePartlyDto.Id"/>.</param>
     /// <param name="bookDto">The <see cref="BookUpdatePartlyDto"/> containing fields to update.</param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// An <see cref="IActionResult"/> containing the updated <see cref="BookDto"/> if successful,
     /// or <c>400 Bad Request</c> if the route ID does not match the body ID.
@@ -489,14 +519,14 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("Books: Write")]
-    public async Task<IActionResult> UpdatePartlyBook(string id, [FromBody]BookUpdatePartlyDto bookDto)
+    public async Task<IActionResult> UpdatePartlyBook(string id, [FromBody]BookUpdatePartlyDto bookDto, CancellationToken cancellationToken)
     {
         if(!id.Equals(bookDto.Id, StringComparison.OrdinalIgnoreCase))
         {
             return BadRequest("Route ID does not match body ID.");
         }
 
-        var updatedBook = await _service.UpdateBookPartlyAsync(bookDto);
+        var updatedBook = await _service.UpdateBookPartlyAsync(bookDto, cancellationToken);
         return Ok(updatedBook);
     }
 

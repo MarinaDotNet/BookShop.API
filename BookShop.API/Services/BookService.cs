@@ -38,6 +38,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A paginated result containing book DTOs and pagination metadata.
     /// </returns> 
@@ -47,9 +50,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// </exception>
-    public async Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination)
+    public async Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        PageResultDto<Book> query = await _bookRepository.GetAllBooksAsync(isAvailable, pagination);
+        PageResultDto<Book> query = await _bookRepository.GetAllBooksAsync(isAvailable, pagination, cancellationToken);
 
         return PaginationHelper.MapPageResult<Book, BookDto>(_mapper, query);
     }
@@ -61,6 +64,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="id">
     /// The unique identifier of the book to retrieve. Cannot be null or empty.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a <see cref="BookDto"/> representing
     /// the requested book.
@@ -68,11 +74,11 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="NotFoundException">
     /// Thrown if a book with the specified <paramref name="id"/> does not exist.
     /// </exception>
-    public async Task<BookDto> GetBookByIdAsync(string id)
+    public async Task<BookDto> GetBookByIdAsync(string id, CancellationToken cancellationToken)
     {
         ValidateObjectId(id);
 
-        var book = await _bookRepository.GetBookByIdAsync(id);
+        var book = await _bookRepository.GetBookByIdAsync(id, cancellationToken);
 
         return book is null 
             ? throw new NotFoundException($"Book with the provided ID '{id}' was not found.") 
@@ -89,6 +95,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// The task result contains a paginated read-only collection of <see cref="BookDto"/> objects that match the specified search criteria.
@@ -101,8 +110,8 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <paramref name="request"/>  is null or contains an invalid search term.
     /// </exception>
-    public async Task<PageResultDto<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination) =>
-        await GetBooksByExactMatchAsync(request, request.IsAvailable, pagination);
+    public async Task<PageResultDto<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination, CancellationToken cancellationToken) =>
+        await GetBooksByExactMatchAsync(request, request.IsAvailable, pagination, cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves available books that exactly match the specified search term.
@@ -113,6 +122,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     ///  <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// The task result contains a paginated read-only collection of <see cref="BookDto"/> objects that match the specified search criteria.
@@ -125,8 +137,8 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <paramref name="request"/>  is null or contains an invalid search term.
     /// </exception>
-    public async Task<PageResultDto<BookDto>> GetAvailableBooksByExactMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination) =>
-        await GetBooksByExactMatchAsync(request, true, pagination);
+    public async Task<PageResultDto<BookDto>> GetAvailableBooksByExactMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination, CancellationToken cancellationToken) =>
+        await GetBooksByExactMatchAsync(request, true, pagination, cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves books that partially match the specified search term
@@ -137,7 +149,10 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
-    /// </param> 
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated read-only collection of <see cref="BookDto"/> 
     /// objects that match the specified search criteria.
@@ -150,8 +165,8 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>
-    public async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination) =>
-        await GetBooksByPartialMatchAsync(request, request.IsAvailable, pagination);
+    public async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination, CancellationToken cancellationToken) =>
+        await GetBooksByPartialMatchAsync(request, request.IsAvailable, pagination, cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves available books that partially match the specified search term.
@@ -161,7 +176,10 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
-    /// </param> 
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// The task result contains a paginated read-only collection of <see cref="BookDto"/> objects that match the specified search criteria.
@@ -174,8 +192,8 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>
-    public async Task<PageResultDto<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination) =>
-        await GetBooksByPartialMatchAsync(request, true, pagination);
+    public async Task<PageResultDto<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination, CancellationToken cancellationToken) =>
+        await GetBooksByPartialMatchAsync(request, true, pagination, cancellationToken);
 
     /// <summary>
     /// Asynchronously checks if a book with the specified identifier exists
@@ -184,6 +202,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="id">
     /// The unique identifier of the book to check. Cannot be <c>null</c> or empty.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A <see cref="Task{Boolean}"/> representing the asynchronous operation.
     /// The task result is <c>true</c> if the book exists; otherwise, <c>false</c>.
@@ -191,11 +212,11 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="ValidationException">
     /// Thrown when the provided identifier is null, empty, or not a valid ObjectId.
     /// </exception>
-    public async Task<bool> IsBookExistsAsync(string id)
+    public async Task<bool> IsBookExistsAsync(string id, CancellationToken cancellationToken)
     {
         ValidateObjectId(id);
 
-        var book = await _bookRepository.GetBookByIdAsync(id);
+        var book = await _bookRepository.GetBookByIdAsync(id, cancellationToken);
 
         return book is not null;
     }
@@ -210,6 +231,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// An optional parameter to filter books by their availability status.
     /// If null then no availability filter is applied.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a read-only collection of <see cref="BookDto"/>
     /// representing the top cheapest books that match the specified criteria. If no books are found matching the criteria, an empty
@@ -218,14 +242,14 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="ValidationException">
     /// Thrown when <paramref name="count"/> is not a positive integer.
     /// </exception>
-    public async Task<IReadOnlyCollection<BookDto>> GetTopCheapestBooksAsync(int count, bool? isAvailable)
+    public async Task<IReadOnlyCollection<BookDto>> GetTopCheapestBooksAsync(int count, bool? isAvailable, CancellationToken cancellationToken)
     {
         if(count <= 0)
         {
             throw new ValidationException("Count must be a positive integer.");
         }
 
-        var books = await _bookRepository.GetTopCheapestBooksAsync(count, isAvailable);
+        var books = await _bookRepository.GetTopCheapestBooksAsync(count, isAvailable, cancellationToken);
         
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
@@ -239,6 +263,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="isAvailable">
     /// An optional parameter to filter books by their availability status. If null then no availability filter is applied.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a read-only collection of <see cref="BookDto"/>
     /// objects representing the top expensive books that match the specified criteria. If no books are found matching the criteria,
@@ -247,14 +274,14 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="ValidationException">
     /// Thrown when <paramref name="count" /> is not a positive integer.
     /// </exception>
-    public async Task<IReadOnlyCollection<BookDto>> GetTopExpensiveBooksAsync(int count, bool? isAvailable)
+    public async Task<IReadOnlyCollection<BookDto>> GetTopExpensiveBooksAsync(int count, bool? isAvailable, CancellationToken cancellationToken)
     {
         if(count <= 0)
         {
             throw new ValidationException("Count must be a positive integer.");
         }
 
-        var books = await _bookRepository.GetTopExpensiveBooksAsync(count, isAvailable);
+        var books = await _bookRepository.GetTopExpensiveBooksAsync(count, isAvailable, cancellationToken);
         return _mapper.Map<IReadOnlyCollection<BookDto>>(books);
     }
     #endregion Getters
@@ -267,6 +294,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="bookDto">
     /// A <see cref="BookDto"/> object containing the details of the book to be added.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A <see cref="Task{BookDto}"/> representing the asynchronous operation.
     /// The task result contains the added <see cref="BookDto"/> object, including the generated Id.
@@ -274,10 +304,10 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="ValidationException">
     /// Thrown if <paramref name="bookDto"/> is invalid according to business rules.
     /// </exception>
-    public async Task<BookCreateDto> CreateBookAsync(BookCreateDto bookDto)
+    public async Task<BookCreateDto> CreateBookAsync(BookCreateDto bookDto, CancellationToken cancellationToken)
     {
         var book = _mapper.Map<Book>(bookDto);
-        var addedBook = await _bookRepository.AddBookAsync(book);
+        var addedBook = await _bookRepository.AddBookAsync(book, cancellationToken);
 
         return _mapper.Map<BookCreateDto>(addedBook);
     }
@@ -289,6 +319,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="id">
     /// The unique identifier of the book to be deleted. Cannot be <c>null</c> or empty.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A <see cref="Task{BookDto}"/> representing the asynchronous operation.
     /// The task result contains the deleted <see cref="BookDto"/>.
@@ -299,16 +332,16 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="NotFoundException">
     /// Thrown when a book with the specified identifier does not exist.
     /// </exception>
-    public async Task<BookDto> DeleteBookByIdAsync(string id)
+    public async Task<BookDto> DeleteBookByIdAsync(string id, CancellationToken cancellationToken)
     {
         ValidateObjectId(id);
 
-        if(!await IsBookExistsAsync(id))
+        if(!await IsBookExistsAsync(id, cancellationToken))
         {
             throw new NotFoundException($"Book with ID '{id}' not found.");
         }
 
-        return _mapper.Map<BookDto>(await _bookRepository.DeleteBookByIdAsync(id));
+        return _mapper.Map<BookDto>(await _bookRepository.DeleteBookByIdAsync(id, cancellationToken));
     }
 
     /// <summary>
@@ -317,6 +350,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </summary>
     /// <param name="bookDto">
     /// A <see cref="BookUpdateDto"/> containing the updated data. Cannot be <c>null</c> and must include a valid book ID.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A <see cref="Task"/> representing the asynchronous operation.
@@ -328,14 +364,14 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="InvalidOperationException">
     /// Thrown when the update operation fails.
     /// </exception>
-    public async Task<BookDto> UpdateBookAsync(BookUpdateDto bookDto)
+    public async Task<BookDto> UpdateBookAsync(BookUpdateDto bookDto, CancellationToken cancellationToken)
     {
-        if (!await IsBookExistsAsync(bookDto.Id))
+        if (!await IsBookExistsAsync(bookDto.Id, cancellationToken))
         {
             throw new NotFoundException($"Book with ID '{bookDto.Id}' not found.");
         }
 
-        var updatedBook = await _bookRepository.UpdateBookAsync(_mapper.Map<Book>(bookDto)) ??
+        var updatedBook = await _bookRepository.UpdateBookAsync(_mapper.Map<Book>(bookDto), cancellationToken) ??
             throw new InvalidOperationException("Book update failed.");
 
         return _mapper.Map<BookDto>(updatedBook);
@@ -347,6 +383,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </summary>
     /// <param name="bookDto">
     /// A <see cref="BookUpdatePartlyDto"/> containing the fields to update. Cannot be <c>null</c> and must include a valid book ID.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A <see cref="Task"/> representing the asynchronous operation.
@@ -362,7 +401,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// Each field is only updated if it passes the corresponding validation defined in the service.
     /// For example, string fields must not be null or whitespace, numeric fields must be positive, and collections must not be empty.
     /// </remarks>
-    public async Task<BookDto> UpdateBookPartlyAsync(BookUpdatePartlyDto bookDto)
+    public async Task<BookDto> UpdateBookPartlyAsync(BookUpdatePartlyDto bookDto, CancellationToken cancellationToken)
     {
         var updates = new List<UpdateDefinition<Book>>();
 
@@ -382,7 +421,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
             throw new ValidationException("No valid fields provided for update.");
         }
 
-        var updatedBook = await _bookRepository.UpdateBookPartlyAsync(updates, bookDto.Id);
+        var updatedBook = await _bookRepository.UpdateBookPartlyAsync(updates, bookDto.Id, cancellationToken);
 
         return updatedBook is not null 
             ? _mapper.Map<BookDto>(updatedBook) 
@@ -439,6 +478,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// The task result contains a paginated read-only collection of <see cref="BookDto"/> 
@@ -453,14 +495,14 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="ArgumentNullException">
     /// Thrown when the pagination object is null.
     /// </exception>
-    private async Task<PageResultDto<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination)
+    private async Task<PageResultDto<BookDto>> GetBooksByExactMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
         if (request is null || string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             throw new ValidationException("Search term cannot be null or empty.");
         }
 
-        var query = await _bookRepository.GetBooksByExactMatchAsync(request.SearchTerm, isAvailable, pagination);
+        var query = await _bookRepository.GetBooksByExactMatchAsync(request.SearchTerm, isAvailable, pagination, cancellationToken);
 
         return PaginationHelper.MapPageResult<Book, BookDto>(_mapper, query);
     }
@@ -477,7 +519,10 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
-    /// </param> 
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation.
     /// The task result contains a paginated read-only collection of <see cref="BookDto"/>. 
@@ -492,14 +537,14 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <exception cref="ArgumentNullException">
     /// Thrown when the pagination object is null.
     /// </exception>
-    private async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination)
+    private async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
         if (request is null || string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             throw new ValidationException("Search term cannot be null or empty.");
         }
 
-        var query = await _bookRepository.GetBooksByPartialMatchAsync(request.SearchTerm, isAvailable, pagination);
+        var query = await _bookRepository.GetBooksByPartialMatchAsync(request.SearchTerm, isAvailable, pagination, cancellationToken);
 
         return PaginationHelper.MapPageResult<Book, BookDto>(_mapper, query);
     }
@@ -513,7 +558,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
-    /// A task th
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated read-only collection of
     /// <see cref="BookDto"/> objects that match the specified search criteria and sorting options. 
@@ -528,9 +575,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>   
-    public async Task<PageResultDto<BookDto>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination)
+    public async Task<PageResultDto<BookDto>> GetSortedAndFilteredBooksAsync(BookQueryDto query, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query, pagination);
+        var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query, pagination, cancellationToken);
 
         return PaginationHelper.MapPageResult<Book, BookDto>(_mapper, result);
     }
@@ -544,7 +591,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
-    /// A task th
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated read-only collection of available
     /// <see cref="BookDto"/> objects that match the specified search criteria and sorting options. 
@@ -559,9 +608,9 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
     /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
     /// </exception>   
-    public async Task<PageResultDto<BookDto>> GetSortedAndFilteredAvailableBooksAsync(BookQueryDto query, PaginationQueryDto pagination)
+    public async Task<PageResultDto<BookDto>> GetSortedAndFilteredAvailableBooksAsync(BookQueryDto query, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query with { IsAvailable = true }, pagination);
+        var result = await _bookRepository.GetSortedAndFilteredBooksAsync(query with { IsAvailable = true }, pagination, cancellationToken);
 
         return PaginationHelper.MapPageResult<Book, BookDto>(_mapper, result);
     }

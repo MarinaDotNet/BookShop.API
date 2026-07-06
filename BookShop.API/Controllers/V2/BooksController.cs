@@ -32,6 +32,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// A paginated collection of books that match the specified criteria. Returns HTTP 200 OK.
     /// </returns>
@@ -65,9 +68,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetAll([FromQuery] PaginationQueryDto pagination)
+    public async Task<IActionResult> GetAll([FromQuery] PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        return Ok( await _service.GetAllBooksAsync(true, pagination));
+        return Ok( await _service.GetAllBooksAsync(true, pagination, cancellationToken));
     }
 
     /// <summary>
@@ -76,6 +79,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </summary>
     /// <param name="id">
     /// The unique identifier of the book to retrieve.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// The requested book if found and available. Returns HTTP 200 OK.
@@ -112,9 +118,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
     {
-        var book = await _service.GetBookByIdAsync(id);
+        var book = await _service.GetBookByIdAsync(id, cancellationToken);
 
         if (book is null || !book.IsAvailable)
         {
@@ -133,6 +139,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A paginated collection of books that exactly match the search criteria.
@@ -165,9 +174,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request, [FromQuery] PaginationQueryDto pagination)
+    public async Task<IActionResult> GetByExactMatch([FromQuery] BookSearchRequestDto request, [FromQuery] PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        return Ok(await _service.GetAvailableBooksByExactMatchAsync(request, pagination));
+        return Ok(await _service.GetAvailableBooksByExactMatchAsync(request, pagination, cancellationToken));
         
     }
 
@@ -180,6 +189,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A paginated collection of books that partly match the search criteria.
@@ -212,9 +224,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetByPartialMatch([FromQuery] BookSearchRequestDto request, [FromQuery] PaginationQueryDto pagination)
+    public async Task<IActionResult> GetByPartialMatch([FromQuery] BookSearchRequestDto request, [FromQuery] PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        return Ok(await _service.GetAvailableBooksByPartialMatchAsync(request, pagination));
+        return Ok(await _service.GetAvailableBooksByPartialMatchAsync(request, pagination, cancellationToken));
     }
 
     /// <summary>
@@ -227,6 +239,9 @@ public class BooksController(IBookService service) : ControllerBase
     /// </param>
     /// <param name="pagination">
     /// Pagination parameters used to control the page number and page size of the returned results.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
     /// </param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a paginated collection of available books that match the
@@ -260,9 +275,9 @@ public class BooksController(IBookService service) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetSortedAndFilteredBooks([FromQuery] BookQueryDto query, [FromQuery] PaginationQueryDto pagination)
+    public async Task<IActionResult> GetSortedAndFilteredBooks([FromQuery] BookQueryDto query, [FromQuery] PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        return Ok(await _service.GetSortedAndFilteredAvailableBooksAsync(query, pagination));
+        return Ok(await _service.GetSortedAndFilteredAvailableBooksAsync(query, pagination, cancellationToken));
     }
 
 }

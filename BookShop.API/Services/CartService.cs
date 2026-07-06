@@ -101,6 +101,9 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <param name="addToCart">
     /// The item which needs to be added into cart.
     /// </param>
+    /// <param name="cancellationToken">
+    /// A token that can be used to cancel the asynchronous operation.
+    /// </param>
     /// <returns>
     /// The mapped <see cref="CartDto"/> with added item if the item added successfully. 
     /// </returns>
@@ -116,7 +119,7 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
     /// <exception cref="ValidationException">
     /// Thrown when the BookId format is invalid or the book is not available.
     /// </exception>
-    public async Task<CartDto> AddItemAsync(string userId, AddToCartDto addToCart)
+    public async Task<CartDto> AddItemAsync(string userId, AddToCartDto addToCart, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
         ArgumentNullException.ThrowIfNull(addToCart);
@@ -124,7 +127,7 @@ public class CartService(ICartRepository cartRepository, IBookRepository bookRep
 
         var cart = await GetOrCreateCartAsync(userId);
 
-        var book = await _bookRepository.GetBookByIdAsync(addToCart.BookId)
+        var book = await _bookRepository.GetBookByIdAsync(addToCart.BookId, cancellationToken)
             ?? throw new NotFoundException(nameof(Book));
 
         if (!book.IsAvailable)
