@@ -83,7 +83,7 @@ public class BookRepository(MongoDbContext context) : IBookRepository
     /// A task that represents the asynchronous operation. The task result contains the <see cref="Book"/> with the
     /// specified identifier, or <see langword="null"/> if no matching book is found.
     /// </returns>
-    public async Task<Book> GetBookByIdAsync(string id, CancellationToken cancellationToken)
+    public async Task<Book?> GetBookByIdAsync(string id, CancellationToken cancellationToken)
     {
         var book = await _booksCollection.Find(b => b.Id!.Equals(id)).FirstOrDefaultAsync(cancellationToken);
         return book;

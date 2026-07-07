@@ -45,7 +45,7 @@ public interface IBookRepository
     /// A task that represents the asynchronous operation. The task result contains the <see cref="Book"/> with the
     /// specified identifier, or <see langword="null"/> if no matching book is found.
     /// </returns>
-    Task<Book> GetBookByIdAsync(string id, CancellationToken cancellationToken);
+    Task<Book?> GetBookByIdAsync(string id, CancellationToken cancellationToken);
 
     /// <summary>
     /// Asynchronously retrieves <see cref="Book"/> documents from MongoDB that partially match the specified
