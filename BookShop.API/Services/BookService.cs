@@ -43,13 +43,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </param>
     /// <returns>
     /// A paginated result containing book DTOs and pagination metadata.
-    /// </returns> 
-    /// <exception cref="ValidationException">
-    /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
-    /// </exception>
+    /// </returns>
     public async Task<PageResultDto<BookDto>> GetAllBooksAsync(bool? isAvailable, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
         PageResultDto<Book> query = await _bookRepository.GetAllBooksAsync(isAvailable, pagination, cancellationToken);
