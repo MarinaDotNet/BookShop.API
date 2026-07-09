@@ -20,7 +20,7 @@
 The API is documented with Swagger/OpenAPI and organized into three API versions based on user access level. Each version exposes only the endpoints available to its intended audience.
 
 <p align="center">
-    <img src="docs/images/swagger-home.png widht="900" alt="Swagger Home">
+    <img src="BookShop.API/docs/images/swagger-home.png" widht="900" alt="Swagger Home">
 </p>
 
 ### Authentication
@@ -28,7 +28,7 @@ The API is documented with Swagger/OpenAPI and organized into three API versions
 Supports registration, email confirmation, JWT authentication, refresh token rotation, account recovery, password reset, and logout from all devices.
 
 <p align="center">
-    <img src="docs/images/swagger-auth.png widht="900" alt="Swagger Auth">
+    <img src="BookShop.API/docs/images/swagger-auth.png" widht="900" alt="Swagger Auth">
 </p>
 
 ### Books API
@@ -36,7 +36,7 @@ Supports registration, email confirmation, JWT authentication, refresh token rot
 Supports CRUD operations, exact and partial search, pagination, availability filtering, and API versioning with different access levels for administrators, authenticated users, and guests.
 
 <p align="center">
-    <img src="docs/images/swagger-books.png widht="900"  alt="Swagger Books">
+    <img src="BookShop.API/docs/images/swagger-books.png" widht="900"  alt="Swagger Books">
 </p>
 
 ### Authorization
@@ -44,7 +44,7 @@ Supports CRUD operations, exact and partial search, pagination, availability fil
 Swagger is configured with JWT Bearer authentication, allowing authenticated endpoints to be tested directly from the browser.
 
 <p align="center">
-    <img src="docs/images/authorize.png widht="900" alt="Authorization">
+    <img src="BookShop.API/docs/images/authorize.png" widht="900" alt="Authorization">
 </p>
 
 ### Shopping Cart and Orders
@@ -52,7 +52,7 @@ Swagger is configured with JWT Bearer authentication, allowing authenticated end
 Provides shopping cart management and order creation for authenticated users.
 
 <p align="center">
-    <img src="docs/images/swagger-cart-and-order.png widht="900"  alt="Swagger Cart and Order">
+    <img src="BookShop.API/docs/images/swagger-cart-and-order.png" widht="900"  alt="Swagger Cart and Order">
 </p>
 
 ### Unit Tests
@@ -60,7 +60,7 @@ Provides shopping cart management and order creation for authenticated users.
 The business layer is covered with unit tests using xUnit, Moq, and FluentAssertions to verify business logic, validation, exception handling, and interaction between application components.
 
 <p align="center">
-    <img src="docs/images/tests.png widht="900"  alt="Unit Tests">
+    <img src="BookShop.API/docs/images/tests.png" widht="900"  alt="Unit Tests">
 </p>
 
 ---
