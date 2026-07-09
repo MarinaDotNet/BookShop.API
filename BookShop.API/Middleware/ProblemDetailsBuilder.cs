@@ -44,6 +44,35 @@ public static class ProblemDetailsBuilder
     }
 
     /// <summary>
+    /// Creates a <see cref="ProblemDetails"/> response without requiring an exception. 
+    /// </summary>
+    /// <param name="context">
+    /// The current HTTP context.
+    /// </param>
+    /// <param name="statusCode">
+    /// The HTTP status code to return.
+    /// </param>
+    /// <param name="title">
+    /// The short, human-readable summary of the problem.
+    /// </param>
+    /// <param name="detail">
+    /// A human-readable explanation specific to this occurrence of the problem.
+    /// </param>
+    /// <returns>
+    /// A populated <see cref="ProblemDetails"/> instance. 
+    /// </returns>
+    public static ProblemDetails Build(HttpContext context, int statusCode, string? title = null, string? detail = null)
+    {
+        return new ProblemDetails
+        {
+            Status = statusCode,
+            Title = title,
+            Detail = detail,
+            Instance = context.Request.Path
+        };
+    }
+
+    /// <summary>
     /// Maps the given <paramref name="exception"/> to an HTTP status code for a <c>ProblemDetails</c> response.
     /// </summary>
     /// <param name="exception">The exception to map. Cannot be null.</param>
