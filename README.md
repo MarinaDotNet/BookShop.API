@@ -2,7 +2,7 @@
 
 ## ASP.NET Core REST API — Portfolio Project
 
-**BookShop.API** is a RESTful Web API built with **ASP.NET Core**. The goal of this project is to show how I work with backend development - clean architecture, real authentication flows, and practical patterns.
+**BookShop.API** is a RESTful Web API built with **ASP.NET Core**. The goal of this project is to demonstrate production-oriented backend development practices using ASP.NET Core.
 
 > **Project Status**
 > 🚧 Still in active development - adding new features and improving existing ones.
@@ -13,9 +13,61 @@
 
 ---
 
+## Screenshots
+
+### Swagger UI
+
+The API is documented with Swagger/OpenAPI and organized into three API versions based on user access level. Each version exposes only the endpoints available to its intended audience.
+
+<p align="center">
+    <img src="docs/images/swagger-home.png widht="900" alt="Swagger Home">
+</p>
+
+### Authentication
+
+Supports registration, email confirmation, JWT authentication, refresh token rotation, account recovery, password reset, and logout from all devices.
+
+<p align="center">
+    <img src="docs/images/swagger-auth.png widht="900" alt="Swagger Auth">
+</p>
+
+### Books API
+
+Supports CRUD operations, exact and partial search, pagination, availability filtering, and API versioning with different access levels for administrators, authenticated users, and guests.
+
+<p align="center">
+    <img src="docs/images/swagger-books.png widht="900"  alt="Swagger Books">
+</p>
+
+### Authorization
+
+Swagger is configured with JWT Bearer authentication, allowing authenticated endpoints to be tested directly from the browser.
+
+<p align="center">
+    <img src="docs/images/authorize.png widht="900" alt="Authorization">
+</p>
+
+### Shopping Cart and Orders
+
+Provides shopping cart management and order creation for authenticated users.
+
+<p align="center">
+    <img src="docs/images/swagger-cart-and-order.png widht="900"  alt="Swagger Cart and Order">
+</p>
+
+### Unit Tests
+
+The business layer is covered with unit tests using xUnit, Moq, and FluentAssertions to verify business logic, validation, exception handling, and interaction between application components.
+
+<p align="center">
+    <img src="docs/images/tests.png widht="900"  alt="Unit Tests">
+</p>
+
+---
+
 ## What This Project Shows
 
-I buiilt this to practice and demostrate skills that matter for a Junior .NET Backend Developer:
+I built this to practice and demostrate skills that matter for a Junior .NET Backend Developer:
 
 - Building REST APIs with clear structure and versioning
 - Layered architecture with proper separation of concerns
@@ -23,22 +75,31 @@ I buiilt this to practice and demostrate skills that matter for a Junior .NET Ba
 - Email confirmation and account management flows
 - Working with both MongoDB and PostgreSQL in the project
 - Custom exception handling with RFC 7807 ProblemDetails
-- Deploying to the cloud with Docker
+- Containerized with Docker and deployed on Render.
+- Request validation using Data Annotations and FluentValidation
+- Shopping cart and order management
+- Endpoint-specific rate limiting using ASP.NET Core RateLimiter
 
 ---
 
 ## Tech Stack
 
 - ASP .NET Core Web API (.NET 10)
-- Entity Framework Core + PostgreSQL (users and auth)
-- MongoDB (books catalog)
+- Entity Framework Core + PostgreSQL (users and auth and orders)
+- MongoDB (books catalog and cart)
 - JWT Bearer Authentication + Refresh Tokens
 - ASP .NET Core Data Protection (auth action tokens)
 - Brevo (transactional email)
 - AutoMapper
+- ASP.NET Core Rate Limiting
+- FluentValidation
+- xUnit
+- Moq
+- FluentAssertions
 - Swagger / OpenAPI (with XML documentation)
 - Docker
 - Render.com (deployment)
+- CancellationToken support accross controllers, services, and repositories
 
 ---
 
@@ -49,7 +110,7 @@ Instead of versioning by feature, I versioned by **who can access what**:
 | Version | Who can use it | Controllers |
 |---------|----------------|-------------|
 | **V1** | Admins only | `AuthController`, `BooksController` |
-| **V2** | Logged in users | `BooksController` |
+| **V2** | Logged in users | `BooksController`, `CartsController`, `OrdersController` |
 | **V3** | Guests / not logged in | `BooksController` |
 
 This keeps authorization logic clear at the routing level and makes access boundaries explicit.
@@ -71,6 +132,17 @@ The auth system is one of the main focuses of this project. It includes:
 - **Account deletion** with email confirmation
 - **Account recovery** for soft-deleted accounts
 - **Soft delete** - users are never removed from the database
+- **Sliding Window rate limiting** - endpoint-specific rate limiting to protect authentication and public endpoints
+
+---
+
+## Validation
+
+The API uses a layered validation approach.
+
+- **ASP.NET Core Model Validation** (Data Anotations) validates incoming request models during model binding and authoamtically returns `400 Bad Request` responses for invalid requests.
+- **FluentValidation** is used for business validation rules that belong to the application layer.
+- Validation failures are returned as standardized **RFC 7807 ProblemDetails** responses.
 
 ---
 
@@ -84,7 +156,9 @@ BookShop.API
 |  |  ├── AuthController.cs          ← Admin + public auth endpoints
 |  |  └── BooksController.cs         ← Full CRUD (admin only)
 |  ├── V2
-|  |  └── BooksController.cs         ← Read all available books (logged in users)
+|  |  ├──BooksController.cs          ← Read all available books (logged in users)
+|  |  ├──CartController.cs
+|  |  └──OrderController.cs
 |  ├── V3
 |  |  └── BooksController.cs         ← Top 10 cheapest books (guests)
 |  └── BaseApiController.cs          ← Shared base with GetCurrentUserId()
@@ -106,9 +180,19 @@ BookShop.API
 |  |  ├── UpdatePasswordDto.cs
 |  |  └── UpdateUserNameDto.cs
 |  ├── Catalog
+|  |  ├── AddToCartDto.cs
+|  |  ├── BookCreateDto.cs
 |  |  ├── BookDto.cs
+|  |  ├── BookQueryDto.cs
 |  |  ├── BookSearchRequestDto.cs
-|  |  └── BookUpdateDto.cs
+|  |  ├── BookUpdateDto.cs
+|  |  ├── BookUpdatePartlyDto.cs
+|  |  ├── CartDto.cs
+|  |  ├── CartItemsDto.cs
+|  |  └── UpdateItemQuantityDto.cs
+|  ├──Order
+|  |  ├── OrderDto.cs
+|  |  └── OrderItemDto.cs
 |  └── Shared
 |  |  ├── PageResultDto.cs
 |  |  └── PaginationQueryDto.cs
@@ -121,22 +205,29 @@ BookShop.API
 |  └── ValidationException.cs
 |
 ├── Helpers
-|  └── PaginationHelper.cs
+|  ├── PaginationHelper.cs
+|  └── ValidationExtensions.cs
 |
 ├── Infrastructure
-|  ├──Persistence
+|  ├── Persistence
 |  |  ├── AuthDbContext.cs           ← EF Core context for PostgreSQL
+|  |  ├── BaseMongoDbContex.cs
+|  |  ├── CartMongoDbSettings.cs
 |  |  ├── MongoDbContext.cs          ← MongoDB context for books
 |  |  ├── MongoDbSettings.cs
+|  |  ├── OrderDbContext.cs
 |  |  └── UpdateDefinitionExtensions.cs
 |  ├── AppUrlOptions.cs
 |  ├── BrevoAuthEmailSender.cs
 |  ├── BrevoOptions.cs
 |  ├── ConfigurationSwaggerOptions.cs
-|  └── JwtOptions.cs
+|  ├── JwtOptions.cs
+|  └── RateLimiterExtensions.cs
 |
 ├── Mappings
 |  ├── BookMappingProfile.cs
+|  ├── CartMappingProfile.cs
+|  ├── OrderMappingProfile.cs
 |  └── UserMappingProfile.cs
 |
 ├── Middleware
@@ -144,6 +235,7 @@ BookShop.API
 |  └── ProblemDetailsBuilder.cs
 |
 ├── Migrations
+|  └── OrderMigrations
 |
 ├── Models
 |  ├── Auth
@@ -153,34 +245,68 @@ BookShop.API
 |  |  ├── User.cs
 |  |  └── UserRole.cs
 |  ├── Catalog
-|  |  └── Book.cs
+|  |  ├── Book.cs
+|  |  ├── Cart.cs
+|  |  └── Item.cs
+|  ├── Order
+|  |  ├── Order.cs
+|  |  ├── OrderItem.cs
+|  |  └── OrderStatus.cs
 |
 ├── Repositories
 |  ├── BookRepository.cs
+|  ├── CartRepository.cs
 |  ├── IBookRepository.cs
+|  ├── ICartRepository.cs
+|  ├── IOrderRepository.cs
 |  ├── IUserRepository.cs
+|  ├── OrderRepository.cs
 |  └── UserRepository.cs
 |
 ├── Services
 |  ├── AuthLinkGenerator.cs
-|  ├── IAuthLinkGenerator.cs
 |  ├── AuthServices.cs
 |  ├── AuthTokenService.cs
-|  ├── IAuthTokenService.cs
 |  ├── BookService.cs
-|  ├── IBookService.cs
+|  ├── CartService.cs
 |  ├── IAuthEmailSender.cs
-|  ├── JwtTokenService.cs
+|  ├── IAuthLinkGenerator.cs
+|  ├── IAuthTokenService.cs
+|  ├── IBookService.cs
+|  ├── ICartService.cs 
 |  ├── IJwtTokenService.cs
-|  ├── RefreshTokenGenerator.cs
+|  ├── IOrderService.cs
 |  ├── IRefreshTokenGenerator.cs
-|  ├── RefreshTokenHasher.cs
-|  └── IRefreshTokenHasher.cs
+|  ├── IRefreshTokenHasher.cs
+|  ├── JwtTokenService.cs
+|  ├── OrderService.cs
+|  ├── RefreshTokenGenerator.cs
+|  └── RefreshTokenHasher.cs
+|
+├── Validators
+|  ├── AddToCartValidator.cs
+|  ├── BookCreateValidator.cs
+|  ├── BookQueryValidator.cs
+|  ├── BookUpdatePartlyValidation.cs
+|  ├── BookUpdateValidator.cs
+|  ├── ForgotPasswordValidator.cs
+|  ├── PaginationQueryValidator.cs
+|  ├── ResetPasswordValidator.cs
+|  ├── UpdateItemQuantityValidator.cs
+|  ├── UpdatePasswordValidator.cs
+|  ├── UpdateUserNameValidator.cs
+|  ├── UserLoginValidator.cs
+|  └── UserRegisterValidator.cs
 |
 ├── Program.cs
 ├── appsettings.json
 ├── appsettings.Development.json
-└── Dockerfile
+├── Dockerfile
+|
+BookShop.API.Tests
+|
+├── Services
+|  ├── BookServiceTests.cs
 ```
 
 ---
@@ -201,6 +327,10 @@ BookShop.API
 
 **Auth tokens** (email confirmation, password reset, etc.) use ASP .NET Core Data Protection - the are not JWT tokens. They are purpose-bound, time-limited, and Base64URL-encoded.
 
+**Validation** is split across layers. Request models are validated by ASP.NET Core model binding using Data Annotations, while business-specific validation is handled with FluentValidation.
+
+**Rate Limitting** uses ASP.NET Core's built-in RateLimiter middleware with endpoint-specific policies. Different limits are applied to authentication, catalog, and public endpoints to reduce abuse while allowing normal application usage.
+
 ---
 
 ## Database Design Highlights
@@ -211,13 +341,14 @@ BookShop.API
 - `SecurityTokenInvalidBeforeUtc` timestamp for instant JWT invalidation without a token blacklist
 
 **MongoDB:**
-- Books collection with case-insensitive regex search across title, authors, publisher, genres, and annotation
-- Partial update support via `UpdateDefinition` builder
+- Books catalog stored in MonogDB wiht case-insensitive regex search
+- Shopping cart persistence
+- Partial document updates using UpdateDefinition builders
 
 ---
 ## Pagination
 
-Pagination is supported for catalog and search endpoints.
+Pagination is supported for catalog and search endpoints. Pagination requests are validated automatically using ASP.NET Core model validation before reaching the service layer.
 
 ### Query Parameters
 | Parameter  | Description | Default |
@@ -231,12 +362,31 @@ The API limits the maximum page size to `100`.
 
 ---
 
-## What I'm Working On Next
+## Unit Tests
 
-**1. Cart feature**
-`CartController` and all supporting components - `ICartService`, `CartService`, `ICartRepository`, DTOs, and the Cart model. Cart data will likely live in Redis or MongoDB.
+The solution includes unit tests focused on the business layer.
 
-**2. Order feature**
+Current coverage includes:
 
-`OrderController` and all supporting components - `IOrderService`, `OrderService`, `IOrderRepository`, `OrderRepository`, DTOs, and the Order model with PostgreSQL persistence.
+- BookService
+- xUnit
+- Moq
+- FluentAssertions
+
+More service-level tests will be added as new features are completed.
+
+---
+
+## Planned Improvements
+
+- Increase unit test coverage
+- Redis caching for shopping cart
+- Integration tests
+- CI/CD with GitHub Actions
+- Structured logging
+- Response caching
+
+---
+
+
 
