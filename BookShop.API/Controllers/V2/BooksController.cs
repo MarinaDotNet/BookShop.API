@@ -2,10 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using Asp.Versioning;
 using BookShop.API.DTOs.Catalog;
 using BookShop.API.DTOs.Shared;
+using BookShop.API.Infrastructure;
 using BookShop.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BookShop.API.Controllers.V2;
 
@@ -22,6 +24,7 @@ namespace BookShop.API.Controllers.V2;
 [Authorize(Roles = "user, admin")]
 [ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
+[EnableRateLimiting(RateLimiterExtensions.Default)]
 public class BooksController(IBookService service) : ControllerBase
 {
     private readonly IBookService _service = service;

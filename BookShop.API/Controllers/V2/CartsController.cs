@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using BookShop.API.DTOs.Catalog;
 using BookShop.API.Models.Catalog;
+using Microsoft.AspNetCore.RateLimiting;
+using BookShop.API.Infrastructure;
 
 namespace BookShop.API.Controllers.V2;
 
@@ -20,6 +22,7 @@ namespace BookShop.API.Controllers.V2;
 [Authorize(Roles = "user, admin")]
 [ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
+[EnableRateLimiting(RateLimiterExtensions.Default)]
 public class CartsController(ICartService service) : BaseApiController
 {
     private readonly ICartService _service = service;

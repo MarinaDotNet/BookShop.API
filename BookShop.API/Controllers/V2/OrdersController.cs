@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using BookShop.API.DTOs.Order;
 using BookShop.API.Models.Order;
+using Microsoft.AspNetCore.RateLimiting;
+using BookShop.API.Infrastructure;
 
 namespace BookShop.API.Controllers.V2;
 
@@ -16,6 +18,7 @@ namespace BookShop.API.Controllers.V2;
 [Authorize(Roles = "user, admin")]
 [ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
+[EnableRateLimiting(RateLimiterExtensions.Default)]
 public class OrdersController(IOrderService service) : BaseApiController
 {
     private readonly IOrderService _service = service;

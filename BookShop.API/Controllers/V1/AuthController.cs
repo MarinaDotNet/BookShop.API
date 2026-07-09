@@ -4,6 +4,8 @@ using BookShop.API.Services;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
+using BookShop.API.Infrastructure;
 namespace BookShop.API.Controllers.V1;
 
 /// <summary>
@@ -22,6 +24,7 @@ namespace BookShop.API.Controllers.V1;
 [EnableCors("PublicPolicy")]
 [ApiVersion(1.0)]
 [Route("api/v{version:apiVersion}/auth")]
+[EnableRateLimiting(RateLimiterExtensions.Default)]
 public class AuthController(AuthServices auth) : BaseApiController
 {
     private readonly AuthServices _auth = auth;
@@ -54,6 +57,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Tags("01 Auth: Registration & Login")]
+    [EnableRateLimiting(RateLimiterExtensions.Register)]
     public async Task<IActionResult> RegisterUser([FromBody] UserRegisterDto dto, CancellationToken cancellationToken)
     {
         int id = await _auth.RegisterUserAsync(dto, cancellationToken);
@@ -95,6 +99,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [EnableCors("AdminPolicy")]
     [Authorize(Roles = "Admin")]
     [Tags("01 Auth: Registration & Login")]
+    [EnableRateLimiting(RateLimiterExtensions.Register)]
     public async Task<IActionResult> RegisterAdmin([FromBody] UserRegisterDto dto, CancellationToken cancellationToken)
     {
         int id = await _auth.RegisterAdminAsync(dto, cancellationToken);
@@ -134,6 +139,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Tags("01 Auth: Registration & Login")]
+    [EnableRateLimiting(RateLimiterExtensions.Login)]
     public async Task<IActionResult> Login([FromBody] UserLoginDto dto, CancellationToken cancellationToken)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -248,6 +254,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [AllowAnonymous]
     [Tags("02 Auth: Email Confirmation")]
+    [EnableRateLimiting(RateLimiterExtensions.ResendEmailConfirmation)]
     public async Task<IActionResult> ResendEmailConfirmation([FromBody] ResendEmailConfirmationDto dto, CancellationToken cancellationToken)
     {
         await _auth.ResendEmailConfirmationLink(dto.Email, cancellationToken);
@@ -725,6 +732,7 @@ public class AuthController(AuthServices auth) : BaseApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Tags("06 Auth: Password Recovery")]
+    [EnableRateLimiting(RateLimiterExtensions.PasswordReset)]
     public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordDto dto, CancellationToken cancellationToken)
     {
         await _auth.ResetPasswordAsync(dto, cancellationToken);
