@@ -167,13 +167,20 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
-    /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
+    /// - <paramref name="request"/>  is null.
     /// </exception>
-    public async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination, CancellationToken cancellationToken) =>
-        await GetBooksByPartialMatchAsync(request, request.IsAvailable, pagination, cancellationToken);
+    public async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(
+        BookSearchRequestDto request, 
+        PaginationQueryDto pagination, 
+        CancellationToken cancellationToken)
+    {
+        if(request is null)
+        {
+            throw new ValidationException("Search term cannot be null.");
+        }
+        return await GetBooksByPartialMatchAsync(request, request.IsAvailable, pagination, cancellationToken);
+    }
+        
 
     /// <summary>
     /// Asynchronously retrieves available books that partially match the specified search term.
@@ -194,13 +201,20 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
-    /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
+    /// - <paramref name="request"/>  is null.
     /// </exception>
-    public async Task<PageResultDto<BookDto>> GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto request, PaginationQueryDto pagination, CancellationToken cancellationToken) =>
-        await GetBooksByPartialMatchAsync(request, true, pagination, cancellationToken);
+    public async Task<PageResultDto<BookDto>> GetAvailableBooksByPartialMatchAsync(
+        BookSearchRequestDto request, 
+        PaginationQueryDto pagination, 
+        CancellationToken cancellationToken)
+    {
+         if(request is null)
+        {
+            throw new ValidationException("Search term cannot be null.");
+        }
+        return await GetBooksByPartialMatchAsync(request, true, pagination, cancellationToken);
+    }
+        
 
     /// <summary>
     /// Asynchronously checks if a book with the specified identifier exists
@@ -530,17 +544,11 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </returns>
     /// <exception cref="ValidationException">
     /// Thrown when:
-    /// - <see cref="PaginationQueryDto.PageNumber"/> is less than 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> is less than 1.
-    /// - <see cref="PaginationQueryDto.PageSize"/> exceeds <see cref="PaginationQueryDto.MaxPageSize"/>.
-    /// - <see cref="BookSearchRequestDto.SearchTerm"/> is null or empty.
-    /// </exception>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when the pagination object is null.
+    /// - <paramref name="request"/> contains an invalid search term.
     /// </exception>
     private async Task<PageResultDto<BookDto>> GetBooksByPartialMatchAsync(BookSearchRequestDto request, bool? isAvailable, PaginationQueryDto pagination, CancellationToken cancellationToken)
     {
-        if (request is null || string.IsNullOrWhiteSpace(request.SearchTerm))
+        if (string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             throw new ValidationException("Search term cannot be null or empty.");
         }
