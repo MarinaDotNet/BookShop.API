@@ -9,11 +9,6 @@ using Moq;
 using FluentAssertions;
 using MongoDB.Bson;
 using BookShop.API.DTOs.Shared;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.StaticAssets;
-using DnsClient.Protocol;
-using System.Diagnostics.CodeAnalysis;
 
 public class BookServiceTests
 {
@@ -86,11 +81,19 @@ public class BookServiceTests
             .GetAllBooksAsync(true, pagination, cancellationToken))
             .ReturnsAsync(pageResult);
 
+        _mapperMock.Setup(mapper =>
+            mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items))
+            .Returns(expectedResult.Items);
+
+        var result = await _bookService.GetAllBooksAsync(true, pagination, cancellationToken);
+
+        result.Should().BeEquivalentTo(expectedResult);
+
         _bookRepositoryMock.Verify(repo => 
-            repo.GetAllBooksAsync(true, pagination, It.IsAny<CancellationToken>()), Times.Never);
+            repo.GetAllBooksAsync(true, pagination, It.IsAny<CancellationToken>()), Times.Once);
 
         _mapperMock.Verify(mapper => 
-            mapper.Map<IReadOnlyCollection<BookDto>>(It.IsAny<IReadOnlyCollection<Book>>()), Times.Never);
+            mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items), Times.Once);
     }
     
     #endregion of GetAllBooksAsync Tests
@@ -140,7 +143,7 @@ public class BookServiceTests
     [InlineData("\t")]
     public async Task GetBookByIdAsync_ShouldThrowValidationException_WhenIdIsNullOrWhitespace(string? bookId)
     {
-        Func<Task> act = async () => await _bookService.GetBookByIdAsync(bookId!, cancellationToken);
+        Func<Task> act = () => _bookService.GetBookByIdAsync(bookId!, cancellationToken);
 
         await act.Should()
             .ThrowAsync<ValidationException>()
@@ -170,7 +173,7 @@ public class BookServiceTests
     [InlineData("not-an-object-id")]
     public async Task GetBookByIdAsync_ShouldThrowValidationException_WhenIdHasInvalidFormat(string bookId)
     {
-        Func<Task> act = async () => await _bookService.GetBookByIdAsync(bookId, cancellationToken);
+        Func<Task> act = () => _bookService.GetBookByIdAsync(bookId, cancellationToken);
 
         await act.Should()
             .ThrowAsync<ValidationException>()
@@ -197,7 +200,7 @@ public class BookServiceTests
 
         _bookRepositoryMock.Setup(repo => repo.GetBookByIdAsync(bookId, cancellationToken)).ReturnsAsync((Book?)null);
 
-        Func<Task> act = async () => await _bookService.GetBookByIdAsync(bookId, cancellationToken);
+        Func<Task> act = () => _bookService.GetBookByIdAsync(bookId, cancellationToken);
 
         await act.Should()
             .ThrowAsync<NotFoundException>()
@@ -251,16 +254,972 @@ public class BookServiceTests
             mapper.Map<IReadOnlyCollection<BookDto>>(It.IsAny<IReadOnlyCollection<Book>>()), Times.Once);
     }
 
-    //GetBooksByExactMatchAsync_ShouldReturnEmptyPage_WhenNoBooksMatch
-    //GetBooksByExactMatchAsync_ShoudThrowValidationException_WhenRequestIsNull
-    //GetBooksByExactMatchAsync_ShouldThrowValidationException_WhenSearchTermIsInvalid [Theory][InlineData] // null, empty, whitespace
-    //GetBooksByExactMatchAsync_ShouldPassAvailabilityFilterToRepository // check that request.IsAvaialble sends to the Repository
+    /// <summary>
+    /// Verifies that an empty paginated result is returned when no books match the exact search term.
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetBooksByExactMatchAsync_ShouldReturnEmptyPage_WhenNoBooksMatch()
+    {
+        string searchTerm = "Clean Code";
+        var requestDto = CreateBookSearchRequestDto(searchTerm, true);
+        var pagination = CreatePaginationQueryDto(1, 10);
+        
+        var pageResult = new PageResultDto<Book>([], 1, 10, 0, 0);
+        var expectedResult = new PageResultDto<BookDto>([], 1, 10, 0, 0);
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBooksByExactMatchAsync(
+                searchTerm, 
+                true, 
+                pagination, 
+                cancellationToken))
+            .ReturnsAsync(pageResult);
+
+        _mapperMock
+            .Setup(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items))
+            .Returns([]);
+
+        var result = await _bookService.GetBooksByExactMatchAsync(requestDto, pagination, cancellationToken);
+
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock.Verify(
+            repo => repo.GetBooksByExactMatchAsync(
+                searchTerm, 
+                true, 
+                pagination, 
+                cancellationToken)
+            ,Times.Once);
+
+        _mapperMock.Verify(
+            mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items), 
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetBooksByExactMatchAsync"/> throws <see cref="ValidationException"/> 
+    /// when the request is null.  
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetBooksByExactMatchAsync_ShoudThrowValidationException_WhenRequestIsNull()
+    {
+        var pagination = CreatePaginationQueryDto(1, 10);
+        BookSearchRequestDto? request = null;
+
+        Func<Task> act = () => _bookService.GetBooksByExactMatchAsync(request!, pagination, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Search term cannot be null.");
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByExactMatchAsync(
+                It.IsAny<string>(), 
+                It.IsAny<bool>(), 
+                It.IsAny<PaginationQueryDto>(), 
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(
+                It.IsAny<IReadOnlyCollection<BookDto>>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetBooksByExactMatchAsync(BookSearchRequestDto, PaginationQueryDto, CancellationToken)"/>
+    /// throws <see cref="ValidationException"/> when the search term is null, empty, or consists only of whitespace.  
+    /// </summary>
+    /// <param name="searchTerm">
+    /// The invalid search term supplied to the request.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public async Task GetBooksByExactMatchAsync_ShouldThrowValidationException_WhenSearchTermIsInvalid(string? searchTerm)
+    {
+        var pagination = CreatePaginationQueryDto(1, 10);
+        var request = CreateBookSearchRequestDto(searchTerm!, true);
+
+        Func<Task> act = () => _bookService.GetBooksByExactMatchAsync(request, pagination, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Search term cannot be null or empty.");
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByExactMatchAsync(
+                It.IsAny<string>(), 
+                It.IsAny<bool>(), 
+                It.IsAny<PaginationQueryDto>(), 
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(
+                It.IsAny<IReadOnlyCollection<BookDto>>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetBooksByExactMatchAsync(BookSearchRequestDto, PaginationQueryDto, CancellationToken)"/>
+    /// passes the availability filter from the request to the <see cref="BookRepository.GetBooksByExactMatchAsync(string, bool?, PaginationQueryDto, CancellationToken)"/>.  
+    /// </summary>
+    /// <param name="isAvailable">
+    /// The availability filter that should be forwarded to the repository.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    [InlineData(null)]
+    public async Task GetBooksByExactMatchAsync_ShouldPassAvailabilityFilterToRepository(bool? isAvailable)
+    {
+        var request = CreateBookSearchRequestDto("Clean Code", isAvailable);
+        var pagination = CreatePaginationQueryDto(1, 10);
+
+        var pageResult = new PageResultDto<Book>([], 1, 10, 0, 0);
+        var expectedResult = new PageResultDto<BookDto>([], 1, 10, 0, 0);
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBooksByExactMatchAsync(
+                request.SearchTerm,
+                isAvailable,
+                pagination,
+                cancellationToken))
+            .ReturnsAsync(pageResult);
+        
+        _mapperMock
+            .Setup(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items))
+            .Returns(expectedResult.Items);
+
+        var result = await _bookService.GetBooksByExactMatchAsync(request, pagination, cancellationToken);
+
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByExactMatchAsync(
+                request.SearchTerm,
+                isAvailable,
+                pagination,
+                cancellationToken),
+                Times.Once);
+
+        _mapperMock.Verify(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items), Times.Once);
+    }
 
     #endregion of GetBooksByExactMatchAsync Tests
 
+    #region of GetAvailableBooksByExactMatchAsync Tests
 
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetAvailableBooksByExactMatchAsync(BookSearchRequestDto, PaginationQueryDto, CancellationToken)"/>
+    /// returns the expected pagianted collection of <see cref="BookDto"/> objects when the search request and pagination parameters are valid. 
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetAvailableBooksByExactMatchAsync_ShouldReturnPagedBooks_WhenRequestIsValid()
+    {
+        var book = CreateTestBook();
+        var pagination = CreatePaginationQueryDto(1, 10);
+        var pageResult = CreateTestPageResult(book);
+        var expectedResult = CreateTestPageResult(CreateTestBookDto(book));
+        var requestDto = CreateBookSearchRequestDto(book.Title!, book.IsAvailable);
+
+        _bookRepositoryMock.Setup(repo => 
+            repo.GetBooksByExactMatchAsync(
+                book.Title!, 
+                book.IsAvailable, 
+                pagination, 
+                cancellationToken))
+            .ReturnsAsync(pageResult);
+
+        _mapperMock
+        .Setup(mapper => mapper
+            .Map<IReadOnlyCollection<BookDto>>(It.IsAny<IReadOnlyCollection<Book>>()))
+            .Returns(expectedResult.Items);
+
+        var result = await _bookService.GetAvailableBooksByExactMatchAsync(requestDto, pagination, cancellationToken);
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByExactMatchAsync(book.Title!, book.IsAvailable, pagination, cancellationToken), Times.Once);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(It.IsAny<IReadOnlyCollection<Book>>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that an empty paginated result is returned when no books match the exact search term.
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetAvailableBooksByExactMatchAsync_ShouldReturnEmptyPage_WhenNoBooksMatch()
+    {
+        string searchTerm = "Clean Code";
+        var requestDto = CreateBookSearchRequestDto(searchTerm, true);
+        var pagination = CreatePaginationQueryDto(1, 10);
+        
+        var pageResult = new PageResultDto<Book>([], 1, 10, 0, 0);
+        var expectedResult = new PageResultDto<BookDto>([], 1, 10, 0, 0);
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBooksByExactMatchAsync(
+                searchTerm, 
+                true, 
+                pagination, 
+                cancellationToken))
+            .ReturnsAsync(pageResult);
+
+        _mapperMock
+            .Setup(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items))
+            .Returns([]);
+
+        var result = await _bookService.GetAvailableBooksByExactMatchAsync(requestDto, pagination, cancellationToken);
+
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock.Verify(
+            repo => repo.GetBooksByExactMatchAsync(
+                searchTerm, 
+                true, 
+                pagination, 
+                cancellationToken)
+            ,Times.Once);
+
+        _mapperMock.Verify(
+            mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items), 
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetAvailableBooksByExactMatchAsync"/> throws <see cref="ValidationException"/> 
+    /// when the request is null.  
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetAvailableBooksByExactMatchAsync_ShoudThrowValidationException_WhenRequestIsNull()
+    {
+        var pagination = CreatePaginationQueryDto(1, 10);
+        BookSearchRequestDto? request = null;
+
+        Func<Task> act = () => _bookService.GetAvailableBooksByExactMatchAsync(request!, pagination, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Search term cannot be null.");
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByExactMatchAsync(
+                It.IsAny<string>(), 
+                It.IsAny<bool>(), 
+                It.IsAny<PaginationQueryDto>(), 
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(
+                It.IsAny<IReadOnlyCollection<BookDto>>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetAvailableBooksByExactMatchAsync(BookSearchRequestDto, PaginationQueryDto, CancellationToken)"/>
+    /// throws <see cref="ValidationException"/> when the search term is null, empty, or consists only of whitespace.  
+    /// </summary>
+    /// <param name="searchTerm">
+    /// The invalid search term supplied to the request.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public async Task GetAvailableBooksByExactMatchAsync_ShouldThrowValidationException_WhenSearchTermIsInvalid(string? searchTerm)
+    {
+        var pagination = CreatePaginationQueryDto(1, 10);
+        var request = CreateBookSearchRequestDto(searchTerm!, true);
+
+        Func<Task> act = () => _bookService.GetAvailableBooksByExactMatchAsync(request, pagination, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Search term cannot be null or empty.");
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByExactMatchAsync(
+                It.IsAny<string>(), 
+                It.IsAny<bool>(), 
+                It.IsAny<PaginationQueryDto>(), 
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(
+                It.IsAny<IReadOnlyCollection<BookDto>>()),
+            Times.Never);
+    }
+
+    #endregion of GetAvailableBooksByExactMatchAsync Tests
+
+    #region of GetBooksByPartialMatchAsync Tests
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetBooksByPartialMatchAsync(BookSearchRequestDto, PaginationQueryDto, CancellationToken)"/>
+    /// returns the expected pagianted collection of <see cref="BookDto"/> objects when the search request and pagination parameters are valid. 
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetBooksByPartialMatchAsync_ShouldReturnPagedBooks_WhenRequestIsValid()
+    {
+        var book = CreateTestBook();
+        var pagination = CreatePaginationQueryDto(1, 10);
+        var pageResult = CreateTestPageResult(book);
+        var expectedResult = CreateTestPageResult(CreateTestBookDto(book));
+        string searchTerm = book.Title![2..];
+        var requestDto = CreateBookSearchRequestDto(searchTerm, book.IsAvailable);
+
+        _bookRepositoryMock.Setup(repo => 
+            repo.GetBooksByPartialMatchAsync(
+                searchTerm, 
+                book.IsAvailable, 
+                pagination, 
+                cancellationToken))
+            .ReturnsAsync(pageResult);
+
+        _mapperMock
+        .Setup(mapper => mapper
+            .Map<IReadOnlyCollection<BookDto>>(It.IsAny<IReadOnlyCollection<Book>>()))
+            .Returns(expectedResult.Items);
+
+        var result = await _bookService.GetBooksByPartialMatchAsync(requestDto, pagination, cancellationToken);
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByPartialMatchAsync(searchTerm, book.IsAvailable, pagination, cancellationToken), Times.Once);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(It.IsAny<IReadOnlyCollection<Book>>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that an empty paginated result is returned when no books match the partial search term.
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetBooksByPartialMatchAsync_ShouldReturnEmptyPage_WhenNoBooksMatch()
+    {
+        string searchTerm = "ean Co";
+        var requestDto = CreateBookSearchRequestDto(searchTerm, true);
+        var pagination = CreatePaginationQueryDto(1, 10);
+        
+        var pageResult = new PageResultDto<Book>([], 1, 10, 0, 0);
+        var expectedResult = new PageResultDto<BookDto>([], 1, 10, 0, 0);
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBooksByPartialMatchAsync(
+                searchTerm, 
+                true, 
+                pagination, 
+                cancellationToken))
+            .ReturnsAsync(pageResult);
+
+        _mapperMock
+            .Setup(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items))
+            .Returns([]);
+
+        var result = await _bookService.GetBooksByPartialMatchAsync(requestDto, pagination, cancellationToken);
+
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock.Verify(
+            repo => repo.GetBooksByPartialMatchAsync(
+                searchTerm, 
+                true, 
+                pagination, 
+                cancellationToken)
+            ,Times.Once);
+
+        _mapperMock.Verify(
+            mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items), 
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetBooksByPartialMatchAsync"/> throws <see cref="ValidationException"/> 
+    /// when the request is null.  
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetBooksByPartialMatchAsync_ShoudThrowValidationException_WhenRequestIsNull()
+    {
+        var pagination = CreatePaginationQueryDto(1, 10);
+        BookSearchRequestDto? request = null;
+
+        Func<Task> act = () => _bookService.GetBooksByPartialMatchAsync(request!, pagination, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Search term cannot be null.");
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByPartialMatchAsync(
+                It.IsAny<string>(), 
+                It.IsAny<bool>(), 
+                It.IsAny<PaginationQueryDto>(), 
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(
+                It.IsAny<IReadOnlyCollection<BookDto>>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetBooksByPartialMatchAsync(BookSearchRequestDto, PaginationQueryDto, CancellationToken)"/>
+    /// throws <see cref="ValidationException"/> when the search term is null, empty, or consists only of whitespace.  
+    /// </summary>
+    /// <param name="searchTerm">
+    /// The invalid search term supplied to the request.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public async Task GetBooksByPartialMatchAsync_ShouldThrowValidationException_WhenSearchTermIsInvalid(string? searchTerm)
+    {
+        var pagination = CreatePaginationQueryDto(1, 10);
+        var request = CreateBookSearchRequestDto(searchTerm!, true);
+
+        Func<Task> act = () => _bookService.GetBooksByPartialMatchAsync(request, pagination, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Search term cannot be null or empty.");
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByPartialMatchAsync(
+                It.IsAny<string>(), 
+                It.IsAny<bool>(), 
+                It.IsAny<PaginationQueryDto>(), 
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(
+                It.IsAny<IReadOnlyCollection<BookDto>>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetBooksByPartialMatchAsync(BookSearchRequestDto, PaginationQueryDto, CancellationToken)"/>
+    /// passes the availability filter from the request to the <see cref="BookRepository.GetBooksByPartialMatchAsync(string, bool?, PaginationQueryDto, CancellationToken)"/>.  
+    /// </summary>
+    /// <param name="isAvailable">
+    /// The availability filter that should be forwarded to the repository.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    [InlineData(null)]
+    public async Task GetBooksByPartialMatchAsync_ShouldPassAvailabilityFilterToRepository(bool? isAvailable)
+    {
+        var request = CreateBookSearchRequestDto("ean Co", isAvailable);
+        var pagination = CreatePaginationQueryDto(1, 10);
+
+        var pageResult = new PageResultDto<Book>([], 1, 10, 0, 0);
+        var expectedResult = new PageResultDto<BookDto>([], 1, 10, 0, 0);
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBooksByPartialMatchAsync(
+                request.SearchTerm,
+                isAvailable,
+                pagination,
+                cancellationToken))
+            .ReturnsAsync(pageResult);
+        
+        _mapperMock
+            .Setup(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items))
+            .Returns(expectedResult.Items);
+
+        var result = await _bookService.GetBooksByPartialMatchAsync(request, pagination, cancellationToken);
+
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByPartialMatchAsync(
+                request.SearchTerm,
+                isAvailable,
+                pagination,
+                cancellationToken),
+                Times.Once);
+
+        _mapperMock.Verify(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items), Times.Once);
+    }
+
+    #endregion of GetBooksByPartialMatchAsync Tests
+
+    #region of GetAvailableBooksByPartialMatchAsync Tests
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto, PaginationQueryDto, CancellationToken)"/>
+    /// returns the expected pagianted collection of <see cref="BookDto"/> objects when the search request and pagination parameters are valid. 
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetAvailableBooksByPartialMatchAsync_ShouldReturnPagedBooks_WhenRequestIsValid()
+    {
+        var book = CreateTestBook();
+        var pagination = CreatePaginationQueryDto(1, 10);
+        var pageResult = CreateTestPageResult(book);
+        var expectedResult = CreateTestPageResult(CreateTestBookDto(book));
+        string searchTerm = book.Title![2..];
+        var requestDto = CreateBookSearchRequestDto(searchTerm, book.IsAvailable);
+
+        _bookRepositoryMock.Setup(repo => 
+            repo.GetBooksByPartialMatchAsync(
+                searchTerm, 
+                book.IsAvailable, 
+                pagination, 
+                cancellationToken))
+            .ReturnsAsync(pageResult);
+
+        _mapperMock
+        .Setup(mapper => mapper
+            .Map<IReadOnlyCollection<BookDto>>(It.IsAny<IReadOnlyCollection<Book>>()))
+            .Returns(expectedResult.Items);
+
+        var result = await _bookService.GetAvailableBooksByPartialMatchAsync(requestDto, pagination, cancellationToken);
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByPartialMatchAsync(searchTerm, book.IsAvailable, pagination, cancellationToken), Times.Once);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(It.IsAny<IReadOnlyCollection<Book>>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that an empty paginated result is returned when no books match the partial search term.
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetAvailableBooksByPartialMatchAsync_ShouldReturnEmptyPage_WhenNoBooksMatch()
+    {
+        string searchTerm = "ean Co";
+        var requestDto = CreateBookSearchRequestDto(searchTerm, true);
+        var pagination = CreatePaginationQueryDto(1, 10);
+        
+        var pageResult = new PageResultDto<Book>([], 1, 10, 0, 0);
+        var expectedResult = new PageResultDto<BookDto>([], 1, 10, 0, 0);
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBooksByPartialMatchAsync(
+                searchTerm, 
+                true, 
+                pagination, 
+                cancellationToken))
+            .ReturnsAsync(pageResult);
+
+        _mapperMock
+            .Setup(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items))
+            .Returns([]);
+
+        var result = await _bookService.GetAvailableBooksByPartialMatchAsync(requestDto, pagination, cancellationToken);
+
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock.Verify(
+            repo => repo.GetBooksByPartialMatchAsync(
+                searchTerm, 
+                true, 
+                pagination, 
+                cancellationToken)
+            ,Times.Once);
+
+        _mapperMock.Verify(
+            mapper => mapper.Map<IReadOnlyCollection<BookDto>>(pageResult.Items), 
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetAvailableBooksByPartialMatchAsync"/> throws <see cref="ValidationException"/> 
+    /// when the request is null.  
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task GetAvailableBooksByPartialMatchAsync_ShoudThrowValidationException_WhenRequestIsNull()
+    {
+        var pagination = CreatePaginationQueryDto(1, 10);
+        BookSearchRequestDto? request = null;
+
+        Func<Task> act = () => _bookService.GetAvailableBooksByPartialMatchAsync(request!, pagination, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Search term cannot be null.");
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByPartialMatchAsync(
+                It.IsAny<string>(), 
+                It.IsAny<bool>(), 
+                It.IsAny<PaginationQueryDto>(), 
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(
+                It.IsAny<IReadOnlyCollection<BookDto>>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetAvailableBooksByPartialMatchAsync(BookSearchRequestDto, PaginationQueryDto, CancellationToken)"/>
+    /// throws <see cref="ValidationException"/> when the search term is null, empty, or consists only of whitespace.  
+    /// </summary>
+    /// <param name="searchTerm">
+    /// The invalid search term supplied to the request.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public async Task GetAvailableBooksByPartialMatchAsync_ShouldThrowValidationException_WhenSearchTermIsInvalid(string? searchTerm)
+    {
+        var pagination = CreatePaginationQueryDto(1, 10);
+        var request = CreateBookSearchRequestDto(searchTerm!, true);
+
+        Func<Task> act = () => _bookService.GetAvailableBooksByPartialMatchAsync(request, pagination, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Search term cannot be null or empty.");
+
+        _bookRepositoryMock.Verify(repo => 
+            repo.GetBooksByPartialMatchAsync(
+                It.IsAny<string>(), 
+                It.IsAny<bool>(), 
+                It.IsAny<PaginationQueryDto>(), 
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _mapperMock.Verify(mapper => 
+            mapper.Map<IReadOnlyCollection<BookDto>>(
+                It.IsAny<IReadOnlyCollection<BookDto>>()),
+            Times.Never);
+    }
+
+    #endregion of GetAvailableBooksByPartialMatchAsync Tests
+
+    #region of IsBookExistsAsync Tests
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.IsBookExistsAsync(string, CancellationToken)"/> returns <see langword="true"/> when
+    /// the specified book exists. 
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task IsBookExistsAsync_ShoulReturnTrue_WhenBookExists()
+    {
+        var book = CreateTestBook();
+        var bookId = book.Id!;
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(bookId, cancellationToken))
+            .ReturnsAsync(book);
+
+        var result = await _bookService.IsBookExistsAsync(bookId, cancellationToken);
+
+        result.Should().BeTrue();
+
+        _bookRepositoryMock.Verify(repo => repo.GetBookByIdAsync(bookId, cancellationToken), Times.Once);
+        _mapperMock.Verify(mapper => mapper.Map<BookDto>(It.IsAny<Book>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.IsBookExistsAsync(string, CancellationToken)"/> returns <see langword="false"/> when
+    /// the specified book doesnot exists. 
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task IsBookExistsAsync_ShouldReturnFalse_WhenBookDoesNotExist()
+    {
+        var bookId = ObjectId.GenerateNewId().ToString();
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(bookId, cancellationToken))
+            .ReturnsAsync((Book?)null);
+
+        var result = await _bookService.IsBookExistsAsync(bookId, cancellationToken);
+
+        result.Should().BeFalse();
+
+        _bookRepositoryMock.Verify(repo => repo.GetBookByIdAsync(bookId, cancellationToken), Times.Once);
+        _mapperMock.Verify(mapper => mapper.Map<BookDto>(It.IsAny<Book>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.IsBookExistsAsync(string, CancellationToken)"/> throws and <see cref="ValidationException"/>
+    /// when the book ID is <see langword="null"/>, empty, or consists only of whitespace characters.
+    /// </summary>
+    /// <param name="bookId">
+    /// The book ID passed to the service method.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public async Task IsBookExistsAsync_ShouldThrowValidationException_WhenIdIsNullOrWhitespace(string? bookId)
+    {
+        Func<Task> act = () => _bookService.IsBookExistsAsync(bookId!, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Book ID cannot be empty or null.");
+
+        _bookRepositoryMock.Verify(repo => repo.GetBookByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        _mapperMock.Verify(mapper => mapper.Map<BookDto>(It.IsAny<Book>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.IsBookExistsAsync(string, CancellationToken)"/> throws and <see cref="ValidationException"/>
+    /// when the provided book ID is not a valid MonogDB ObjectId.
+    /// </summary>
+    /// <param name="bookId">
+    /// The invalid book ID passed to the service method.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("123")]
+    [InlineData("507f1f77bcf86cd7994390")]
+    [InlineData("not-an-object-id")]
+    public async Task IsBookExistsAsync_ShouldThrowValidationException_WhenIdIsInvalid(string bookId)
+    {
+        Func<Task> act = () => _bookService.IsBookExistsAsync(bookId, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Invalid Book ID format.");
+
+        _bookRepositoryMock.Verify(repo => repo.GetBookByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        _mapperMock.Verify(mapper => mapper.Map<BookDto>(It.IsAny<Book>()), Times.Never);
+    }  
+
+    #endregion of IsBookExistsAsync Tests
+
+    #region of GetTopCheapestBooksAsync Tests
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetTopCheapestBooksAsync(int, bool?, CancellationToken)"/> passes the availability filter
+    /// to the repository and returns the mapped collection of books. 
+    /// </summary>
+    /// <param name="isAvailable">
+    /// The availability filter passed to the service method.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    [InlineData(null)]
+    public async Task GetTopCheapestBooksAsync_ShouldPassAvailabilityFilterToRepository(bool? isAvailable)
+    {
+        int count = 10;
+        var (books, expectedResult) = CreateBooksAndDtos(count, isAvailable);
+
+        _bookRepositoryMock.
+            Setup(repo => repo.GetTopCheapestBooksAsync(count, isAvailable, cancellationToken))
+            .ReturnsAsync(books);
+        _mapperMock
+            .Setup(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(books))
+            .Returns(expectedResult);
+
+        var result = await _bookService.GetTopCheapestBooksAsync(count, isAvailable, cancellationToken);
+        result.Should().BeEquivalentTo(expectedResult);
+        _bookRepositoryMock
+            .Verify(repo => repo.GetTopCheapestBooksAsync(count, isAvailable, cancellationToken), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(books), Times.Once);          
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetTopCheapestBooksAsync(int, bool?, CancellationToken)"/> throws a 
+    /// <see cref="ValidationExcepiton"/> when the specified count is less than or equal to zero.
+    /// </summary>
+    /// <param name="count">
+    /// The invalid number of books requested.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchrounous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    public async Task GetTopCheapestBooksAsync_ShouldThrowValidationException_WhenCountIsNotPositive(int count)
+    {
+        Func<Task> act = () => _bookService.GetTopCheapestBooksAsync(count, true, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Count must be a positive integer.");
+        
+        _bookRepositoryMock
+            .Verify(repo => repo.GetTopCheapestBooksAsync(
+                It.IsAny<int>(), 
+                It.IsAny<bool>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+
+        _mapperMock
+        .Verify(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(
+            It.IsAny<Book>()), 
+        Times.Never);
+    }
+
+    #endregion of GetTopCheapestBooksAsync Tests
+    
+    #region of GetTopExpensiveBooksAsync Tests
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetTopExpensiveBooksAsync(int, bool?, CancellationToken)"/> passes the availability filter
+    /// to the repository and returns the mapped collection of books. 
+    /// </summary>
+    /// <param name="isAvailable">
+    /// The availability filter passed to the service method.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    [InlineData(null)]
+    public async Task GetTopExpensiveBooksAsync_ShouldPassAvailabilityFilterToRepository(bool? isAvailable)
+    {
+        int count = 10;
+        var (books, expectedResult) = CreateBooksAndDtos(count, isAvailable);
+
+        _bookRepositoryMock.
+            Setup(repo => repo.GetTopExpensiveBooksAsync(count, isAvailable, cancellationToken))
+            .ReturnsAsync(books);
+        _mapperMock
+            .Setup(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(books))
+            .Returns(expectedResult);
+
+        var result = await _bookService.GetTopExpensiveBooksAsync(count, isAvailable, cancellationToken);
+        result.Should().BeEquivalentTo(expectedResult);
+        _bookRepositoryMock
+            .Verify(repo => repo.GetTopExpensiveBooksAsync(count, isAvailable, cancellationToken), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(books), Times.Once);          
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.GetTopExpensiveBooksAsync(int, bool?, CancellationToken)"/> throws a 
+    /// <see cref="ValidationExcepiton"/> when the specified count is less than or equal to zero.
+    /// </summary>
+    /// <param name="count">
+    /// The invalid number of books requested.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchrounous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    public async Task GetTopExpensiveBooksAsync_ShouldThrowValidationException_WhenCountIsNotPositive(int count)
+    {
+        Func<Task> act = () => _bookService.GetTopExpensiveBooksAsync(count, true, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Count must be a positive integer.");
+        
+        _bookRepositoryMock
+            .Verify(repo => repo.GetTopExpensiveBooksAsync(
+                It.IsAny<int>(), 
+                It.IsAny<bool>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+
+        _mapperMock
+        .Verify(mapper => mapper.Map<IReadOnlyCollection<BookDto>>(
+            It.IsAny<Book>()), 
+        Times.Never);
+    }
+
+    #endregion of GetTopExpensiveBooksAsync Tests
+    
     #endregion of All HttpGET Tests
-
 
     #region Private Helper Methods
 
@@ -379,6 +1338,40 @@ public class BookServiceTests
     /// </returns>
     private static BookSearchRequestDto CreateBookSearchRequestDto(string searchTerm, bool? isAvailable = null) =>
         new (searchTerm, isAvailable);
+
+/// <summary>
+/// Creates a collection of test books and the corresponding DTOs based on the specified availability filter.
+/// </summary>
+/// <param name="count">
+/// The maximum number of DTOs to include in the expected result.
+/// </param>
+/// <param name="isAvailable">
+/// The availability filter used to detemine which books are included in the expected DTO colleciton.
+/// If <see langword="null"/>, books of any availability status are included. 
+/// </param>
+/// <returns>
+/// A tuple containing the generated collection of <see cref="Book"/> entities and the corresponding expected collection
+/// of <see cref="BookDto"/> objects.
+/// </returns>
+    private static (List<Book> Books, List<BookDto> ExpectedResult) CreateBooksAndDtos(int count, bool? isAvailable)
+    {
+        List<Book> books = [];
+        List<BookDto> expectedResult = [];
+
+        for(int i = 0; i < count * 2; i++)
+        {
+            var book = CreateTestBook();
+            book.IsAvailable = (i % 2) == 0;
+
+            books.Add(book);
+
+            if(expectedResult.Count < count && (!isAvailable.HasValue || book.IsAvailable == isAvailable))
+            {
+                expectedResult.Add(CreateTestBookDto(book));
+            }
+        }
+        return (books, expectedResult);
+    }
 
     #endregion Private Helper Methods
 }
