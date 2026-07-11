@@ -24,7 +24,7 @@ public class BookServiceTests
         _bookService = new BookService(_bookRepositoryMock.Object, _mapperMock.Object);
     }
 
-    #region of All HttpGET Tests
+    #region GET Methods Tests
 
     #region of GetAllBooksAsync Tests
 
@@ -1219,7 +1219,99 @@ public class BookServiceTests
 
     #endregion of GetTopExpensiveBooksAsync Tests
     
-    #endregion of All HttpGET Tests
+    #endregion GET Methods Tests
+
+
+    #region POST Methods Tests
+
+    #region CreateBookAsync Tests
+
+    #endregion CreateBookAsync Tests
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.CreateBookAsync(BookCreateDto, CancellationToken)"/> successfully creates a new book
+    /// and returns the mapped <see cref="BookCreateDto"/>.  
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task CreateBookAsync_ShouldCreateBook()
+
+    {
+        var book = CreateTestBook();
+        var createBookDto = CreateTestBookCreateDto(book);
+
+        _mapperMock
+            .Setup(mapper => mapper.Map<Book>(createBookDto))
+            .Returns(book);
+
+        _bookRepositoryMock
+            .Setup(repo => repo.AddBookAsync(book, cancellationToken))
+            .ReturnsAsync(book);
+
+        _mapperMock
+            .Setup(mapper => mapper.Map<BookCreateDto>(book))
+            .Returns(createBookDto);     
+
+        var result = await _bookService.CreateBookAsync(createBookDto, cancellationToken);
+        result.Should().BeEquivalentTo(createBookDto);
+
+        _bookRepositoryMock
+            .Verify(repo => repo.AddBookAsync(book, cancellationToken), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookCreateDto>(book), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<Book>(createBookDto), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies <see cref="BookService.CreateBookAsync(BookCreateDto, CancellationToken)"/> maps the provided <see cref="BookCreateDto"/>
+    /// to a <see cref="Book"/>, passes the mapped entity to the repository, and maps the created <see cref="Book"/> back to 
+    /// <see cref="BookCreateDto"/>.
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task CreateBookAsync_ShuldCallRepositoryWithMappedBook()
+    {
+        var book = CreateTestBook();
+        var createBookDto = CreateTestBookCreateDto(book);
+
+        _mapperMock
+            .Setup(mapper => mapper.Map<Book>(createBookDto))
+            .Returns(book);
+        
+        _bookRepositoryMock
+            .Setup(repo => repo.AddBookAsync(book, cancellationToken))
+            .ReturnsAsync(book);
+
+        _mapperMock
+            .Setup(mapper => mapper.Map<BookCreateDto>(book))
+            .Returns(createBookDto);   
+
+        await _bookService.CreateBookAsync(createBookDto, cancellationToken);
+        
+        _bookRepositoryMock
+            .Verify(repo => repo.AddBookAsync(book, cancellationToken), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookCreateDto>(book), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<Book>(createBookDto), Times.Once);
+    }
+
+    #endregion POST Methods Tests
+
+
+    #region PUT Methods Tests
+
+    #endregion PUT Methods Tests
+
+
+    #region DELETE Methods Tests
+
+    #endregion DELETE Methods Tests
 
     #region Private Helper Methods
 
@@ -1371,6 +1463,32 @@ public class BookServiceTests
             }
         }
         return (books, expectedResult);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="BookCreateDto"/> populated with the values from the specified <see cref="Book"/> instance.  
+    /// </summary>
+    /// <param name="book">
+    /// The source <see cref="Book"/> used to populate DTO. 
+    /// </param>
+    /// <returns>
+    /// A new <see cref="BookCreateDto"/> containing the values from the specified book. 
+    /// </returns>
+    private static BookCreateDto CreateTestBookCreateDto(Book book)
+    {
+        return new BookCreateDto(
+            book.Id!,
+            book.Title!,
+            book.Authors,
+            book.Price,
+            book.Pages,
+            book.Publisher!,
+            book.Language!,
+            book.Genres,
+            book.Link,
+            book.IsAvailable,
+            book.Annotation!);  
+    
     }
 
     #endregion Private Helper Methods
