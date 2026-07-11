@@ -1311,6 +1311,134 @@ public class BookServiceTests
 
     #region DELETE Methods Tests
 
+    /// <summary>
+    /// Verifies that <see cref="BookService.DeleteBookByIdAsync(string, CancellationToken)"/>  deletes an existing book and returns
+    /// the corresponding <see cref="BookDto"/>.  
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task DeleteBookByIdAsync_ShouldDeleteBook()
+    {
+        var book = CreateTestBook();
+        var expectedResult = CreateTestBookDto(book);
+        string bookId = book.Id!;
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(bookId, cancellationToken))
+                .ReturnsAsync(book);
+        _bookRepositoryMock
+            .Setup(repo => repo.DeleteBookByIdAsync(bookId, cancellationToken))
+            .ReturnsAsync(book);
+        _mapperMock
+            .Setup(mapper => mapper.Map<BookDto>(book))
+            .Returns(expectedResult);
+
+        var result = await _bookService.DeleteBookByIdAsync(bookId, cancellationToken);
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock
+            .Verify(repo => repo.DeleteBookByIdAsync(bookId, cancellationToken), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.DeleteBookByIdAsync(string, CancellationToken)"/> throws a <see cref="ValidationException"/>
+    /// when the specified book ID is <see langword="null"/>, empty, or consists only of whitespace characters.  
+    /// </summary>
+    /// <param name="bookId">
+    /// An invalid book identifier to validate.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public async Task DeleteBookByIdAsync_ShouldThrowValidationException_WhenIdIsNullOrWhitespace(string? bookId)
+    {
+        Func<Task> act = () => _bookService.DeleteBookByIdAsync(bookId!, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Book ID cannot be empty or null.");
+
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _bookRepositoryMock
+            .Verify(repo => repo.DeleteBookByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mapperMock.Verify(mapper => 
+            mapper.Map<BookDto>(It.IsAny<Book>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.DeleteBookByIdAsync(string, CancellationToken)"/> throws a <see cref="ValidationException"/>
+    /// when the specified book ID is not in valid ObjectId format.  
+    /// </summary>
+    /// <param name="bookId">
+    /// An invalid book identifier with an incorrect ObjectId format.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("123")]
+    [InlineData("507f1f77bcf86cd7994390")]      //22 simboles
+    [InlineData("not-an-object-id")]
+    public async Task DeleteBookByIdAsync_ShouldThrowValidationException_WhenIdIsInvalid(string bookId)
+    {
+        Func<Task> act = () => _bookService.DeleteBookByIdAsync(bookId!, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Invalid Book ID format.");
+
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _bookRepositoryMock
+            .Verify(repo => repo.DeleteBookByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mapperMock.Verify(mapper => 
+            mapper.Map<BookDto>(It.IsAny<Book>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.DeleteBookByIdAsync(string, CancellationToken)"/> throws a <see cref="NotFoundException"/>
+    /// when the specified book does not exist. 
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task DeleteBookByIdAsync_ShouldThrowNotFoundException_WhenBookDoesNotExists()
+    {
+        var bookId = ObjectId.GenerateNewId().ToString();
+        
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(bookId, cancellationToken)).ReturnsAsync((Book?)null);
+
+        Func<Task> act = () => _bookService.DeleteBookByIdAsync(bookId, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<NotFoundException>()
+            .WithMessage($"Book with ID '{bookId}' not found.");
+
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _bookRepositoryMock
+            .Verify(repo => repo.DeleteBookByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mapperMock.Verify(mapper => 
+            mapper.Map<BookDto>(It.IsAny<Book>()), Times.Never);
+    }
+
     #endregion DELETE Methods Tests
 
     #region Private Helper Methods
