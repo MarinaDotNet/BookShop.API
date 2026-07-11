@@ -1226,8 +1226,6 @@ public class BookServiceTests
 
     #region CreateBookAsync Tests
 
-    #endregion CreateBookAsync Tests
-
     /// <summary>
     /// Verifies that <see cref="BookService.CreateBookAsync(BookCreateDto, CancellationToken)"/> successfully creates a new book
     /// and returns the mapped <see cref="BookCreateDto"/>.  
@@ -1300,6 +1298,8 @@ public class BookServiceTests
         _mapperMock
             .Verify(mapper => mapper.Map<Book>(createBookDto), Times.Once);
     }
+
+    #endregion CreateBookAsync Tests
 
     #endregion POST Methods Tests
 
