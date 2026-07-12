@@ -401,6 +401,7 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// <summary>
     /// Partially updates an existing book in the data source using PATCH semantics.
     /// Only fields provided and considered valid in <paramref name="bookDto"/> are applied; other fields remain unchanged.
+    /// The book must exist before any update is performed.
     /// </summary>
     /// <param name="bookDto">
     /// A <see cref="BookUpdatePartlyDto"/> containing the fields to update. Cannot be <c>null</c> and must include a valid book ID.
@@ -413,7 +414,8 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// The task result contains the updated <see cref="BookDto"/> object.
     /// </returns>
     /// <exception cref="ValidationException">
-    /// Thrown when <paramref name="bookDto"/> is <c>null</c> or contains no valid fields to update.
+    /// Thrown when <paramref name="bookDto"/> is <c>null</c> or contains no valid fields to update, or
+    /// when the book identifier is invalid.
     /// </exception>
     /// <exception cref="NotFoundException">
     /// Thrown when a book with the specified ID does not exist in the data source.
@@ -424,6 +426,11 @@ public class BookService(IBookRepository bookRepository, IMapper mapper) : IBook
     /// </remarks>
     public async Task<BookDto> UpdateBookPartlyAsync(BookUpdatePartlyDto bookDto, CancellationToken cancellationToken)
     {
+        if (!await IsBookExistsAsync(bookDto.Id, cancellationToken))
+        {
+            throw new NotFoundException($"Book with ID '{bookDto.Id}' not found.");
+        }
+
         var updates = new List<UpdateDefinition<Book>>();
 
         updates.AddIfNotNull(bookDto.Title, b => b.Title, v => !string.IsNullOrWhiteSpace(v));
