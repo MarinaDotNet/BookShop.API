@@ -1306,10 +1306,231 @@ public class BookServiceTests
 
     #region PUT Methods Tests
 
+    #region UpdateBookAsync Tests
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookAsync(BookUpdateDto, CancellationToken)"/> updates an existing book and
+    /// returns the updated <see cref="BookDto"/>.  
+    /// </summary>
+    /// <remarks>
+    /// This test verifies that:
+    /// <list type="bullet">
+    /// <item><description>The existing book is retrieved from the repository</description></item>
+    /// <item><description>The update DTO is mapped to a <see cref="Book"/> entity.</description></item>
+    /// <item><description>The updated entity is passed to the repository.</description></item>
+    /// <item><description>The updated entity is mapped back to a <see cref="BookDto"/>.</description></item>
+    /// </list> 
+    /// </ramrks>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task UpdateBookAsync_ShouldUpdateBook()
+    {
+        var book = CreateTestBook();
+        var expectedResult = CreateTestBookDto(book);
+        var bookUpdateDto = CreateTestBookUpdateDto(book);
+
+         _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken))
+            .ReturnsAsync(book);
+        _mapperMock
+            .Setup(mapper => mapper.Map<Book>(bookUpdateDto))
+            .Returns(book);
+        _bookRepositoryMock
+            .Setup(repo => repo.UpdateBookAsync(book, cancellationToken))
+            .ReturnsAsync(book);   
+        _mapperMock
+            .Setup(mapper => mapper.Map<BookDto>(book))
+            .Returns(expectedResult);
+
+        var result = await _bookService.UpdateBookAsync(bookUpdateDto, cancellationToken);
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Once);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookAsync(book, cancellationToken), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<Book>(bookUpdateDto), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookAsync(BookUpdateDto, CancellationToken)"/> throws a <see cref="ValidationException"/>
+    /// when the specified book ID is <see langword="null"/>, empty, or consists only of whitespace characters
+    /// </summary>
+    /// <param name="bookId">
+    /// An invalid book identifier to validate.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public async Task UpdateBookAsync_ShouldThrowValidationException_WhenIdIsNullOrWhitespace(string? bookId)
+    {
+        var book = CreateTestBook();
+        book.Id = bookId;
+        var bookUpdateDto = CreateTestBookUpdateDto(book);
+
+        Func<Task> act = () => _bookService.UpdateBookAsync(bookUpdateDto, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Book ID cannot be empty or null.");
+        
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Never);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookAsync(book, cancellationToken), Times.Never);
+        _mapperMock
+            .Verify(mapper => mapper.Map<Book>(bookUpdateDto), Times.Never);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookAsync(BookUpdateDto, CancellationToken)"/> throws a <see cref="ValidationException"/>
+    /// when the specified book ID is not in valid ObjectId format.  
+    /// </summary>
+    /// <param name="bookId">
+    /// An invalid book identifier with an incorrect ObjectId format.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("123")]
+    [InlineData("507f1f77bcf86cd7994390")]      //22 simboles
+    [InlineData("not-an-object-id")]
+    public async Task UpdateBookAsync_ShouldThrowValidationException_WhenIdIsInvalid(string bookId)
+    {
+        var book = CreateTestBook();
+        book.Id = bookId;
+        var bookUpdateDto = CreateTestBookUpdateDto(book);
+
+        Func<Task> act = () => _bookService.UpdateBookAsync(bookUpdateDto, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Invalid Book ID format.");
+        
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Never);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookAsync(book, cancellationToken), Times.Never);
+        _mapperMock
+            .Verify(mapper => mapper.Map<Book>(bookUpdateDto), Times.Never);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookAsync(BookUpdateDto, CancellationToken)"/> throws a 
+    /// <see cref="NotFoundException"/> when the specified book does not exist. 
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task UpdateBookAsync_ShouldThrowNotFoundException_WhenBookDoesNotExists()
+    {
+        var book = CreateTestBook();
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken)).ReturnsAsync((Book?)null);
+
+        var bookUpdateDto = CreateTestBookUpdateDto(book);
+
+        Func<Task> act = () => _bookService.UpdateBookAsync(bookUpdateDto, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<NotFoundException>()
+            .WithMessage($"Book with ID '{book.Id}' not found.");
+
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Once);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookAsync(book, cancellationToken), Times.Never);
+        _mapperMock
+            .Verify(mapper => mapper.Map<Book>(bookUpdateDto), Times.Never);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Never);
+
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookAsync(BookUpdateDto, CancellationToken)"/> throws an
+    /// <see cref="InvalidOperationException"/> when the repository fails to update the book and returns <see langword="null"/>.
+    /// </summary>
+    /// <remarks>
+    /// This test vefifies that:
+    /// <list type="bullet">
+    /// <item><description>The existing book is retrieved successfully.</description></item>
+    /// <item><description>The update DTO is mapped to a <see cref="Book"/> entity.</description></item>
+    /// <item><description>The repository update operation is invoked exactly once.</description></item>
+    /// <item><description>An <see cref="InvalidOperationException"/> is thrown when the repository returns <see langword="null"/>.</description></item>
+    /// <item><description>The updated entity is not mapped back to <see cref="BookDto"/> after the failure.</description></item>
+    /// </list> 
+    /// </remarks>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task UpdateBookAsync_ShouldThrowInvalidOperationException_WhenRepositoryReturnsNull()
+    {
+        var book = CreateTestBook();
+        var bookUpdateDto = CreateTestBookUpdateDto(book);
+
+         _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken))
+            .ReturnsAsync(book);
+        _mapperMock
+            .Setup(mapper => mapper.Map<Book>(bookUpdateDto))
+            .Returns(book);
+        _bookRepositoryMock
+            .Setup(repo => repo.UpdateBookAsync(book, cancellationToken))
+            .ReturnsAsync((Book?)null!);  
+
+        Func<Task> act = () => _bookService.UpdateBookAsync(bookUpdateDto, cancellationToken);
+        await act
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("Book update failed.");
+
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Once);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookAsync(book, cancellationToken), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<Book>(bookUpdateDto), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Never);
+    }
+
+    #endregion UpdateBookAsync Tests
+
     #endregion PUT Methods Tests
 
 
+    #region PATCH Methods Tests
+
+
+    #endregion PATCH Methods Tests
+
     #region DELETE Methods Tests
+
+    #region DeleteBookByIdAsync Tests
 
     /// <summary>
     /// Verifies that <see cref="BookService.DeleteBookByIdAsync(string, CancellationToken)"/>  deletes an existing book and returns
@@ -1438,6 +1659,8 @@ public class BookServiceTests
         _mapperMock.Verify(mapper => 
             mapper.Map<BookDto>(It.IsAny<Book>()), Times.Never);
     }
+
+    #endregion DeleteBookByIdAsync Tests
 
     #endregion DELETE Methods Tests
 
@@ -1617,6 +1840,31 @@ public class BookServiceTests
             book.IsAvailable,
             book.Annotation!);  
     
+    }
+
+    /// <summary>
+    /// Creates a <see cref="BookUpdateDto"/> populated with the values from the specified <see cref="Book"/> instance.  
+    /// </summary>
+    /// <param name="book">
+    /// The source <see cref="Book"/> used to populate DTO. 
+    /// </param>
+    /// <returns>
+    /// A <see cref="BookUpdateDto"/> containing the same values as the source book. 
+    /// </returns>
+    private static BookUpdateDto CreateTestBookUpdateDto(Book book)
+    {
+        return new (
+            book.Id!,
+            book.Title!,
+            book.Authors,
+            book.Price,
+            book.Pages,
+            book.Publisher!,
+            book.Language!,
+            book.Genres,
+            book.Link,
+            book.IsAvailable,
+            book.Annotation!);
     }
 
     #endregion Private Helper Methods
