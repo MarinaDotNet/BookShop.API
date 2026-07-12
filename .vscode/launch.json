@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch BookShop.Web",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/BookShop.Web/BookShop.Web.csproj"
+        },
+        {
+            "name": "Launch BookShop.API",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath":"${workspaceFolder}/BookShop.API/BookShop.API.csproj"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch API + Web",
+            "configurations": [
+                "Launch BookShop.API",
+                "Launch BookShop.Web"
+            ]
+        }
+    ]  
+}
