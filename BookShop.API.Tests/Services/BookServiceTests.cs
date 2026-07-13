@@ -9,6 +9,7 @@ using Moq;
 using FluentAssertions;
 using MongoDB.Bson;
 using BookShop.API.DTOs.Shared;
+using MongoDB.Driver;
 
 public class BookServiceTests
 {
@@ -1525,6 +1526,321 @@ public class BookServiceTests
 
     #region PATCH Methods Tests
 
+    #region UpdateBookPartlyAsync Tests
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookPartlyAsync(BookUpdatePartlyDto, CancellationToken)"/> successfully updates
+    /// a book when multiple valid fields are provided.
+    /// </summary>
+    /// <remarks>
+    /// Ensures that:
+    /// <list type="bullet">
+    /// <item><description>The  service verifying that the book exists before updating it.</description></item>
+    /// <item><description>The repository updates the book once.</description></item>
+    /// <item><description>The updated entity is mapped to <see cref="BookDto"/>.</description></item>
+    /// <item><description>The expected updated book is returned.</description></item>
+    /// </list> 
+    /// </remarks>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task UpdateBookPartlyAsync_ShouldUpdateBook()
+    {
+        var book = CreateTestBook();
+        book.Title = "Clean Architecture";
+        book.Annotation = "Updated annotation for testing.";
+        book.Price = 99.99M;
+        
+        var bookUpdatePartlyDto = CreateTestBookUpdatePartlyDto(book);
+        var expectedResult = CreateTestBookDto(book);
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken))
+            .ReturnsAsync(book);
+        _bookRepositoryMock
+            .Setup(repo => repo.UpdateBookPartlyAsync(It.IsAny<List<UpdateDefinition<Book>>>(), book.Id!, cancellationToken))
+            .ReturnsAsync(book);
+        _mapperMock
+            .Setup(mapper => mapper.Map<BookDto>(book))
+            .Returns(expectedResult);
+
+        var result = await _bookService.UpdateBookPartlyAsync(bookUpdatePartlyDto, cancellationToken);
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Once);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookPartlyAsync(It.IsAny<List<UpdateDefinition<Book>>>(), book.Id!, cancellationToken), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookPartlyAsync(BookUpdatePartlyDto, CancellationToken)"/> throws a 
+    /// <see cref="NotFoundException"/> when the specified book does not exist.
+    /// </summary>
+    /// <remarks>
+    /// Ensures that:
+    /// <list type="bullet">
+    /// <item><description>The repository returns <see langword="null"/> when checking whether the book exists.</description></item>
+    /// <item><description>A <see cref="NotFoundException"/> is thrown with th expected message.</description></item>
+    /// <item><description>The partial update operaiton is never executed.</description></item>
+    /// <item><description>The returned entity is not mapped to <see cref="BookDto"/>.</description></item>
+    /// </list> 
+    /// </remarks>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task UpdateBookPartlyAsync_ShouldThrowNotFoundException_WhenBookDoesNotExist()
+    {
+        var book = CreateTestBook();
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken))
+            .ReturnsAsync((Book?)null);
+
+        var updateBookPartlyDto = CreateTestBookUpdatePartlyDto(book);
+
+        Func<Task> act = () => _bookService.UpdateBookPartlyAsync(updateBookPartlyDto, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<NotFoundException>()
+            .WithMessage($"Book with ID '{book.Id}' not found.");
+
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Once);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookPartlyAsync(It.IsAny<List<UpdateDefinition<Book>>>(), book.Id!, cancellationToken), Times.Never);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookPartlyAsync(BookUpdatePartlyDto, CancellationToken)"/> throws a 
+    /// <see cref="ValidationException"/> when no vaid fields are provided for the partial update.
+    /// </summary>
+    /// <remarks>
+    /// Ensures that:
+    /// <list type="bullet">
+    /// <item><description>The repository checks that the book exists exactly once.</description></item>
+    /// <item><description>A <see cref="ValidationException"/> is thrown with th expected message.</description></item>
+    /// <item><description>The repository update method is never invoked.</description></item>
+    /// <item><description>The updated entity is not mapped to <see cref="BookDto"/>.</description></item>
+    /// </list> 
+    /// </remarks>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task UpdateBookPartlyAsync_ShouldThrowValidationException_WhenNoValidFieldProvided()
+    {
+        var book = CreateTestBook();
+        BookUpdatePartlyDto bookUpdatePartlyDto = new (book.Id!, "", [], 0, 0, "", "", [], new Uri("invalid", UriKind.Relative), null, "");
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken))
+            .ReturnsAsync(book);
+
+        Func<Task> act = () => _bookService.UpdateBookPartlyAsync(bookUpdatePartlyDto, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("No valid fields provided for update.");
+        
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Once);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookPartlyAsync(It.IsAny<List<UpdateDefinition<Book>>>(), book.Id!, cancellationToken), Times.Never);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookPartlyAsync(BookUpdatePartlyDto, CancellationToken)"/> throws a 
+    /// <see cref="ValidationException"/> when the provided book identifier is not a valid MongoDB ObjectId.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item><description>A <see cref="ValidationException"/> thrown with expected message.</description></item>
+    /// <item><description>The repository is never queried for the book.</description></item>
+    /// <item><description>The repository update partly method is never invoked.</description></item>
+    /// <item><description>The updated entity is not mapped to <see cref="BookDto"/>.</description></item>
+    /// </list>
+    /// </ramrks>
+    /// <param name="bookId">
+    /// The invalid book identifier used during the test.
+    /// </param>
+    /// <returns>
+    /// A task reprsenting the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("123")]
+    [InlineData("507f1f77bcf86cd7994390")]      //22 simboles
+    [InlineData("not-an-object-id")]
+    public async Task UpdateBookPartlyAsync_ShouldThrowValidationException_WhenIdIsInvalid(string bookId)
+    {
+        var book = CreateTestBook();
+        book.Id = bookId;
+        var bookUpdatePartlyDto = CreateTestBookUpdatePartlyDto(book);
+
+        Func<Task> act = () => _bookService.UpdateBookPartlyAsync(bookUpdatePartlyDto, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Invalid Book ID format.");
+        
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Never);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookPartlyAsync(It.IsAny<List<UpdateDefinition<Book>>>(), book.Id!, cancellationToken), Times.Never);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookPartlyAsync(BookUpdatePartlyDto, CancellationToken)"/> throws a 
+    /// <see cref="ValidationException"/> when the specified book ID is <see langword="null"/>, empty, or consists only of whitespace character
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item><description>A <see cref="ValidationException"/> thrown with expected message.</description></item>
+    /// <item><description>The repository is never queried for the book.</description></item>
+    /// <item><description>The repository update partly method is never invoked.</description></item>
+    /// <item><description>The updated entity is not mapped to <see cref="BookDto"/>.</description></item>
+    /// </list>
+    /// </ramrks>
+    /// <param name="bookId">
+    /// The invalid book identifier used during the test.
+    /// </param>
+    /// <returns>
+    /// A task reprsenting the asynchronous test operation.
+    /// </returns>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public async Task UpdateBookPartlyAsync_ShouldThrowValidationException_WhenIdIsNullOrWhiteSpace(string? bookId)
+    {
+        var book = CreateTestBook();
+        book.Id = bookId;
+        var bookUpdatePartlyDto = CreateTestBookUpdatePartlyDto(book);
+
+        Func<Task> act = () => _bookService.UpdateBookPartlyAsync(bookUpdatePartlyDto, cancellationToken);
+
+        await act
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("Book ID cannot be empty or null.");
+        
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Never);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookPartlyAsync(It.IsAny<List<UpdateDefinition<Book>>>(), book.Id!, cancellationToken), Times.Never);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Never);
+    }
+    
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookPartlyAsync(BookUpdatePartlyDto, CancellationToken)"/> successfully updates
+    /// only the book title when it is the only valid field provided.
+    /// </summary>
+    /// <remarks>
+    /// Ensures that:
+    /// <list type="bullet">
+    /// <item><description>The  service verifying that the book exists before updating it.</description></item>
+    /// <item><description>The repository updates the book once.</description></item>
+    /// <item><description>The updated entity is mapped to <see cref="BookDto"/>.</description></item>
+    /// <item><description>The expected updated book is returned.</description></item>
+    /// </list> 
+    /// </remarks>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task UpdateBookPartlyAsync_ShouldUpdateBook_WhenOnlyTitleToUpdate()
+    {
+        var book = CreateTestBook();
+        book.Title = "New Title For Update Partly Tests";
+        
+        var bookUpdatePartlyDto = CreateTestBookUpdatePartlyDto(book);
+        var expectedResult = CreateTestBookDto(book);
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken))
+            .ReturnsAsync(book);
+        _bookRepositoryMock
+            .Setup(repo => repo.UpdateBookPartlyAsync(It.IsAny<List<UpdateDefinition<Book>>>(), book.Id!, cancellationToken))
+            .ReturnsAsync(book);
+        _mapperMock
+            .Setup(mapper => mapper.Map<BookDto>(book))
+            .Returns(expectedResult);
+
+        var result = await _bookService.UpdateBookPartlyAsync(bookUpdatePartlyDto, cancellationToken);
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Once);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookPartlyAsync(It.IsAny<List<UpdateDefinition<Book>>>(), book.Id!, cancellationToken), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="BookService.UpdateBookPartlyAsync(BookUpdatePartlyDto, CancellationToken)"/> successfully updates
+    /// only the book link when it is the only valid field provided.
+    /// </summary>
+    /// <remarks>
+    /// Ensures that:
+    /// <list type="bullet">
+    /// <item><description>The  service verifying that the book exists before updating it.</description></item>
+    /// <item><description>The repository updates the book once.</description></item>
+    /// <item><description>The updated entity is mapped to <see cref="BookDto"/>.</description></item>
+    /// <item><description>The expected updated book is returned.</description></item>
+    /// </list> 
+    /// </remarks>
+    /// <returns>
+    /// A task representing the asynchronous test operation.
+    /// </returns>
+    [Fact]
+    public async Task UpdateBookPartlyAsync_ShouldUpdateBook_WhenOnlyLinkToUpdate()
+    {
+        var book = CreateTestBook();
+        book.Link = new Uri("https://netbymarina.dev", UriKind.Absolute);
+        
+        var bookUpdatePartlyDto = CreateTestBookUpdatePartlyDto(book);
+        var expectedResult = CreateTestBookDto(book);
+
+        _bookRepositoryMock
+            .Setup(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken))
+            .ReturnsAsync(book);
+        _bookRepositoryMock
+            .Setup(repo => repo.UpdateBookPartlyAsync(It.IsAny<List<UpdateDefinition<Book>>>(), book.Id!, cancellationToken))
+            .ReturnsAsync(book);
+        _mapperMock
+            .Setup(mapper => mapper.Map<BookDto>(book))
+            .Returns(expectedResult);
+
+        var result = await _bookService.UpdateBookPartlyAsync(bookUpdatePartlyDto, cancellationToken);
+        result.Should().BeEquivalentTo(expectedResult);
+
+        _bookRepositoryMock
+            .Verify(repo => repo.GetBookByIdAsync(book.Id!, cancellationToken), Times.Once);
+        _bookRepositoryMock
+            .Verify(repo => repo.UpdateBookPartlyAsync(It.IsAny<List<UpdateDefinition<Book>>>(), book.Id!, cancellationToken), Times.Once);
+        _mapperMock
+            .Verify(mapper => mapper.Map<BookDto>(book), Times.Once);
+    }
+
+    #endregion UpdateBookPartlyAsync Tests
 
     #endregion PATCH Methods Tests
 
@@ -1852,6 +2168,31 @@ public class BookServiceTests
     /// A <see cref="BookUpdateDto"/> containing the same values as the source book. 
     /// </returns>
     private static BookUpdateDto CreateTestBookUpdateDto(Book book)
+    {
+        return new (
+            book.Id!,
+            book.Title!,
+            book.Authors,
+            book.Price,
+            book.Pages,
+            book.Publisher!,
+            book.Language!,
+            book.Genres,
+            book.Link,
+            book.IsAvailable,
+            book.Annotation!);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="BookUpdatePartlyDto"/> populated with the values from the specified <see cref="Book"/> instance.  
+    /// </summary>
+    /// <param name="book">
+    /// The source <see cref="Book"/> used to populate DTO. 
+    /// </param>
+    /// <returns>
+    /// A <see cref="BookUpdatePartlyDto"/> containing the same values as the source book. 
+    /// </returns>
+    private static BookUpdatePartlyDto CreateTestBookUpdatePartlyDto(Book book)
     {
         return new (
             book.Id!,
