@@ -1,4 +1,7 @@
+using BookShop.Web.Interfaces;
 using BookShop.Web.Options;
+using BookShop.Web.Services;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 builder.Services.Configure<BookShopApiOptions>(builder.Configuration.GetSection(BookShopApiOptions.SectionName));
+
+builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) =>
+{
+    var options = serviceProvider.GetRequiredService<IOptions<BookShopApiOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+});
 
 var app = builder.Build();
 
