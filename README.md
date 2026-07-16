@@ -13,6 +13,46 @@
 
 ---
 
+## Architecture
+
+BookShop.API is built using a layered architecture with Clean Architectrue princilples.
+
+### Architectural patterns
+
+- Layered (N-Tier) Architecture
+- Repository Pattern
+- Service Layer Pattern
+- Dependency Injection
+- DTO Pattern
+- AutoMapper
+- Centralized Exception Handling (ProblemDetails / RFC 7807)
+
+### Design principles
+
+- Separation of Concerns
+- Dependency Inversion
+- Single Responsibility Principle
+- Interface-based abstractions
+
+```
+Client
+    |
+    ▼
+Controllers
+    |
+    ▼
+Services
+    |
+    ▼
+Repositories
+    |
+    ▼
+MongoDB / PostgreSQL
+
+```
+
+---
+
 ## Screenshots
 
 ### Swagger UI
