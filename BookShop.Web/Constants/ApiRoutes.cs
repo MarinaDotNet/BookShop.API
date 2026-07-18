@@ -29,11 +29,11 @@ public static class ApiRoutes
             /// Books controller route.
             /// </summary>
             public const string Controller = "/Books";
-            
+
             /// <summary>
             /// Endpoint for retrieving the cheapest books.
             /// </summary>
-            public const string Cheapest = $"{Base}{Controller}/chapest";
+            public const string Cheapest = $"{Base}{Controller}/cheapest";
 
             /// <summary>
             /// Endpoint for retrieving the most expensive books.

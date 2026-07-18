@@ -1,10 +1,39 @@
 ﻿@page
-@model IndexModel
+@model BookShop.Web.Pages.IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Welcome to the BookShop";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="row g-4">
+    @foreach(var book in Model.Books)
+    {
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card h-100">
+
+                <div class="card-img-top d-flex justify-content-center align-items-center" style="height:250px;font-size:5rem">
+                    📚
+                </div>
+
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">@book.Title</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">@string.Join(",", book.Authors)</h6>
+
+                    <div class="mb-3">
+                        @foreach(var genre in book.Genres)
+                        {
+                            <a asp-page="/Catalog/Filters" asp-route-name="@genre" class="badge genre-badge me-1 mb-1">@genre</a>
+                        }
+                    </div>
+
+                    <p class="card-text book-description">@book.Annotation</p>
+                    
+                    <div class="card-actions mt-auto">
+                        <h4 class="d-flex gap-2 book-price">$@book.Price</h4>
+                        <button class="btn btn-details flex-fill">Details</button>
+                        <button class="btn btn-add flex-fill">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>

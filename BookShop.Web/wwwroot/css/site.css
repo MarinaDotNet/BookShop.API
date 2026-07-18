@@ -29,3 +29,181 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+
+
+:root{
+  /* Backgrounds */
+  --body-bg: #f5e8c7;
+  --card-bg: #edd290;
+
+  /* Borders */
+  --card-boder: #a37b18;
+
+  /* Text */
+  --text: #1E1605;
+  --text-muted: #513D0C;
+
+  /* Brand */
+  --primary: #1b0a5c;
+  --primary-2: #4820DA;
+  --primary-hover: #3515B8;
+
+  --secondary: #2082DA;
+  --secondary-hover: #1768AF;
+
+  --gold: #DAA520;
+
+  /* Statets */
+  --success: #4c8c2b;
+  --danger: #b53a3a;
+}
+
+/*#region Layout*/
+
+body{
+  background: var(--body-bg);
+  color: var(--text);
+}
+
+.card-actions{
+  margin-top: auto;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: .5rem;
+}
+
+/*#endregion Layout*/
+
+/* #region Cards */
+
+.card{
+  border: 1px solid var(--card-boder);
+  border-radius: 12px;
+  transition: background-color .2s ease,
+              color .2s ease,
+              border-color .2s ease,
+              box-shadow .2s ease,
+              transform .2s ease;
+
+  background-color: var(--card-bg);
+  overflow: hidden;
+}
+
+.card:hover{
+  transform: translateY(-4px);
+  box-shadow: 0.75rem 1.5rem rgba(0,0,0,.15)!important;
+  cursor: pointer;
+}
+
+.card-img-top{
+  height: 250px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #f4dfad;
+  
+  font-size: 5rem;
+  color: #8b5e34;
+
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.card-title{
+  font-weight: 700;
+  color: var(--primary);
+}
+.card-subtitle{
+  color: var(--text-muted)!important;
+}
+
+/* #endregion Cards */
+
+/* #region Badges */
+.genre-badge{
+  background: rgba(72,32,218,.12);
+  color: var(--primary);
+  text-decoration: none;
+
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.genre-badge:hover {
+  transition: background-color .2s ease,
+              color .2s ease,
+              border-color .2s ease,
+              box-shadow .2s ease,
+              transform .2s ease;
+
+  box-shadow: 5px 5px 2px rgba(0, 0, 0, 0.2);
+
+  text-decoration: underline;
+}
+
+/* #endregion Badges */
+
+/* #region Buttons */
+.btn-add,
+.btn-details{
+  color: var(--primary);
+  padding: .55rem 1rem;
+  font-weight: 700;
+  border: 1px solid var(--primary);
+}
+
+.btn-add:hover,
+.btn-details:hover{
+  border-color: transparent;
+  background: var(--primary);
+
+}
+
+.btn-add{
+  background: var(--gold); 
+}
+
+.btn-details{
+  background: var(--card-bg);
+}
+
+.btn-add:hover{
+  color: var(--gold);
+}
+
+.btn-details:hover{
+  color: var(--card-bg);
+}
+
+/* #endregion Buttons */
+
+/* #region Typography */
+.book-price{
+  color: var(--primary);
+  font-weight: 900;
+  font-size: 1.6rem;
+  letter-spacing: .3px;
+
+  font-variant-numeric: tabular-nums;
+  text-box-trim: trim-both;
+  text-wrap: balnce;
+
+  justify-content: flex-end;
+}
+
+.book-description{
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 72px;
+
+  text-box-trim: trim-both;
+  text-wrap: balance;
+}
+
+/* #endregion Typography */

@@ -1,12 +1,29 @@
-using Microsoft.AspNetCore.Mvc;
+using BookShop.Web.DTOs.Catalog;
+using BookShop.Web.Interfaces;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace BookShop.Web.Pages;
 
-public class IndexModel : PageModel
+/// <summary>
+/// Represents the home page.
+/// </summary>
+public sealed class IndexModel(IBookService bookService) : PageModel
 {
-    public void OnGet()
-    {
+    private readonly IBookService _bookService = bookService ??
+        throw new ArgumentException(nameof(bookService));
 
+    /// <summary>
+    /// Books displayed on the home page.
+    /// </summary>
+    public IReadOnlyCollection<BookDto> Books { get; private set; } = [];
+
+    /// <summary>
+    /// Loads the list of books displayed on the home page.
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task OnGetAsync(CancellationToken cancellationToken)
+    {
+        Books = await _bookService.GetTopCheapestBooksAsync(10, cancellationToken);
     }
 }

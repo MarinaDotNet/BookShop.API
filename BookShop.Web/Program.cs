@@ -16,6 +16,8 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) 
     client.BaseAddress = new Uri(options.BaseUrl);
 });
 
+builder.Services.AddScoped<IBookService, BookService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
