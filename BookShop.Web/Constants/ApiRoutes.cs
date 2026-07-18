@@ -11,6 +11,27 @@ public static class ApiRoutes
     public const string Api = "/api";
 
     /// <summary>
+    /// API version 1 routes.
+    /// </summary>
+    public static class V1
+    {
+        public const string Base = $"{Api}/v1";
+
+        public static class Auth
+        {
+            /// <summary>
+            /// Base path for version 1 endpoints.
+            /// </summary>
+            public const string Controller = "/Auth";
+
+            /// <summary>
+            /// Login endpoint.
+            /// </summary>
+            public const string LogIn = $"{Base}{Controller}/login";
+        }
+    }
+
+    /// <summary>
     /// API version 3 routes.
     /// </summary>
     public static class V3
@@ -42,4 +63,6 @@ public static class ApiRoutes
 
         }
     }
+
+
 }

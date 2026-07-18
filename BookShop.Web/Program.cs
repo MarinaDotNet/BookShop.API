@@ -17,6 +17,7 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) 
 });
 
 builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IAuthService, AuthServcie>();
 
 var app = builder.Build();
 
