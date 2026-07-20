@@ -15,6 +15,9 @@ public static class ApiRoutes
     /// </summary>
     public static class V1
     {
+        /// <summary>
+        /// Base path for version 1 endpoints.
+        /// </summary>
         public const string Base = $"{Api}/v1";
 
         public static class Auth
@@ -28,6 +31,11 @@ public static class ApiRoutes
             /// Login endpoint.
             /// </summary>
             public const string LogIn = $"{Base}{Controller}/login";
+
+            /// <summary>
+            /// API endpoint for logging out the current user.
+            /// </summary>
+            public const string LogOut = $"{Base}{Controller}/logout";
         }
     }
 

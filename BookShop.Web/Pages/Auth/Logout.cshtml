@@ -1,0 +1,11 @@
+@page
+@model BookShop.Web.Pages.Auth.LogoutModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<form method="post" asp-page="/Auth/Logout">
+    @Html.AntiForgeryToken()
+    
+    <button type="submit" class="btn btn-add">Logout</button>
+</form>

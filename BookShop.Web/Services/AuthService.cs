@@ -49,6 +49,29 @@ public class AuthServcie(IApiClient apiClient) : IAuthService
         return await _apiClient.PostAsync<UserLoginDto, LoginResultDto>(ApiRoutes.V1.Auth.LogIn, userLoginDto, cancellationToken);
     }
 
+    /// <summary>
+    /// Logs out the current user by sending the refresh token to the API, revoking the authentication session, and removing the
+    /// authentication cookie.
+    /// </summary>
+    /// <param name="refreshToken">
+    /// The refresh token to be invalidated.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchrounous operation.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="refreshToken"/> is <see langword="null"/>. 
+    /// </exception>
+    public async Task LogOutAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(refreshToken, nameof(refreshToken));
+
+        await _apiClient.PostAsync(ApiRoutes.V1.Auth.LogOut, new LogoutDto(refreshToken), cancellationToken);
+    }
+
 
     /// <summary>
     /// Validates that the specified email address conforms to a standard email format.

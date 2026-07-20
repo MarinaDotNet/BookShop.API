@@ -20,4 +20,19 @@ public interface IAuthService
     /// An object containing authentication tokens and related login information.
     /// </returns>
     Task<LoginResultDto> LoginAsync(UserLoginDto userLoginDto, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Logs out the current user by revoking the refresh token, signing out of the local authentication session, and removing the
+    /// authentication cookie.
+    /// </summary>
+    /// <param name="refreshToken">
+    /// The refresh token to be invalidated.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchrounous operation.
+    /// </returns>
+    Task LogOutAsync(string refreshToken, CancellationToken cancellationToken);
 }
