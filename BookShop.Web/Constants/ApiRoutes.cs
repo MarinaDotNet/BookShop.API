@@ -36,6 +36,11 @@ public static class ApiRoutes
             /// API endpoint for logging out the current user.
             /// </summary>
             public const string LogOut = $"{Base}{Controller}/logout";
+
+            /// <summary>
+            /// API endpoint for registering a new user account.
+            /// </summary>
+            public const string Register = $"{Base}{Controller}/register";
         }
     }
 

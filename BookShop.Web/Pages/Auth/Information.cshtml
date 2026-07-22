@@ -1,0 +1,18 @@
+@page
+@model BookShop.Web.Pages.Auth.InformationModel
+@{
+    ViewData["Title"] = "Information";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-sm-10 col-md-8 col-lg-5">
+        <div class="login-card">
+            <div class="card-body p-5 text-center">
+                <h2 class="mb-4 card-title">@Model.Title</h2>
+                <p class="card-subtitle mb-4 information-message">@Model.Message</p>
+                <a asp-page="/Auth/Login" class="btn btn-add">Go to Login</a>
+            </div>
+        </div>
+    </div>
+    
+</div>

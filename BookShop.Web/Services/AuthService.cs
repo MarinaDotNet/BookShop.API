@@ -72,6 +72,41 @@ public class AuthServcie(IApiClient apiClient) : IAuthService
         await _apiClient.PostAsync(ApiRoutes.V1.Auth.LogOut, new LogoutDto(refreshToken), cancellationToken);
     }
 
+    /// <summary>
+    /// Registers a new user account by sending the registration request to the API.
+    /// </summary>
+    /// <param name="registerDto">
+    /// The registration data containing the user's username, email address, and password.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancell the operaiton.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the registration data is invalid.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="registerDto"/> is <see langword="null"/>. 
+    /// </exception>
+    public async Task RegisterAsync(UserRegisterDto registerDto, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(registerDto);
+
+        ValidateEmailPatern(registerDto.Email);
+        if (string.IsNullOrWhiteSpace(registerDto.Username))
+        {
+            throw new ArgumentException("The username is requered.");
+        }
+        if(string.IsNullOrWhiteSpace(registerDto.Password) || registerDto.Password.Length < 8)
+        {
+            throw new ArgumentException("Password must contain at least 8 characters.", nameof(registerDto));
+        }
+
+        await _apiClient.PostAsync(ApiRoutes.V1.Auth.Register, registerDto, cancellationToken);
+    }
+
 
     /// <summary>
     /// Validates that the specified email address conforms to a standard email format.

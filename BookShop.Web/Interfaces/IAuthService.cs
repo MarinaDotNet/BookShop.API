@@ -35,4 +35,24 @@ public interface IAuthService
     /// A task that represents the asynchrounous operation.
     /// </returns>
     Task LogOutAsync(string refreshToken, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Registers a new user account.
+    /// </summary>
+    /// <param name="registerDto">
+    /// The registration data containing the user's username, email address, and password.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancell the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="registerDto"/> is <see langword="null"/>. 
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the registration data is invalid.
+    /// </exception>
+    Task RegisterAsync(UserRegisterDto registerDto, CancellationToken cancellationToken);
 }
