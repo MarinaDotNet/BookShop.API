@@ -87,14 +87,7 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
 
         await AddAuthorizationHeaderAsync(httpRequest);
 
-        using var response = await ExecuteWithRetryAsync(async () =>
-        {
-            HttpResponseMessage result = await 
-                _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-
-            result.EnsureSuccessStatusCode();
-            return result;
-        }, cancellationToken);
+        using HttpResponseMessage response = await SendAsync(httpRequest, cancellationToken);
 
         return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken)
             ?? throw new InvalidOperationException("Response body was empty.");
@@ -136,7 +129,7 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
 
         await AddAuthorizationHeaderAsync(httpRequest);
 
-        using var response = 
+        using HttpResponseMessage response = await SendAsync(httpRequest, cancellationToken);
     }
 
     /// <summary>
