@@ -1,6 +1,7 @@
 using BookShop.Web.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity.Data;
+using System.Net;
 using System.Net.Http.Headers;
 
 namespace BookShop.Web.Services;
@@ -39,13 +40,7 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
 
         await AddAuthorizationHeaderAsync(request);
 
-        var response =  await ExecuteWithRetryAsync(() => 
-            _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken), cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new HttpRequestException($"Request failed with status code {(int)response.StatusCode}.");
-        }
+        using HttpResponseMessage response = await SendAsync(request, cancellationToken);
 
         return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
     }
@@ -92,13 +87,14 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
 
         await AddAuthorizationHeaderAsync(httpRequest);
 
-        using var response = await ExecuteWithRetryAsync(() => 
-            _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken), cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
+        using var response = await ExecuteWithRetryAsync(async () =>
         {
-            throw new HttpRequestException($"Request failed with status code {(int)response.StatusCode}.");
-        }
+            HttpResponseMessage result = await 
+                _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
+            result.EnsureSuccessStatusCode();
+            return result;
+        }, cancellationToken);
 
         return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken)
             ?? throw new InvalidOperationException("Response body was empty.");
@@ -140,13 +136,7 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
 
         await AddAuthorizationHeaderAsync(httpRequest);
 
-        using var response = await ExecuteWithRetryAsync(() => 
-            _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken), cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new HttpRequestException($"Request failed with status code {(int)response.StatusCode}.");
-        }
+        using var response = 
     }
 
     /// <summary>
@@ -232,10 +222,34 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
         {
             return await operation();
         }
-        catch(HttpRequestException)
+        catch(HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            await EnsureApiIsAwakeAsync(cancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+
+            return await operation();
+        }
+        catch (HttpRequestException)
         {
             await EnsureApiIsAwakeAsync(cancellationToken);
             return await operation();
         }
+        catch (TaskCanceledException)
+        {
+            await EnsureApiIsAwakeAsync(cancellationToken);
+            return await operation();
+        }
+    }
+
+    private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWithRetryAsync(async () =>
+        {
+            HttpResponseMessage response = await 
+                _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+            return response;
+        }, cancellationToken);
     }
 }
