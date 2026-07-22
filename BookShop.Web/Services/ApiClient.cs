@@ -39,7 +39,8 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
 
         await AddAuthorizationHeaderAsync(request);
 
-        var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var response =  await ExecuteWithRetryAsync(() => 
+            _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken), cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -91,7 +92,8 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
 
         await AddAuthorizationHeaderAsync(httpRequest);
 
-        using var response = await _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response = await ExecuteWithRetryAsync(() => 
+            _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken), cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -138,7 +140,8 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
 
         await AddAuthorizationHeaderAsync(httpRequest);
 
-        using var response = await _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response = await ExecuteWithRetryAsync(() => 
+            _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken), cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -168,6 +171,71 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
         if (!string.IsNullOrWhiteSpace(accessToken))
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to wake the BookShop API by repeatdly calling the health endpoint.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A token used to cancel the operation.
+    /// </param>
+    /// <remarks>
+    /// This method is intended to handle cold starts on hosting platforms such as Render. It retries the health 
+    /// check several times before giving up.
+    /// </remarks>
+    private async Task EnsureApiIsAwakeAsync(CancellationToken cancellationToken)
+    {
+        for(int i = 0; i < 3; i++)
+        {
+            try
+            {
+                HttpResponseMessage response = await _httpClient.GetAsync("health", cancellationToken);
+
+                if(response.IsSuccessStatusCode)
+                {
+                    return;
+                }
+            }
+            catch(HttpRequestException)
+            { }
+            catch(TaskCanceledException)
+            { }
+            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Executes the specified HTTP operation and automatically retries it after attempting to wake the API if the 
+    /// initial request fails.
+    /// </summary>
+    /// <typeparam name="TOperation">
+    /// The type of the operation result.
+    /// </typeparam>
+    /// <param name="operation">
+    /// The HTTP operation to execute.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// The result returned by the specified operation.
+    /// </returns>
+    /// <exception cref="HttpRequestException">
+    /// Thrown when the operation fails after the retry attempt.
+    /// </exception>
+    /// <exception cref="TaskCanceledException">
+    /// Thrown when the operation is canceled or times out after the retry attempt.
+    private async Task<TOperation> ExecuteWithRetryAsync<TOperation>(Func<Task<TOperation>> operation, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await operation();
+        }
+        catch(HttpRequestException)
+        {
+            await EnsureApiIsAwakeAsync(cancellationToken);
+            return await operation();
         }
     }
 }
