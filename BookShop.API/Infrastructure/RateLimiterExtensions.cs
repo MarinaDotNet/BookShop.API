@@ -91,7 +91,7 @@ public static class RateLimiterExtensions
             options.AddPolicy(Catalog, context => 
                 RateLimitPartition.GetSlidingWindowLimiter(
                     partitionKey: GetClientIpKey(context),
-                    factory: _ => CreateSlidingWindowOptions(200, TimeSpan.FromMinutes(1))));
+                    factory: _ => CreateSlidingWindowOptions(10000, TimeSpan.FromMinutes(1))));
         });
         return services;
     }
