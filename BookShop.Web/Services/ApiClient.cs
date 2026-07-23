@@ -1,6 +1,5 @@
 using BookShop.Web.Interfaces;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity.Data;
 using System.Net;
 using System.Net.Http.Headers;
 
@@ -16,8 +15,8 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
     /// <summary>
-    /// Sends an HTTP GET request and deserializes the JSON response into the specified type. Automatically adds the current user's
-    /// access token to the Authorization header when one is available in the authentication session.
+    /// Sends an HTTP GET request automatically retries it if necessary, and deserialize the JSON response into the specified type.
+    /// Authorization header is added automatically when an access token is available in the current authentication session.
     /// </summary>
     /// <typeparam name="TResponse">
     /// The type of the response object to deserialize.
@@ -36,18 +35,16 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     /// </exception>
     public async Task<TResponse?> GetAsync<TResponse>(string requestUri, CancellationToken cancellationToken = default)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        HttpRequestMessage requestFactory() => new (HttpMethod.Get, requestUri);
 
-        await AddAuthorizationHeaderAsync(request);
-
-        using HttpResponseMessage response = await SendAsync(request, cancellationToken);
+        using HttpResponseMessage response = await SendAsync(requestFactory, cancellationToken);
 
         return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
     }
 
     /// <summary>
-    /// Sends an HTTP POST request with a JSON payload and deserializes the JSON response. Automatically adds the current user's access token to the 
-    /// Authorization header when one is available in the authentication session.
+    /// Sends an HTTP POST request with a JSON payload, automatically retries the request if neccessary, and deserializes the JSON 
+    /// response. Authorization header is added automatically when an access token is available in the current authentication session.
     /// </summary>
     /// <typeparam name="TRequest">
     /// The type of the request body.
@@ -80,22 +77,21 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri)
-        {
-            Content = JsonContent.Create(request)
-        };
+        HttpRequestMessage requestFactory() =>
+            new(HttpMethod.Post, requestUri)
+            {
+                Content = JsonContent.Create(request)
+            };
 
-        await AddAuthorizationHeaderAsync(httpRequest);
-
-        using HttpResponseMessage response = await SendAsync(httpRequest, cancellationToken);
+        using HttpResponseMessage response = await SendAsync(requestFactory, cancellationToken);
 
         return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken)
             ?? throw new InvalidOperationException("Response body was empty.");
     }
 
     /// <summary>
-    /// Sends an HTTP POST request without expecting a response body. Automatically adds the current user's access token to the 
-    /// Authorization header when one is available in the authentication session.
+    /// Sends an HTTP POST request with a JSON payload, automatically retries the request if neccessary, and does not expect a response 
+    /// body. Authorization header is added automatically when an access token is available in the current authentication session.
     /// </summary>
     /// <typeparam name="TRequest">
     /// The type of the request body to be serialized as JSON.
@@ -122,14 +118,13 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri)
-        {
-            Content = JsonContent.Create(request)
-        };
+        HttpRequestMessage requestFactory() => 
+            new(HttpMethod.Post, requestUri)
+            {
+                Content = JsonContent.Create(request)
+            };
 
-        await AddAuthorizationHeaderAsync(httpRequest);
-
-        using HttpResponseMessage response = await SendAsync(httpRequest, cancellationToken);
+        using HttpResponseMessage response = await SendAsync(requestFactory, cancellationToken);
     }
 
     /// <summary>
@@ -158,7 +153,8 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     }
 
     /// <summary>
-    /// Attempts to wake the BookShop API by repeatdly calling the health endpoint.
+    /// Attempts to wake the BookShop API by repeatdly calling the health endpoint. This helps recover from cold starts on hosting
+    /// platforms such as Render.
     /// </summary>
     /// <param name="cancellationToken">
     /// A token used to cancel the operation.
@@ -189,14 +185,14 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     }
 
     /// <summary>
-    /// Executes the specified HTTP operation and automatically retries it after attempting to wake the API if the 
-    /// initial request fails.
+    /// Executes the specified HTTP operation. If the operation fails because the API is unavailable (for example during a Render
+    /// cold start), the client attempts to wake the API and retries the operation once.
     /// </summary>
     /// <typeparam name="TOperation">
     /// The type of the operation result.
     /// </typeparam>
     /// <param name="operation">
-    /// The HTTP operation to execute.
+    /// Delegate that performs the HTTP operation.
     /// </param>
     /// <param name="cancellationToken">
     /// A token used to cancel the operation.
@@ -205,10 +201,10 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     /// The result returned by the specified operation.
     /// </returns>
     /// <exception cref="HttpRequestException">
-    /// Thrown when the operation fails after the retry attempt.
+    /// Thrown when the operation still fails after the retry.
     /// </exception>
     /// <exception cref="TaskCanceledException">
-    /// Thrown when the operation is canceled or times out after the retry attempt.
+    /// Thrown when the operation is canceled.
     private async Task<TOperation> ExecuteWithRetryAsync<TOperation>(Func<Task<TOperation>> operation, CancellationToken cancellationToken)
     {
         try
@@ -234,15 +230,39 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
         }
     }
 
-    private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    /// <summary>
+    /// Creates an HTTP request by using the specified request factory, adds the current user's authorization header when available,
+    /// executes the request with automatic retry support, and returns HTTP response.
+    /// </summary>
+    /// <param name="requestFactory">
+    /// A delegate that creates a new <see cref="HttpRequestMessage"/> instance for each execution attempt. 
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A token used to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// The HTTP response message returned by the API.
+    /// </returns>
+    /// <exception cref="HttpRequestException">
+    /// Thrown when the request fails or the server returns an unsuccessful HTTP status code.
+    /// </exception>
+    /// <exception cref="TaskCanceledException">
+    /// Thrown when the operation is canceled.
+    /// </exception>
+    private async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> requestFactory, CancellationToken cancellationToken)
     {
         return await ExecuteWithRetryAsync(async () =>
         {
-            HttpResponseMessage response = await 
-                _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            using HttpRequestMessage request = requestFactory();
+
+            await AddAuthorizationHeaderAsync(request);
+
+            HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
             response.EnsureSuccessStatusCode();
             return response;
         }, cancellationToken);
     }
+
+    
 }
