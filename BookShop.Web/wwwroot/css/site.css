@@ -127,6 +127,31 @@ body{
   color: var(--text-muted)!important;
 }
 
+.api-awakening{
+  max-width: 700px;
+  margin: 60px auto;
+  padding: 2rem;
+  border-radius: 18px;
+  background: var(--card-bg); 
+  border: 2px solid var(--gold);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, .20),
+              0 20px 48px rgba(218, 165, 32, .28);
+}
+
+.api-awakening h3{
+  color: var(--primary);
+  --bs-text-opacity: 1;
+}
+
+.api-awakening p{
+  margin-bottom: 1rem;
+}
+
+.alert{
+  background: linear-gradient(90deg, #f4e4be 0%, #f1dca7 100%);
+  color: var(--primary);
+  border: 1px solid #8B6A15;
+}
 /* #endregion Cards */
 
 /* #region Badges */

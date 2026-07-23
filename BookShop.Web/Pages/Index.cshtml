@@ -4,6 +4,34 @@
     ViewData["Title"] = "Welcome to the BookShop";
 }
 
+@if(Model.IsApiAwakening){
+    <div class="api-awakening">
+        <h3 class="mb-3">BookShop API is currently sleeping.</h3>
+        <p class="mb-3">
+            This demo is hosted on Render's free plan. After a period of inactivity the API automatically goes to sleep and needs
+            a short time to start again.
+        </p>
+
+        <p class="mb-3">
+            Startup usually takes <strong>30-90 seconds</strong>.
+        </p>
+            
+        <div class="alert alert-info mt-3">
+            <strong>Tip</strong><br/>
+            The API currently needs to be woken up manually.<br/>
+            Open the Swagger page in a new tab, wait until it loads, then return here and refresh this page.
+        </div>
+
+        <a class="btn btn-add me-2" target="_blank" href="https://bookshop-api-xyxs.onrender.com/swagger">Open API (Swagger)</a>
+            
+        <button onclick="window.location.reload();" class="btn btn-details">Refresh Status</button><br/>
+
+        <small class="text-muted">
+            Note: On the Render free plan, the API may go  back to sleep after approximately <strong>15 minutes</strong> of inactivity.
+        </small>
+        <p class="mt-3 mb-0 fw-semibold">Thank you for your patience!</p>
+        </div>
+}
 <div class="row g-4">
     @foreach(var book in Model.Books)
     {

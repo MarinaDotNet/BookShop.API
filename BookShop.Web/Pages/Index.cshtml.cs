@@ -17,6 +17,8 @@ public sealed class IndexModel(IBookService bookService) : PageModel
     /// </summary>
     public IReadOnlyCollection<BookDto> Books { get; private set; } = [];
 
+    public bool IsApiAwakening { get; private set; } = false;
+
     /// <summary>
     /// Loads the list of books displayed on the home page.
     /// </summary>
@@ -24,6 +26,19 @@ public sealed class IndexModel(IBookService bookService) : PageModel
     /// <returns></returns>
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
-        Books = await _bookService.GetTopCheapestBooksAsync(10, cancellationToken);
+        try
+        {
+            Books = await _bookService.GetTopCheapestBooksAsync(10, cancellationToken);
+
+            if(Books.Count == 0)
+            {
+                IsApiAwakening = true;
+            }
+        }
+        catch
+        {
+            IsApiAwakening = true;
+            Books = [];
+        }
     }
 }
