@@ -15,6 +15,8 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) 
 {
     var options = serviceProvider.GetRequiredService<IOptions<BookShopApiOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl);
+
+    client.Timeout = TimeSpan.FromMinutes(3);
 });
 
 builder.Services.AddScoped<IBookService, BookService>();
@@ -55,5 +57,16 @@ app.UseAuthorization();
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
+
+_ = Task.Run(async ()=> {
+    await Task.Delay(2000);
+    try
+    {
+        using var client = new HttpClient();
+        client.Timeout = TimeSpan.FromMinutes(2.5);
+        await client.GetAsync("https://bookshop-api-xyxs.onrender.com/");
+    }
+    catch{}
+});
 
 app.Run();
