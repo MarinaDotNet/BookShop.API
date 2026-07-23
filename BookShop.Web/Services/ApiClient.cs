@@ -15,8 +15,8 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
     /// <summary>
-    /// Sends an HTTP GET request automatically retries it if necessary, and deserialize the JSON response into the specified type.
-    /// Authorization header is added automatically when an access token is available in the current authentication session.
+    /// Sends an HTTP GET request, deserialize the JSON response into the specified type, and relies on the underlying HTTP pipeline
+    /// to recover from temporary API unavailability.
     /// </summary>
     /// <typeparam name="TResponse">
     /// The type of the response object to deserialize.
@@ -37,9 +37,20 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     {
         HttpRequestMessage requestFactory() => new (HttpMethod.Get, requestUri);
 
-        using HttpResponseMessage response = await SendAsync(requestFactory, cancellationToken);
+        HttpResponseMessage response = await SendAsync(requestFactory, cancellationToken);
+        try
+        {
+            if(response.StatusCode == HttpStatusCode.ServiceUnavailable)
+            {
+                return default;
+            }
 
-        return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
+            return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
+        }
+        finally
+        {
+            response.Dispose();
+        }
     }
 
     /// <summary>
@@ -154,7 +165,7 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
 
     /// <summary>
     /// Attempts to wake the BookShop API by repeatdly calling the health endpoint. This helps recover from cold starts on hosting
-    /// platforms such as Render.
+    /// platforms such as Render. This method performs a best-effort wake-up attempt and intentionally ignores transient failures.
     /// </summary>
     /// <param name="cancellationToken">
     /// A token used to cancel the operation.
@@ -165,74 +176,34 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     /// </remarks>
     private async Task EnsureApiIsAwakeAsync(CancellationToken cancellationToken)
     {
-        for(int i = 0; i < 3; i++)
-        {
-            try
-            {
-                HttpResponseMessage response = await _httpClient.GetAsync("health", cancellationToken);
-
-                if(response.IsSuccessStatusCode)
-                {
-                    return;
-                }
-            }
-            catch(HttpRequestException)
-            { }
-            catch(TaskCanceledException)
-            { }
-            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// Executes the specified HTTP operation. If the operation fails because the API is unavailable (for example during a Render
-    /// cold start), the client attempts to wake the API and retries the operation once.
-    /// </summary>
-    /// <typeparam name="TOperation">
-    /// The type of the operation result.
-    /// </typeparam>
-    /// <param name="operation">
-    /// Delegate that performs the HTTP operation.
-    /// </param>
-    /// <param name="cancellationToken">
-    /// A token used to cancel the operation.
-    /// </param>
-    /// <returns>
-    /// The result returned by the specified operation.
-    /// </returns>
-    /// <exception cref="HttpRequestException">
-    /// Thrown when the operation still fails after the retry.
-    /// </exception>
-    /// <exception cref="TaskCanceledException">
-    /// Thrown when the operation is canceled.
-    private async Task<TOperation> ExecuteWithRetryAsync<TOperation>(Func<Task<TOperation>> operation, CancellationToken cancellationToken)
-    {
         try
         {
-            return await operation();
-        }
-        catch(HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
-        {
-            await EnsureApiIsAwakeAsync(cancellationToken);
-            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+            using var serviceClient = new HttpClient();
+            serviceClient.Timeout = TimeSpan.FromMinutes(2.5);
 
-            return await operation();
+            var baseAddress = _httpClient.BaseAddress?.ToString() ?? "https://bookshop-api-xyxs.onrender.com/";
+
+            for(int i = 0; i < 3; i++)
+            {
+                try
+                {
+                    var response = await serviceClient.GetAsync(baseAddress, cancellationToken);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        break;
+                    }
+                }
+                catch{}
+
+                await Task.Delay(TimeSpan.FromSeconds(15), cancellationToken);
+            }
         }
-        catch (HttpRequestException)
-        {
-            await EnsureApiIsAwakeAsync(cancellationToken);
-            return await operation();
-        }
-        catch (TaskCanceledException)
-        {
-            await EnsureApiIsAwakeAsync(cancellationToken);
-            return await operation();
-        }
+        catch{}
     }
 
     /// <summary>
-    /// Creates an HTTP request by using the specified request factory, adds the current user's authorization header when available,
-    /// executes the request with automatic retry support, and returns HTTP response.
+    /// Sends the request, adds the current user's authorization header, and returns HTTP response. If the API appears unavailable,
+    /// a best-effort wake-up attempt is performed before returning a fallback response.
     /// </summary>
     /// <param name="requestFactory">
     /// A delegate that creates a new <see cref="HttpRequestMessage"/> instance for each execution attempt. 
@@ -251,18 +222,26 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     /// </exception>
     private async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> requestFactory, CancellationToken cancellationToken)
     {
-        return await ExecuteWithRetryAsync(async () =>
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(25));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
+        var request = requestFactory();
+        await AddAuthorizationHeaderAsync(request);
+        try
         {
-            using HttpRequestMessage request = requestFactory();
-
-            await AddAuthorizationHeaderAsync(request);
-
-            HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-
-            response.EnsureSuccessStatusCode();
-            return response;
-        }, cancellationToken);
+            return await _httpClient.SendAsync(request, linkedCts.Token);
+        }
+        catch(Exception ex) when (
+            ex is OperationCanceledException ||
+            ex is HttpRequestException )
+        {
+            _ = EnsureApiIsAwakeAsync(CancellationToken.None);
+            
+            var fallbackResponse = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+            {
+                Content = new StringContent("{\"status\":\"ApiIsAwaking\"}")
+            };
+            return fallbackResponse;
+        }
     }
-
-    
 }
