@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Net;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -25,22 +26,27 @@ public sealed class LoginModel(IAuthService authService) : PageModel
     public UserLoginDto? Login { get; set; }
 
     /// <summary>
+    /// Gets a value indicating whether the BookShop API is currently unavailable because it is waking up after a cold start.
+    /// </summary>
+    public bool IsApiAwakening { get; private set; } = false;
+
+    /// <summary>
     /// Authenticates the user against the BookShop API. On success, creates an authenticated cookie and redirects to the home page.
     /// </summary>
     /// <param name="cancellationToken">
-    /// 
     /// </param>
     /// <returns>
     /// Redirects to the home page if authentication succeeds; otherwise redisplays the login page with a validation error.
     /// </returns>
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
-        if(!ModelState.IsValid)
-        {
-            return Page();
-        }
         try
         {
+            if(!ModelState.IsValid)
+            {
+                return Page();
+            }
+            
             LoginResultDto loginResult = await _authService.LoginAsync(Login!, cancellationToken);
 
             ClaimsPrincipal claimsPrincipal = CreatePrincipal(loginResult);       
@@ -61,6 +67,17 @@ public sealed class LoginModel(IAuthService authService) : PageModel
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
             return RedirectToPage("/Index");
         }
+        catch(OperationCanceledException)
+        {
+            //Render cold start may cause the request to time out.
+            IsApiAwakening = true;
+            return Page();
+        }
+        catch(HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests)
+        {
+            IsApiAwakening = true;
+            return Page();
+        }
         catch (HttpRequestException)
         {
             ModelState.AddModelError(string.Empty, "Invalid email or password.");      
@@ -69,7 +86,6 @@ public sealed class LoginModel(IAuthService authService) : PageModel
         {
             ModelState.AddModelError(string.Empty, ex.Message);
         }
-
         return Page();
     }
 
@@ -85,8 +101,8 @@ public sealed class LoginModel(IAuthService authService) : PageModel
     private static ClaimsPrincipal CreatePrincipal(LoginResultDto loginResult)
     {
         JwtSecurityTokenHandler tokenHandler = new();
-        JwtSecurityToken jwt = tokenHandler.ReadJwtToken(loginResult.AccessToken);
-        List<Claim> claims = [.. jwt.Claims];
+        JwtSecurityToken token = tokenHandler.ReadJwtToken(loginResult.AccessToken);
+        List<Claim> claims = [.. token.Claims];
         ClaimsIdentity identity = new(
             claims, 
             CookieAuthenticationDefaults.AuthenticationScheme,
@@ -106,11 +122,13 @@ public sealed class LoginModel(IAuthService authService) : PageModel
     /// </returns>
     private static AuthenticationProperties CreateAuthenticationProperties(LoginResultDto loginResult)
     {
+        double cookieLifeTime = 30;
+
         return new AuthenticationProperties
         {
             IsPersistent = true,
             AllowRefresh = true,
-            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30)
+            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(cookieLifeTime)
         };
     }
 }
