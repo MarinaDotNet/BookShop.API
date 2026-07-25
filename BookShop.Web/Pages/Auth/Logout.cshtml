@@ -4,8 +4,16 @@
     ViewData["Title"] = "Login";
 }
 
-<form method="post" asp-page="/Auth/Logout">
-    @Html.AntiForgeryToken()
-    
-    <button type="submit" class="btn btn-add">Logout</button>
-</form>
+@if(Model.IsApiAwakening)
+{
+    <partial name="_ApiAwakening" model='new ApiAwakeningViewModel{ Operation = ApiOperation.Logout}' />
+}
+else
+{
+    <form method="post" asp-page="/Auth/Logout">
+        @Html.AntiForgeryToken()
+        
+        <button type="submit" class="btn btn-add">Logout</button>
+    </form>
+}
+
