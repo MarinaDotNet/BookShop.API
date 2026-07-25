@@ -11,13 +11,13 @@ using System.Security.Claims;
 namespace BookShop.Web.Pages.Auth;
 
 /// <summary>
-/// Handles user authentication using the BookShop API and signs the authencticated user into the web application using ASP.NET
+/// Handles user authentication using the BookShop API and signs the authenticated user into the web application using ASP.NET
 /// Core cookie authentication.
 /// </summary>
 public sealed class LoginModel(IAuthService authService) : PageModel
 {
     private readonly IAuthService _authService = authService
-        ?? throw new ArgumentException(nameof(authService));
+        ?? throw new ArgumentNullException(nameof(authService));
 
     /// <summary>
     /// Gets or sets the user login credentials submitted by the login form.
@@ -34,9 +34,10 @@ public sealed class LoginModel(IAuthService authService) : PageModel
     /// Authenticates the user against the BookShop API. On success, creates an authenticated cookie and redirects to the home page.
     /// </summary>
     /// <param name="cancellationToken">
+    /// A token used to cancel the authentication operation.
     /// </param>
     /// <returns>
-    /// Redirects to the home page if authentication succeeds; otherwise redisplays the login page with a validation error.
+    /// Redirects to the home page if authentication succeeds; otherwise redisplays the login page with an appropriate error message.
     /// </returns>
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
@@ -71,16 +72,15 @@ public sealed class LoginModel(IAuthService authService) : PageModel
         {
             //Render cold start may cause the request to time out.
             IsApiAwakening = true;
-            return Page();
         }
         catch(HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests)
         {
+            //Render is waking up after a cold start.
             IsApiAwakening = true;
-            return Page();
         }
-        catch (HttpRequestException)
+        catch(HttpRequestException ex)
         {
-            ModelState.AddModelError(string.Empty, "Invalid email or password.");      
+            ModelState.AddModelError(string.Empty, ex.Message);
         }
         catch(ArgumentException ex)
         {
