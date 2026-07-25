@@ -2,6 +2,9 @@ using BookShop.Web.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using System.Net;
 using System.Net.Http.Headers;
+using BookShop.Web.DTOs.Shared;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace BookShop.Web.Services;
 
@@ -40,11 +43,6 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
         HttpResponseMessage response = await SendAsync(requestFactory, cancellationToken);
         try
         {
-            if(response.StatusCode == HttpStatusCode.ServiceUnavailable)
-            {
-                return default;
-            }
-
             return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
         }
         finally
@@ -202,8 +200,8 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     }
 
     /// <summary>
-    /// Sends the request, adds the current user's authorization header, and returns HTTP response. If the API appears unavailable,
-    /// a best-effort wake-up attempt is performed before returning a fallback response.
+    /// Sends an HTTP request, automatically adds the current user's authorization header, validates the HTTP respnse, and returns it.
+    /// If the request fails, a best-effort API wake-up attempt is started before the exception is rethrown.
     /// </summary>
     /// <param name="requestFactory">
     /// A delegate that creates a new <see cref="HttpRequestMessage"/> instance for each execution attempt. 
@@ -212,7 +210,7 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     /// A token used to cancel the operation.
     /// </param>
     /// <returns>
-    /// The HTTP response message returned by the API.
+    /// A successful HTTP response returned by the API.
     /// </returns>
     /// <exception cref="HttpRequestException">
     /// Thrown when the request fails or the server returns an unsuccessful HTTP status code.
@@ -225,11 +223,44 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(25));
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
 
-        var request = requestFactory();
+        using HttpRequestMessage request = requestFactory();
         await AddAuthorizationHeaderAsync(request);
+
         try
         {
-            return await _httpClient.SendAsync(request, linkedCts.Token);
+            HttpResponseMessage response = await _httpClient.SendAsync(request, linkedCts.Token);
+
+            if(response.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                response.Dispose();
+                throw new HttpRequestException("API is waking up.", null, HttpStatusCode.TooManyRequests);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                return response;
+            }
+
+            ApiProblemDetails? problem = null;
+
+            try
+            {
+                problem = await response.Content.ReadFromJsonAsync<ApiProblemDetails>(cancellationToken: cancellationToken);
+            }
+            catch(JsonException)
+            {
+                //The response body is not a valid ProblemDetails JSON. 
+                // Fall back to a generic HTTP error message.
+            }
+
+            string message = problem?.Detail
+                            ?? problem?.Title
+                            ?? $"The server returned HTTP {(int)response.StatusCode} ({response.StatusCode}).";
+            HttpStatusCode statusCode = response.StatusCode;
+
+            response.Dispose();
+            throw new HttpRequestException(message, null, statusCode);
+            
         }
         catch(Exception ex) when (
             ex is OperationCanceledException ||
@@ -237,11 +268,7 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
         {
             _ = EnsureApiIsAwakeAsync(CancellationToken.None);
             
-            var fallbackResponse = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
-            {
-                Content = new StringContent("{\"status\":\"ApiIsAwaking\"}")
-            };
-            return fallbackResponse;
+            throw;
         }
     }
 }
