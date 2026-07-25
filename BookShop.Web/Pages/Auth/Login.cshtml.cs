@@ -73,7 +73,9 @@ public sealed class LoginModel(IAuthService authService) : PageModel
             //Render cold start may cause the request to time out.
             IsApiAwakening = true;
         }
-        catch(HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests)
+        catch(HttpRequestException ex) when (
+            ex.StatusCode is HttpStatusCode.TooManyRequests||
+            ex.InnerException is System.Net.Sockets.SocketException)
         {
             //Render is waking up after a cold start.
             IsApiAwakening = true;
