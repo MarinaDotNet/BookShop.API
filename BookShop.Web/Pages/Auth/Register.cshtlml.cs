@@ -40,6 +40,10 @@ public sealed class RegisterModel(IAuthService authService) : PageModel
     /// </returns>
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
+        if(User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToPage("/Index");
+        }
         try
         {
             if(Register is null)
@@ -81,6 +85,21 @@ public sealed class RegisterModel(IAuthService authService) : PageModel
         catch(ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
+        }
+        return Page();
+    }
+
+    /// <summary>
+    /// Displays the register page for anonymous users. Authenticated users are redirected to the home page.
+    /// </summary>
+    /// <returns>
+    /// The register page for anonymous users; otherwise a redirect to the home page.
+    /// </returns>
+    public IActionResult OnGet()
+    {
+        if(User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToPage("/Index");
         }
         return Page();
     }

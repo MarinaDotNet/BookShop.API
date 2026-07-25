@@ -35,6 +35,10 @@ public sealed class LogoutModel(IAuthService authService) : PageModel
     /// </param>
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
+        if(User.Identity?.IsAuthenticated == false)
+        {
+            return RedirectToPage("/Auth/Login");
+        }
         try
         {
             var refreshToken = await HttpContext.GetTokenAsync("refresh_token");
@@ -71,5 +75,20 @@ public sealed class LogoutModel(IAuthService authService) : PageModel
             ModelState.AddModelError(string.Empty, ex.Message);
         }
         return Page();   
+    }
+
+    /// <summary>
+    /// Displays the logout page for authenticated users. Anonymous users are redirected to the login page.
+    /// </summary>
+    /// <returns>
+    /// The logout page for authenticated users; otherwise a redirect to the login page.
+    /// </returns>
+    public IActionResult OnGet()
+    {
+        if(User.Identity?.IsAuthenticated == false)
+        {
+            return RedirectToPage("/Auth/Login");
+        }
+        return Page();
     }
 }

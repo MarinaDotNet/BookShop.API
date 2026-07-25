@@ -41,6 +41,10 @@ public sealed class LoginModel(IAuthService authService) : PageModel
     /// </returns>
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
+        if(User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToPage("/Index");
+        }
         try
         {
             if(!ModelState.IsValid)
@@ -70,14 +74,14 @@ public sealed class LoginModel(IAuthService authService) : PageModel
         }
         catch(OperationCanceledException)
         {
-            //Render cold start may cause the request to time out.
+            // Render cold start may cause the request to time out.
             IsApiAwakening = true;
         }
         catch(HttpRequestException ex) when (
             ex.StatusCode is HttpStatusCode.TooManyRequests||
             ex.InnerException is System.Net.Sockets.SocketException)
         {
-            //Render is waking up after a cold start.
+            // Render is waking up after a cold start or the API is unavailable.
             IsApiAwakening = true;
         }
         catch(HttpRequestException ex)
@@ -87,6 +91,21 @@ public sealed class LoginModel(IAuthService authService) : PageModel
         catch(ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
+        }
+        return Page();
+    }
+
+    /// <summary>
+    /// Displays the login page for anonymous users. Authenticated users are redirected to the home page.
+    /// </summary>
+    /// <returns>
+    /// The login page for anonymous users; otherwise a redirect to the home page.
+    /// </returns>
+    public IActionResult OnGet()
+    {
+        if(User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToPage("/Index");
         }
         return Page();
     }
