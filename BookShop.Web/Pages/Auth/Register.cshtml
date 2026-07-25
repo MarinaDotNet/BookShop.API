@@ -1,48 +1,55 @@
 @page
-@model BookShop.Web.Pages.Auth.RegisterModel
+@model RegisterModel
 @{
     ViewData["Title"] = "Register";
 }
+@if(Model.IsApiAwakening)
+{
+    <partial name="_ApiAwakening" model='new ApiAwakeningViewModel{ Operation = ApiOperation.Register}' />
+}
+else
+{
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-5">
+            <div class="login-card">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4 card-title">Register</h2>
+                    <form method="post" asp-page="/Auth/Register" type="submit">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
+                        <div class="mb-3">
+                            <label asp-for="Register.Email" class="form-label card-subtitle">Email:</label>
+                            <input asp-for="Register.Email" class="form-control" type="email"/>
+                            <span asp-validation-for="Register.Email" class="text-danger small"></span>
+                        </div>
 
-<div class="row justify-content-center">
-    <div class="col-12 col-sm-10 col-md-8 col-lg-5">
-        <div class="login-card">
-            <div class="card-body p-5">
-                <h2 class="text-center mb-4 card-title">Register</h2>
-                <form method="post" asp-page="/Auth/Register" type="submit">
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
-                    <div class="mb-3">
-                        <label asp-for="Register.Email" class="form-label card-subtitle">Email:</label>
-                        <input asp-for="Register.Email" class="form-control" type="email"/>
-                        <span asp-validation-for="Register.Email" class="text-danger small"></span>
-                    </div>
+                        <div class="mb-3">
+                            <label asp-for="Register.Username" class="form-label card-subtitle">Username:</label>
+                            <input asp-for="Register.Username" class="form-control" type="text"/>
+                            <span asp-validation-for="Register.Username" class="text-danger small"></span>
+                        </div>
 
-                     <div class="mb-3">
-                        <label asp-for="Register.Username" class="form-label card-subtitle">Username:</label>
-                        <input asp-for="Register.Username" class="form-control" type="text"/>
-                        <span asp-validation-for="Register.Username" class="text-danger small"></span>
-                    </div>
+                        <div class="mb-4">
+                            <label asp-for="Register.Password" class="form-label card-subtitle">Password:</label>
+                            <input asp-for="Register.Password" class="form-control" type="password"/>
+                            <span asp-validation-for="Register.Password" class="text-danger small"></span>
+                        </div>
 
-                    <div class="mb-4">
-                        <label asp-for="Register.Password" class="form-label card-subtitle">Password:</label>
-                        <input asp-for="Register.Password" class="form-control" type="password"/>
-                        <span asp-validation-for="Register.Password" class="text-danger small"></span>
-                    </div>
+                        <div class="mb-4">
+                            <label asp-for="ConfirmationPassword" class="form-label card-subtitle">Confirm Password:</label>
+                            <input asp-for="ConfirmationPassword" class="form-control" type="password"/>
+                            <span asp-validation-for="ConfirmationPassword" class="text-danger small"></span>
+                        </div>
 
-                    <div class="mb-4">
-                        <label asp-for="ConfirmationPassword" class="form-label card-subtitle">Confirm Password:</label>
-                        <input asp-for="ConfirmationPassword" class="form-control" type="password"/>
-                        <span asp-validation-for="ConfirmationPassword" class="text-danger small"></span>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-add">Register</button>
-                        <a asp-page="/Auth/Login" class="btn btn-add">Login</a>
-                    </div>
-                </form>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-add">Register</button>
+                            <a asp-page="/Auth/Login" class="btn btn-add">Login</a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
+}
+
 

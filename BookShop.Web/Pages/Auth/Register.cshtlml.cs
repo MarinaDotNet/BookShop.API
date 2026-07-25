@@ -3,6 +3,7 @@ using BookShop.Web.DTOs.Auth;
 using BookShop.Web.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Net;
 
 namespace BookShop.Web.Pages.Auth;
 
@@ -12,7 +13,7 @@ namespace BookShop.Web.Pages.Auth;
 public sealed class RegisterModel(IAuthService authService) : PageModel
 {
     private readonly IAuthService _authService = authService
-        ?? throw new ArgumentException(nameof(authService));
+        ?? throw new ArgumentNullException(nameof(authService));
 
     [BindProperty]
     public UserRegisterDto? Register { get; set; }
@@ -23,37 +24,59 @@ public sealed class RegisterModel(IAuthService authService) : PageModel
     public string ConfirmationPassword {get; set;} = string.Empty;
 
     /// <summary>
-    /// Processes the registration request and redirects the user to the information page when the registration request is successfully
+    /// Gets a value indicating whether the BookShop API is currently unavailable because it is waking up after a cold start.
+    /// </summary>
+    public bool IsApiAwakening { get; private set; } = false;
+
+    /// <summary>
+    /// Processes the registration request and redirects the user to the information page after successful registration.
     /// submitted.
     /// </summary>
     /// <param name="cancellationToken">
-    /// A token used to cancell the operation.
+    /// A token used to cancel the operation.
     /// </param>
     /// <returns>
     /// A page result when validation fails; otherwise, a redirect to the information page.
     /// </returns>
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
-        ValidateRegistrationData();
-        if (!ModelState.IsValid)
-        {
-            return Page();
-        } 
         try
         {
-            await _authService.RegisterAsync(Register!, cancellationToken);
-            
+            if(Register is null)
+            {
+                ModelState.AddModelError(string.Empty, "The registration data is required.");
+                return Page();
+            }
+
+            ValidateRegistrationData();
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+
+            await _authService.RegisterAsync(Register, cancellationToken);
+
             return RedirectToPage("/Auth/Information", new { 
                     title = "Registration Successful", 
                     message = "We've sent a confirmation to your email address.\n" +
                     "Please check your inbox and click the confirmation link to activate your account.\n" +
                     "If you don't see the email, check your Spam or Junk folder."});
         }
-        catch (HttpRequestException)
+        catch(OperationCanceledException)
         {
-            ModelState.AddModelError(string.Empty, "Invalid email, password, or username.");
+            // Render cold start may cause the request to time out.
+            IsApiAwakening = true;
         }
-        catch (ArgumentException ex)
+        catch(HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests)
+        {
+            // Render is waking up after a cold start.
+            IsApiAwakening = true;
+        }
+        catch(HttpRequestException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+        }
+        catch(ArgumentException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
         }
@@ -69,7 +92,11 @@ public sealed class RegisterModel(IAuthService authService) : PageModel
     /// </remarks>
     private void ValidateRegistrationData()
     {
-        if (string.IsNullOrWhiteSpace(Register!.Password))
+        if(Register is null)
+        {
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(Register.Password))
         {
             ModelState.AddModelError(nameof(Register.Password), "The password is required.");
         }
@@ -77,9 +104,9 @@ public sealed class RegisterModel(IAuthService authService) : PageModel
         {
             ModelState.AddModelError(nameof(ConfirmationPassword), "The confirmation password is required.");
         }
-        if(Register!.Password != ConfirmationPassword)
+        if(Register.Password != ConfirmationPassword)
         {
-            ModelState.AddModelError(nameof(ConfirmationPassword), "The confirmation password does not match password.");
+            ModelState.AddModelError(nameof(ConfirmationPassword), "The passwords do not match.");
         }
     }
 }

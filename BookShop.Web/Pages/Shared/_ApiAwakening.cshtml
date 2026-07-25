@@ -1,0 +1,44 @@
+@model ApiAwakeningViewModel
+
+ <div class="api-awakening">
+        <h3 class="mb-3">@Model.Title</h3>
+        <p class="mb-3">
+            @Model.Description
+        </p>
+
+        <p class="mb-3">
+            Startup usually takes <strong>30-90 seconds</strong>.
+        </p>
+
+        <div class="alert alert-info mt-3">
+            <strong>Tip:</strong><br/>
+            The API currently needs to be woken up manually.<br/>
+            Open the Swagger page in a new tab, wait until it loads.  
+            @switch(Model.Operation)
+            {
+                case ApiOperation.Login:
+                <span>Then return here, and refresh this page, and sign in again.</span>
+                break;
+
+                case ApiOperation.Register:
+                <span>Then return here, and refresh this page, and register again.</span>
+                break;
+
+                case ApiOperation.LoadBooks:
+                case ApiOperation.Generic:
+                default:
+                <span>Then return here, and refresh this page.</span>
+                break;
+            } 
+        </div>
+
+        <a class="btn btn-add me-2" target="_blank" href="https://bookshop-api-xyxs.onrender.com/swagger/index.html">Open API (Swagger)</a>
+            
+        <button type="button" onclick="window.location.reload();" class="btn btn-details">Refresh</button><br/>
+
+        <small class="text-muted">
+            Note: On the Render free plan, the API may go back to sleep after approximately <strong>15 minutes</strong> of 
+            inactivity.
+        </small>
+        <p class="mt-3 mb-0 fw-semibold">Thank you for your patience!</p>
+    </div>
