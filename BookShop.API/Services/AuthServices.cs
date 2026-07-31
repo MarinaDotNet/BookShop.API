@@ -946,7 +946,7 @@ public class AuthServices(
         {
             UserName = dto.Username,
             NormalizedUsername = normalizedUsername,
-            Email = normalizedEmail,
+            Email = dto.Email,
             NormalizedEmail = NormalizeInput(dto.Email),
             IsActive = true,
             IsDeleted = false,
