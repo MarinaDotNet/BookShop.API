@@ -67,18 +67,32 @@ public class AuthServices(
     private readonly IRefreshTokenHasher _refreshTokenHasher = refreshTokenHasher;
     private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
     private readonly IMapper _mapper = mapper;
+
     /// <summary>
     /// Registers a new user asynchronously using the specified registration details.
     /// </summary>
-    /// <param name="userRegisterDto">An object containing the user's registration information, including username, email, and password. Cannot be
-    /// null.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the registration operation.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the unique identifier of the newly
-    /// registered user.</returns>
-    /// <exception cref="ConflictException">Thrown if a user with the provided username or email already exists, or if the default user role cannot be
-    /// found.</exception>
+    /// <param name="userRegisterDto">
+    /// An object containing the user's registration information, including username, email, and password. Cannot be
+    /// null.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the registration operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the unique identifier of the newly
+    /// registered user.
+    /// </returns>
+    /// <exception cref="ConflictException">
+    /// Thrown if a user with the provided username or email already exists, or if the default user role cannot be
+    /// found.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="userRegisterDto"/> is null.
+    /// </exception>
     public async Task<int> RegisterUserAsync(UserRegisterDto userRegisterDto, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(userRegisterDto, nameof(userRegisterDto));
+
         //Check if user exists
         var normalizedUsername = NormalizeInput(userRegisterDto.Username);
         var normalizedEmail = NormalizeInput(userRegisterDto.Email);
