@@ -58,6 +58,10 @@ public class AuthServiceTests
             _mapperMock.Object);
     }
 
+    #region Registration & Login Tests
+
+    #region of RegisterUserAsync Tests
+
     /// <summary>
     /// Verifies that <see cref="AuthServices.RegisterUserAsync(UserRegisterDto, CancellationToken)"/> successfully creates a new user,
     /// assigns the default role, hashes the password, sends an email confirmation link, and returns the identifier of the created user.
@@ -130,7 +134,7 @@ public class AuthServiceTests
     }
 
     /// <summary>
-    /// Verifies that registration fails when the specified username is already used by another account. 
+    /// Verifies that registration fails when the specified username is already used by another user account. 
     /// </summary>
     [Fact]
     public async Task RegisterUserAsync_ShouldThrowConflictException_WhenUsernameAlreadyExists()
@@ -170,7 +174,7 @@ public class AuthServiceTests
     }
 
     /// <summary>
-    /// Verifies that registration fails when the specified email address is already used by another account.
+    /// Verifies that registration fails when the specified email is already used by another user account. 
     /// </summary>
     [Fact]
     public async Task RegisterUserAsync_ShouldThrowConflictException_WhenEmailAlreadyExists()
@@ -212,7 +216,6 @@ public class AuthServiceTests
     /// <summary>
     /// Verifies that registration fails when the specified role does not exist in the system.
     /// </summary>
-    /// <returns></returns>
     [Fact]
     public async Task RegisterUserAsync_ShouldThrowInvalidOperationException_WhenRoleDoesNotExist()
     {
@@ -261,7 +264,7 @@ public class AuthServiceTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="AuthService.RegisterUserAsync(UserRegisterDto, CancellationToken)"/> fails when the supplied
+    /// Verifies that <see cref="AuthServices.RegisterUserAsync(UserRegisterDto, CancellationToken)"/> fails when the supplied
     /// registration data is invalid. 
     /// </summary>
     /// <param name="invalidRegisterDto">
@@ -305,7 +308,7 @@ public class AuthServiceTests
     /// Verifies that registration fails when the registration data object is <see langword="null"/>. 
     /// </summary>
     [Fact]
-    public async Task RegisterUserAsync_ShoudThrowArgumentNullException_WhenRegistraterDtoIsNull()
+    public async Task RegisterUserAsync_ShouldThrowArgumentNullException_WhenRegisterDtoIsNull()
     {
         UserRegisterDto? registerDto = null;
 
@@ -335,6 +338,293 @@ public class AuthServiceTests
             Times.Never);
     }
 
+    #endregion of RegisterUserAsync Tests
+
+    #region of RegisterAdminAsync Tests
+
+    /// <summary>
+    /// Verifies that <see cref="AuthServices.RegisterAdminAsync(UserRegisterDto, CancellationToken)"/> successfully creates a new 
+    /// administrator account, assigns the admin role, hashes the password, sends an email confirmation link, and returns the 
+    /// identifier of the created administrator account.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAdminAsync_ShouldCreateAdminUser_WhenRegistrationDataIsValid()
+    {
+        UserRegisterDto registerDto = TestValidRegisterData();
+        const int expectedUserId = 20;
+        User? savedUser = null;
+
+        SetupUserDoesNotExist(registerDto, null, cancellationToken);
+        SetupUserRoleExists(adminRole.Name, adminRole, cancellationToken);
+        SetupPasswordHashing(registerDto.Password, "hashed-admin-password");
+
+        _userRepositoryMock.Setup(repo => 
+                repo.AddUserAsync(It.IsAny<User>(), cancellationToken))
+            .Callback<User, CancellationToken>((u, _) => savedUser = u)
+            .ReturnsAsync((User u, CancellationToken _) =>
+            {
+                u.Id = expectedUserId;
+                return u;
+            });
+
+        SetupTokenGeneration(AuthTokens.AuthTokenPurpose.EmailConfirmation, expectedUserId, "admin-token");
+        SetupLinkGeneration("admin-token", new Uri("https://localhost/confirm"));
+        SetupEmailSending(registerDto.Email, cancellationToken);
+
+        int id = await _authService.RegisterAdminAsync(registerDto, cancellationToken);
+
+        id.Should().Be(expectedUserId);
+
+        Assert.NotNull(savedUser);
+
+        AssertCreatedUser(savedUser!, registerDto, "hashed-admin-password");
+
+        Assert.Single(savedUser.UserRoles);
+        Assert.Equal(adminRole.Id, savedUser.UserRoles.First().RoleId);
+
+        Assert.True(savedUser.CreatedAt <= DateTime.UtcNow);
+        Assert.DoesNotContain(savedUser.UserRoles, ur => ur.RoleId == userRole.Id);
+        Assert.True(savedUser.UpdatedAt <= DateTime.UtcNow);
+
+        _passwordHasherMock.Verify(hasher =>
+            hasher.HashPassword(
+                It.IsAny<User>(), 
+                registerDto.Password), 
+            Times.Once);
+
+        _userRepositoryMock.Verify(repo => 
+            repo.AddUserAsync(
+                It.Is<User>(u => 
+                    u.UserName == registerDto.Username
+                    && u.Email == registerDto.Email
+                    && u.UserRoles.Any(ur => ur.RoleId == adminRole.Id)), 
+                cancellationToken),
+            Times.Once);
+        _userRepositoryMock.Verify(repo =>
+            repo.UpdateUserAsync(
+                It.Is<User>(u => u.EmailConfirmationSentAt.HasValue),
+                cancellationToken),
+            Times.Once);
+
+        _emailSenderMock.Verify(sender =>
+            sender.SendEmailConfirmationAsync(
+                registerDto.Email, 
+                It.IsAny<Uri>(), 
+                cancellationToken), 
+            Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that registration fails when the specified username is already used by another user account.
+    /// </summary>
+     [Fact]
+    public async Task RegisterAdminAsync_ShouldThrowConflictException_WhenUsernameAlreadyExists()
+    {
+        var registerDto = TestValidRegisterData();
+
+        _userRepositoryMock.Setup(repo => 
+                repo.GetUserByNormalizedUsernameAsync(
+                    NormalizeString(registerDto.Username), 
+                    cancellationToken))
+            .ReturnsAsync(new User { UserName = registerDto.Username });
+
+        Func<Task> act = () => _authService.RegisterAdminAsync(registerDto, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ConflictException>()
+            .WithMessage("Username is already taken.");
+
+        _userRepositoryMock.Verify(repo => 
+            repo.AddUserAsync(
+                It.IsAny<User>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+        
+        _emailSenderMock.Verify(sender =>
+            sender.SendEmailConfirmationAsync(
+                It.IsAny<string>(), 
+                It.IsAny<Uri>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+        
+        _passwordHasherMock.Verify(hasher =>
+            hasher.HashPassword(
+                It.IsAny<User>(), 
+                It.IsAny<string>()), 
+            Times.Never);     
+    }
+    
+    /// <summary>
+    /// Verifies that registration fails when the specified email is already used by another user account. 
+    /// </summary>
+    [Fact]
+    public async Task RegisterAdminAsync_ShouldThrowConflictException_WhenEmailAlreadyExists()
+    {
+        var registerDto = TestValidRegisterData();
+
+        _userRepositoryMock.Setup(repo => 
+                repo.GetUserByNormalizedEmailAsync(
+                    NormalizeString(registerDto.Email), 
+                    cancellationToken))
+            .ReturnsAsync(new User { Email = registerDto.Email });
+
+        Func<Task> act = () => _authService.RegisterAdminAsync(registerDto, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ConflictException>()
+            .WithMessage("Email is already taken.");
+
+        _userRepositoryMock.Verify(repo => 
+            repo.AddUserAsync(
+                It.IsAny<User>(), 
+                It.IsAny<CancellationToken>()), 
+                Times.Never);
+        
+        _emailSenderMock.Verify(sender =>
+            sender.SendEmailConfirmationAsync(
+                It.IsAny<string>(), 
+                It.IsAny<Uri>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+        
+        _passwordHasherMock.Verify(hasher =>
+            hasher.HashPassword(
+                It.IsAny<User>(), 
+                It.IsAny<string>()), 
+            Times.Never);     
+    }
+
+    /// <summary>
+    /// Verifies that registration fails when the admin role does not exist in the system.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAdminAsync_ShouldThrowInvalidOperationException_WhenAdminRoleDoesNotExist()
+    {
+        var registerDto = TestValidRegisterData();
+        SetupUserDoesNotExist(registerDto, null, cancellationToken);
+
+        _userRepositoryMock.Setup(repo =>
+            repo.GetRoleByNameAsync(adminRole.Name, cancellationToken))
+        .ReturnsAsync((Role?)null);
+
+        Func<Task> act = () => _authService.RegisterAdminAsync(registerDto, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage($"Role '{adminRole.Name}' not found.");
+        
+        _userRepositoryMock.Verify(repo => 
+            repo.GetUserByNormalizedEmailAsync(
+                NormalizeString(registerDto.Email), 
+                cancellationToken), 
+            Times.Once);
+        _userRepositoryMock.Verify(repo => 
+            repo.GetUserByNormalizedUsernameAsync(
+                NormalizeString(registerDto.Username), 
+                cancellationToken), 
+            Times.Once);
+        _userRepositoryMock.Verify(repo =>
+            repo.GetRoleByNameAsync(
+                adminRole.Name, 
+                cancellationToken), 
+            Times.Once);
+        
+        _userRepositoryMock.Verify(repo => 
+            repo.AddUserAsync(
+                It.IsAny<User>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+
+        _emailSenderMock.Verify(sender =>
+            sender.SendEmailConfirmationAsync(
+                It.IsAny<string>(), 
+                It.IsAny<Uri>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="AuthServices.RegisterAdminAsync(UserRegisterDto, CancellationToken)"/> fails when the supplied
+    /// registration data is invalid. 
+    /// </summary>
+    /// <param name="invalidRegisterDto">
+    /// Invalid registration data passed to the authentication service.
+    /// </param>
+    [Theory]
+    [MemberData(nameof(InvalidRegisterData))]
+    public async Task RegisterAdminAsync_ShouldThrowArgumentException_WhenRegistrationDataIsInvalid(UserRegisterDto invalidRegisterDto)
+    {
+        // User with the specified username and email does not exist
+        SetupUserDoesNotExist(invalidRegisterDto, null, cancellationToken);
+        // Role is exists
+        SetupUserRoleExists(adminRole.Name, adminRole, cancellationToken);
+
+        Func<Task> act = () => _authService.RegisterAdminAsync(invalidRegisterDto, cancellationToken);
+
+        await act.Should().ThrowAsync<ArgumentException>();
+        
+        _userRepositoryMock.Verify(repo =>
+            repo.AddUserAsync(
+                It.IsAny<User>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+        
+        _passwordHasherMock.Verify(hasher =>
+            hasher.HashPassword(
+                It.IsAny<User>(), 
+                It.IsAny<string>()), 
+            Times.Never);
+
+        _emailSenderMock.Verify(sender =>
+            sender.SendEmailConfirmationAsync(
+                It.IsAny<string>(), 
+                It.IsAny<Uri>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that registration fails when the registration data object is <see langword="null"/>. 
+    /// </summary>
+    [Fact]
+    public async Task RegisterAdminAsync_ShouldThrowArgumentNullException_WhenRegisterDtoIsNull()
+    {
+        UserRegisterDto? registerDto = null;
+
+        Func<Task> act = () => _authService.RegisterAdminAsync(registerDto!, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ArgumentNullException>()
+            .WithParameterName("userRegisterDto");
+
+        _userRepositoryMock.Verify(repo =>
+            repo.AddUserAsync(
+                It.IsAny<User>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+
+        _passwordHasherMock.Verify(hasher =>
+            hasher.HashPassword(
+                It.IsAny<User>(), 
+                It.IsAny<string>()), 
+            Times.Never);
+
+        _emailSenderMock.Verify(sender =>
+            sender.SendEmailConfirmationAsync(
+                It.IsAny<string>(), 
+                It.IsAny<Uri>(), 
+                It.IsAny<CancellationToken>()), 
+            Times.Never);
+    }
+
+    #endregion of RegisterAdminAsync Tests
+
+    #endregion Registration & Login Tests
+
+    #region of Helper Methods
+
+    #region of Test Data
+
     /// <summary>
     /// Contains invalid registration data for unit tests.
     /// </summary>
@@ -360,6 +650,10 @@ public class AuthServiceTests
     {
         return new ("userName", "userEmail@email.com", "P@ssw0rd123");
     }
+
+    #endregion of Test Data
+
+    #region of Mock Setup and Verification
 
     /// <summary>
     /// Normalizes the string using same rules as the authentication service.
@@ -506,4 +800,8 @@ public class AuthServiceTests
         Assert.False(savedUser.IsDeleted);
         Assert.False(savedUser.IsEmailConfirmed);
     }
+
+    #endregion of Mock Setup and Verification
+
+    #endregion of Helper Methods
 }

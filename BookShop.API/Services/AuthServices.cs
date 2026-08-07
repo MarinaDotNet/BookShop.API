@@ -177,8 +177,13 @@ public class AuthServices(
     /// Thrown if a user with the provided username or email already exists, or if the default user role cannot be
     /// found.
     /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="userRegisterDto"/> is null.
+    /// </exception>
     public async Task<int> RegisterAdminAsync(UserRegisterDto userRegisterDto, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(userRegisterDto, nameof(userRegisterDto));
+
         var normalizedAdminName = NormalizeInput(userRegisterDto.Username);
         var normalizedEmail = NormalizeInput(userRegisterDto.Email);
         await EnsureUserDoesNotExists(normalizedAdminName, normalizedEmail, cancellationToken);
