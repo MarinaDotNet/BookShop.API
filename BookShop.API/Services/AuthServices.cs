@@ -139,7 +139,7 @@ public class AuthServices(
     /// </exception>
     public async Task ConfirmEmailAsync(string token, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(token, nameof(token));
+        ArgumentException.ThrowIfNullOrWhiteSpace(token, nameof(token));
 
         if(!_authTokenService.TryValidateToken(token, AuthTokenPurpose.EmailConfirmation ,out var payload))
         {
