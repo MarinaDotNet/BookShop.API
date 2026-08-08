@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Net;
 using BookShop.Web.Interfaces;
 using Microsoft.AspNetCore.Authentication;
@@ -39,20 +40,15 @@ public sealed class LogoutModel(IAuthService authService) : PageModel
         {
             return RedirectToPage("/Auth/Login");
         }
+
+        var refreshToken = await HttpContext.GetTokenAsync("refresh_token");
+
         try
         {
-            var refreshToken = await HttpContext.GetTokenAsync("refresh_token");
-
-            if (string.IsNullOrWhiteSpace(refreshToken))
+            if (!string.IsNullOrWhiteSpace(refreshToken))
             {
-                return RedirectToPage("/Index");
+                await _authService.LogOutAsync(refreshToken, cancellationToken);
             }
-
-            await _authService.LogOutAsync(refreshToken, cancellationToken); 
-                
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-            return RedirectToPage("/Index");
         }
         catch(OperationCanceledException)
         {
@@ -74,9 +70,13 @@ public sealed class LogoutModel(IAuthService authService) : PageModel
         {
             ModelState.AddModelError(string.Empty, ex.Message);
         }
-        return Page();   
+        finally
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        }
+        return RedirectToPage("/Index");   
     }
-
+/*
     /// <summary>
     /// Displays the logout page for authenticated users. Anonymous users are redirected to the login page.
     /// </summary>
@@ -90,5 +90,5 @@ public sealed class LogoutModel(IAuthService authService) : PageModel
             return RedirectToPage("/Auth/Login");
         }
         return Page();
-    }
+    } */
 }

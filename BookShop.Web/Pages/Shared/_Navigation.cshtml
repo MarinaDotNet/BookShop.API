@@ -1,0 +1,32 @@
+<ul class="navbar-nav align-items-center me-auto">
+    <li class="nav-item">
+        <a class="nav-link" asp-page="/Index">Home</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" asp-page="/Catalog/Index">Books</a>
+    </li>
+</ul>
+
+<ul class="navbar-nav ms-auto align-items-center">
+        @if(User.Identity?.IsAuthenticated == true)
+        {
+            <li class="nav-item">
+                <span class="navbar-text me-3">@User.Identity.Name!</span> 
+            </li>
+            <li class="nav-item">
+                <form method="post" asp-page="/Auth/Logout">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-nav-logout">Logout</button>
+                </form>
+            </li>
+        }
+        else
+        {
+            <li class="nav-item">
+                <a class="nav-link" asp-page="/Auth/Login">Login</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-page="/Auth/Register">Register</a>
+            </li>
+        }
+</ul>
