@@ -1,0 +1,59 @@
+@page
+@model BookShop.Web.Pages.Auth.IndexModel
+@{
+    ViewData[index: "Title"] = "Account";
+}
+
+<div class="container">
+  <div class="row g-4 align-items-stretch">
+    
+        <!-- Sidebar -->
+        <div class="col-12 col-lg-3">
+            <div class="account-sidebar">
+                <button class="btn btn-add w-100">Edit Profile</button>
+                <button class="btn btn-add w-100">Change Email</button>
+                <button class="btn btn-add w-100">Change Password</button>
+            
+
+                <div class="account-sidebar-divider"></div>
+
+                <button class="btn btn-add w-100">Orders History</button>
+                
+                <div class="account-sidebar-divider"></div>
+                
+                <button class="btn btn-delete w-100">Delete Account</button>
+            
+            </div>
+        </div>
+
+        <!-- Profile -->
+        <div class="col-12 col-lg-9">
+            <div class="account-card">
+                <h2 class="card-title mb-4">Profile</h2>
+
+                <div class="mb-3">
+                    <label class="form-label" for="username">Username:</label>
+                    <input id="username" class="form-control form-control-lg" readonly value="@Model.Account.Username" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="email">Email:</label>
+                    <input id="email" class="form-control form-control-lg" readonly value="@Model.Account.Email" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="email">Email status:</label>
+                    
+                    @if(Model.Account.IsEmailConfirmed)
+                    {
+                        <div class="email-confirmed"><span>&#10003;</span> Confirmed</div>
+                    }
+                    else
+                    {
+                        <div class="email-not-confirmed"><span>&#10007;</span> Not Confirmed</div>
+                    }
+                </div>
+            </div>    
+        </div>
+    </div>
+</div>

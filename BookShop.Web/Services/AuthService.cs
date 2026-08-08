@@ -107,6 +107,10 @@ public class AuthServcie(IApiClient apiClient) : IAuthService
         await _apiClient.PostAsync(ApiRoutes.V1.Auth.Register, registerDto, cancellationToken);
     }
 
+    public async Task<UserProfileDto> GetCurrentUserAsync(CancellationToken cancellationToken = default)
+    {
+        return await _apiClient.GetAsync<UserProfileDto>(ApiRoutes.V1.Auth.Account, cancellationToken);
+    }
 
     /// <summary>
     /// Validates that the specified email address conforms to a standard email format.

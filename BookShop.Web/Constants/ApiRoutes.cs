@@ -41,6 +41,8 @@ public static class ApiRoutes
             /// API endpoint for registering a new user account.
             /// </summary>
             public const string Register = $"{Base}{Controller}/register";
+
+            public const string Account = $"{Base}{Controller}/account";
         }
     }
 

@@ -55,4 +55,6 @@ public interface IAuthService
     /// Thrown when the registration data is invalid.
     /// </exception>
     Task RegisterAsync(UserRegisterDto registerDto, CancellationToken cancellationToken);
+
+    Task<UserProfileDto> GetCurrentUserAsync(CancellationToken cancellationToken = default);
 }
