@@ -5,7 +5,9 @@ using BookShop.API.Models.Auth;
 using BookShop.API.Repositories;
 using BookShop.API.Services;
 using FluentAssertions;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.VisualBasic;
 using Moq;
 
 namespace BookShop.API.Tests.Services;
@@ -619,6 +621,208 @@ public class AuthServiceTests
 
     #endregion of RegisterAdminAsync Tests
 
+    #region of ConfirmEmailAsync Tests
+
+    /// <summary>
+    /// Verifies that <see cref="AuthServices.ConfirmEmailAsync(string, CancellationToken)"/> confirms the user's email address
+    /// when the provided token is valid and the exists. 
+    /// </summary>
+    /// <remarks>
+    /// Verifies that the user's <c>UpdatedAt</c> flag is set to <see langword="true"/>, <c>UpdatedAt</c> is updated, and
+    /// <cUpdateUserAsync> is called exactly once.
+    /// </remarks>
+    [Fact]
+    public async Task ConfirmEmailAsync_ShouldConfirmEmail_WhenTokenIsValid()
+    {
+        const string token = "confirmation_token";
+        const int expectedUserId = 5;
+
+        AuthTokens.AuthTokenPurpose authTokenPurpose = AuthTokens.AuthTokenPurpose.EmailConfirmation;
+        DateTime tokenExpires = DateTime.UtcNow.AddHours(1);
+        AuthTokens.AuthTokenPayload? payload = new(expectedUserId, authTokenPurpose, tokenExpires, null);
+
+        SetupValidEmailConfirmationToken(token, payload);
+
+        DateTime initialUpdateAt = DateTime.UtcNow.AddMinutes(-1);
+        var user = new User 
+        { 
+            Id = expectedUserId, 
+            IsEmailConfirmed = false, 
+            UpdatedAt = initialUpdateAt
+        };
+
+        SetupUserExists(user);
+
+        await _authService.ConfirmEmailAsync(token, cancellationToken);
+
+        user.IsEmailConfirmed.Should().BeTrue();
+        user.UpdatedAt.Should().BeAfter(initialUpdateAt);
+
+        _userRepositoryMock.Verify(repo => 
+                repo.UpdateUserAsync(It.Is<User>(u => 
+                    u.IsEmailConfirmed 
+                    && u.UpdatedAt > initialUpdateAt), 
+                cancellationToken),
+            Times.Once);
+
+        _authTokenServiceMock.Verify(service => 
+                service.TryValidateToken(token, AuthTokens.AuthTokenPurpose.EmailConfirmation, out payload),
+            Times.Once);
+
+        _userRepositoryMock.Verify(repo => 
+                repo.GetUserByIdAsync(expectedUserId, cancellationToken),
+            Times.Once());
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="AuthServices.ConfirmEmailAsync(string, CancellationToken)"/> throws an <see cref="InvalidTokenException"/>
+    /// when the email confirmation token is invalid.  
+    /// </summary>
+    /// <remarks>
+    /// Verifies that the user repository is not accessed and the user entity is not updated when token validation fails.
+    /// </remarks>
+    [Fact]
+    public async Task ConfirmEmailAsync_ShouldThrowInvalidTokenException_WhenTokenIsInvalid()
+    {
+        const string invalidToken = "invalid_confirm_token";
+
+        SetupInvalidEmailConfirmationToken(invalidToken, null!);
+
+        Func<Task> act = () => _authService.ConfirmEmailAsync(invalidToken, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<InvalidTokenException>();
+
+        _authTokenServiceMock.Verify(service => 
+            service.TryValidateToken(invalidToken, 
+                AuthTokens.AuthTokenPurpose.EmailConfirmation, 
+                out It.Ref<AuthTokens.AuthTokenPayload>.IsAny!),
+            Times.Once);
+
+        _userRepositoryMock.Verify(repository => 
+            repository.GetUserByIdAsync(It.IsAny<int>(), cancellationToken), Times.Never);
+        _userRepositoryMock.Verify(repository => 
+            repository.UpdateUserAsync(It.IsAny<User>(), cancellationToken), Times.Never);      
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="AuthServices.ConfirmEmailAsync(string, CancellationToken)"/> throws an <see cref="InvalidTokenException"/>
+    /// when the user referenced by a valid email confirmation token does not exist.  
+    /// </summary>
+    /// <remarks>
+    /// Verifies that the token is validated successfully, the user repository is queried using the user identifier from the token payload,
+    /// and no user update is performed when the account is unavailable.
+    /// </remarks>
+    [Fact]
+    public async Task ConfirmEmailAsync_ShouldThrowInvlaidTokenException_WhenUserDoesNotExist()
+    {
+        const string token = "valid_token";
+        const int invalidUserId = 6;
+
+        AuthTokens.AuthTokenPurpose authTokenPurpose = AuthTokens.AuthTokenPurpose.EmailConfirmation;
+        DateTime tokenExpires = DateTime.UtcNow.AddHours(1);
+        AuthTokens.AuthTokenPayload? payload = new(invalidUserId, authTokenPurpose, tokenExpires, null);
+
+        SetupValidEmailConfirmationToken(token, payload);
+
+        _userRepositoryMock.Setup(repo => 
+                repo.GetUserByIdAsync(invalidUserId, cancellationToken))
+            .ReturnsAsync((User)null!);
+
+        Func<Task> act = () => _authService.ConfirmEmailAsync(token, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<InvalidTokenException>()
+            .WithMessage("The user account is not available.");
+
+        _authTokenServiceMock.Verify(service => 
+                service.TryValidateToken(token, AuthTokens.AuthTokenPurpose.EmailConfirmation, out payload),
+            Times.Once);
+
+        _userRepositoryMock.Verify(repository => 
+                repository.GetUserByIdAsync(invalidUserId, cancellationToken),
+            Times.Once);
+        _userRepositoryMock.Verify(repository =>
+                repository.UpdateUserAsync(It.IsAny<User>(), cancellationToken),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="AuthServices.ConfirmEmailAsync(string, CancellationToken)"/> does not modify the user account
+    /// when the email address has already been confirmed. 
+    /// </summary>
+    /// <remarks>
+    /// Verifies that a valid email confirmation token is validate and the corresponding user is retrieved, but no update is performed
+    /// when <see cref="User.IsEmailConfirmed"/> is already <see langword="true"/>.
+    /// </remarks>
+    [Fact]
+    public async Task ConfirmEmailAsync_ShouldDoNothing_WhenEmailIsAlreadyConfirmed()
+    {
+        const string token = "confirmation_token";
+        const int expectedUserId = 5;
+
+        AuthTokens.AuthTokenPurpose authTokenPurpose = AuthTokens.AuthTokenPurpose.EmailConfirmation;
+        DateTime tokenExpires = DateTime.UtcNow.AddHours(1);
+        AuthTokens.AuthTokenPayload? payload = new(expectedUserId, authTokenPurpose, tokenExpires, null);
+
+        SetupValidEmailConfirmationToken(token, payload);
+
+        DateTime initialUpdateAt = DateTime.UtcNow.AddMinutes(-1);
+        var user = new User 
+        { 
+            Id = expectedUserId, 
+            IsEmailConfirmed = true, 
+            UpdatedAt = initialUpdateAt
+        };
+        SetupUserExists(user);
+
+        await _authService.ConfirmEmailAsync(token, cancellationToken);
+
+        user.IsEmailConfirmed.Should().BeTrue();
+        user.UpdatedAt.Should().Be(initialUpdateAt);
+
+        _authTokenServiceMock.Verify(service => 
+                service.TryValidateToken(token, AuthTokens.AuthTokenPurpose.EmailConfirmation, out payload),
+            Times.Once);
+
+        _userRepositoryMock.Verify(repository => 
+                repository.GetUserByIdAsync(expectedUserId, cancellationToken),
+            Times.Once());
+        _userRepositoryMock.Verify(repository =>
+            repository.UpdateUserAsync(user, cancellationToken), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="AuthServices.ConfirmEmailAsync(string, CancellationToken)"/> throws an <see cref="ArgumentException"/>
+    /// when the email confirmation token is <see langword="null"/>, empty, or consists only of whitespace.
+    /// </summary>
+    /// <param name="token">
+    /// The invalid email confirmation token value.
+    /// </param>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    public async Task ConfirmEmailAsync_ShouldThrowArgumentException_WhenTokenIsNullOrEmpty(string? token)
+    {
+        const int expectedUserId = 5;
+        AuthTokens.AuthTokenPurpose authTokenPurpose = AuthTokens.AuthTokenPurpose.EmailConfirmation;
+        DateTime tokenExpires = DateTime.UtcNow.AddHours(1);
+        AuthTokens.AuthTokenPayload? payload = new(expectedUserId, authTokenPurpose, tokenExpires, null);
+
+        Func<Task> act = () => _authService.ConfirmEmailAsync(token!, cancellationToken);
+
+        await act.Should()
+            .ThrowAsync<ArgumentException>();
+        
+        _authTokenServiceMock.Verify(service => 
+            service.TryValidateToken(token!, AuthTokens.AuthTokenPurpose.EmailConfirmation, out payload), Times.Never);
+    }
+
+    #endregion of ConfirmEmailAsync Tests
+
     #endregion Registration & Login Tests
 
     #region of Helper Methods
@@ -800,6 +1004,52 @@ public class AuthServiceTests
         Assert.False(savedUser.IsDeleted);
         Assert.False(savedUser.IsEmailConfirmed);
     }
+
+    /// <summary>
+    /// Configures the authentication token service mock to simulate successful validation of an email confirmation token.
+    /// </summary>
+    /// <param name="token">
+    /// The email confirmation token to validate.
+    /// </param>
+    /// <param name="payload">
+    /// The payload returned when the token is successfully validated.
+    /// </param>
+    private void SetupValidEmailConfirmationToken(string token, AuthTokens.AuthTokenPayload payload)
+    {
+        AuthTokens.AuthTokenPurpose authTokenPurpose = AuthTokens.AuthTokenPurpose.EmailConfirmation;
+
+        _authTokenServiceMock.Setup(service => 
+                service.TryValidateToken(token, authTokenPurpose, out payload!))
+            .Returns(true);
+    }
+
+    /// <summary>
+    /// Configure the authentication token service mock to simulate failed validation of an email confirmation token to validate.
+    /// </summary>
+    /// <param name="invalidToken">
+    /// The email confirmation token to validate.
+    /// </param>
+    /// <param name="payload">
+    /// The token payload passed to the validation method.
+    /// </param>
+    private void SetupInvalidEmailConfirmationToken(string invalidToken, AuthTokens.AuthTokenPayload payload)
+    {
+        AuthTokens.AuthTokenPurpose authTokenPurpose = AuthTokens.AuthTokenPurpose.EmailConfirmation;
+
+        _authTokenServiceMock.Setup(service => 
+                service.TryValidateToken(invalidToken, authTokenPurpose, out payload!))
+            .Returns(false);
+    }
+
+    /// <summary>
+    /// Configures the user repository mock to return the specified user by identifier.
+    /// </summary>
+    /// <param name="user">
+    /// The user entity to return when the repository is queried.
+    /// </param>
+    private void SetupUserExists(User user) =>
+        _userRepositoryMock.Setup(repo => repo.GetUserByIdAsync(user.Id, cancellationToken))
+            .ReturnsAsync(user);
 
     #endregion of Mock Setup and Verification
 
