@@ -42,7 +42,15 @@ public static class ApiRoutes
             /// </summary>
             public const string Register = $"{Base}{Controller}/register";
 
+            /// <summary>
+            /// API endpoint for retrieving the current user's profile information.
+            /// </summary>
             public const string Account = $"{Base}{Controller}/account";
+            
+            /// <summary>
+            /// API endpoint for updating the current user's username.
+            /// </summary>
+            public const string UsernameUpdate = $"{Account}/username";
         }
     }
 
