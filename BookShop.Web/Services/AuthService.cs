@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using BookShop.Web.Constants;
 using BookShop.Web.Interfaces;
 using BookShop.Web.DTOs.Auth;
+using BookShop.Web.Dtos.Auth;
 
 namespace BookShop.Web.Services;
 
@@ -107,9 +108,44 @@ public class AuthServcie(IApiClient apiClient) : IAuthService
         await _apiClient.PostAsync(ApiRoutes.V1.Auth.Register, registerDto, cancellationToken);
     }
 
+    /// <summary>
+    /// Retrieves the profile information of the currently authenticated user from the API.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// The cancellation token to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing the user's profile information.
+    /// </returns>
     public async Task<UserProfileDto> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
         return await _apiClient.GetAsync<UserProfileDto>(ApiRoutes.V1.Auth.Account, cancellationToken);
+    }
+
+    /// <summary>
+    /// Updates the current user's username by sending the new username to the API.
+    /// </summary>
+    /// <param name="updateUsernameDto">
+    /// The data containing the new username to be updated.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The cancellation token to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="updateUsernameDto"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <see cref="UpdateUsernameDto.NewUserName"/> is null or whitespace.
+    /// </exception>
+    public async Task UpdateUsernameAsync(UpdateUsernameDto updateUsernameDto, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(updateUsernameDto);
+        ArgumentException.ThrowIfNullOrWhiteSpace(updateUsernameDto.NewUserName, nameof(updateUsernameDto.NewUserName));  
+
+        await _apiClient.PutAsync(ApiRoutes.V1.Auth.UsernameUpdate, updateUsernameDto, cancellationToken);
     }
 
     /// <summary>

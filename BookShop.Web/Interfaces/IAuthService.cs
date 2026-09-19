@@ -1,3 +1,4 @@
+using BookShop.Web.Dtos.Auth;
 using BookShop.Web.DTOs.Auth;
 
 namespace BookShop.Web.Interfaces;
@@ -56,5 +57,34 @@ public interface IAuthService
     /// </exception>
     Task RegisterAsync(UserRegisterDto registerDto, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Retrieves the profile information of the currently authenticated user.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// The cancellation token to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing the user's profile information.
+    /// </returns>
     Task<UserProfileDto> GetCurrentUserAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates the username of the currently authenticated user.
+    /// </summary>
+    /// <param name="updateUsernameDto">
+    /// The data containing the new username to be updated.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The cancellation token to cancel the operation.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="updateUsernameDto"/> is <see langword="null"/>. 
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the new username is <see langword="null"/> or whitespace.
+    /// </exception>
+    Task UpdateUsernameAsync(UpdateUsernameDto updateUsernameDto, CancellationToken cancellationToken = default)
 }
