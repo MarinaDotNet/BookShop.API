@@ -1,0 +1,43 @@
+@page
+@model BookShop.Web.Pages.Auth.EditProfileModel
+@{
+    ViewData["Title"] = "Edit Profile Username";
+}
+
+@if (Model.IsApiAwakening)
+{
+    <partial name="_ApiAwakening" model='new ApiAwakeningViewModel{Operation = ApiOperation.Generic}' />
+}
+else if(User.Identity?.IsAuthenticated == true)
+{
+    <div class="container">
+        <div class="row g-4 align-items-stretch">
+
+            <!-- Sidebar -->
+            <partial name="_AccountSidebar" />
+
+            <!--Profile Edit Form -->
+            <div class="col-12 col-lg-9">
+                <div class="account-card">
+                    <h2 class="card-title mb-4">Edit Profile Username</h2>
+
+                    <form method="post" asp-page="/Auth/EditProfile" type="submit">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
+
+                        <div class ="mb-3">
+                            <p class="form-label card-subtitle">Current Username</p>
+                            <p class="form-control-plaintext">@User.Identity.Name</p>
+                            <label asp-for="NewUsername" class="form-label card-subtitle">New Username</label>
+                            <input asp-action="UpdateUsername" asp-for="NewUsername.NewUserName" class="form-control" type="text" />
+                            <p>
+                                <span asp-validation-for="NewUsername" class="text-danger small"></span>
+                            </p>
+                            <button type="submit" class="btn btn-add mt-3">Update Username</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
