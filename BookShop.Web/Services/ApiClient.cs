@@ -223,6 +223,92 @@ public sealed class ApiClient(HttpClient httpClient, IHttpContextAccessor httpCo
     }
 
     /// <summary>
+    /// Sends an HTTP PATCH request with a JSON payload, automatically retries the request if neccessary, and deserializes the JSON
+    /// response. Authorization header is added automatically when an access token is available in the current authentication session.
+    /// </summary>
+    /// <typeparam name="TRequest">
+    /// The type of the request body to be serialized as JSON.
+    /// </typeparam>
+    /// <typeparam name="TResponse">
+    /// The type of the response body to be deserialized from JSON.
+    /// </typeparam>
+    /// <param name="requestUri">
+    /// The URI of the API endpoint.
+    /// </param>
+    /// <param name="request">
+    /// The request object to be serialized and sent in the request body. Cannot be null.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the HTTP request.
+    /// </param>
+    /// <returns>
+    /// The deserialized response object.
+    /// </returns>
+    /// <exception cref="HttpRequestException">
+    /// Thrown when the server returns an unsuccessful status code.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the response body cannot be deserialized.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="request"/> is null.
+    /// </exception>
+    public async Task<TResponse> PatchAsync<TRequest, TResponse>(string requestUri, TRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        HttpRequestMessage requestFactory() =>
+            new (HttpMethod.Patch, requestUri)
+            {
+                Content = JsonContent.Create(request)
+            };
+
+        using HttpResponseMessage response = await SendAsync(requestFactory, cancellationToken);
+
+        return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken)
+            ?? throw new InvalidCastException("Response body was empty.");
+    }
+
+    /// <summary>
+    /// Sends an HTTP PATCH request with a JSON payload, automatically retries the request if neccessary, and does not expect a
+    /// response body. Authorization header is added automatically when an access token is available in the current authentication
+    /// session.
+    /// </summary>
+    /// <typeparam name="TRequest">
+    /// The type of the request body to be serialized as JSON.
+    /// </typeparam>
+    /// <param name="requestUri">
+    /// The URI of the API endpoint.
+    /// </param>
+    /// <param name="request">
+    /// The request object to be serialized and sent in the request body. Cannot be null.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used to cancel the HTTP request.
+    /// </param>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
+    /// <exception cref="HttpRequestException">
+    /// Thrown when the API returns a non-success HTTP status code.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="request"/> is <see langword="null"/>.
+    /// </excepiton>
+    public async Task PatchAsync<TRequest>(string requestUri, TRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        HttpRequestMessage requestFactory() =>
+            new (HttpMethod.Patch, requestUri)
+            {
+                Content = JsonContent.Create(request)
+            };
+
+        using HttpResponseMessage response = await SendAsync(requestFactory, cancellationToken);
+    }
+
+    /// <summary>
     /// Adds the current user's access token to the Authorization header of the specified HTTP request, if an access token is available
     /// in the current authentication session.
     /// </summary>
