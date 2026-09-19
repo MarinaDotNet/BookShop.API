@@ -145,7 +145,7 @@ public class AuthServcie(IApiClient apiClient) : IAuthService
         ArgumentNullException.ThrowIfNull(updateUsernameDto);
         ArgumentException.ThrowIfNullOrWhiteSpace(updateUsernameDto.NewUserName, nameof(updateUsernameDto.NewUserName));  
 
-        await _apiClient.PutAsync(ApiRoutes.V1.Auth.UsernameUpdate, updateUsernameDto, cancellationToken);
+        await _apiClient.PatchAsync(ApiRoutes.V1.Auth.UsernameUpdate, updateUsernameDto, cancellationToken);
     }
 
     /// <summary>

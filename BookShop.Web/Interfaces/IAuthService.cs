@@ -86,5 +86,5 @@ public interface IAuthService
     /// <exception cref="ArgumentException">
     /// Thrown when the new username is <see langword="null"/> or whitespace.
     /// </exception>
-    Task UpdateUsernameAsync(UpdateUsernameDto updateUsernameDto, CancellationToken cancellationToken = default)
+    Task UpdateUsernameAsync(UpdateUsernameDto updateUsernameDto, CancellationToken cancellationToken = default);
 }
